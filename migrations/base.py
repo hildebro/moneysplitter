@@ -15,9 +15,8 @@ cursorObj = con.cursor()
 
 cursorObj.execute("""
     CREATE TABLE user(
-        id integer PRIMARY KEY AUTOINCREMENT,
+        id integer PRIMARY KEY,
         first_name text,
-        last_name text,
         username text UNIQUE
     )
 """)
