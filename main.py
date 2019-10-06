@@ -8,10 +8,18 @@ def start(update, context):
     dbqueries.register_user(update.message.chat)
     update.message.reply_text('You are now registered.')
 
+def refresh_username(update, context):
+    dbqueries.refresh_username(update.message.chat)
+    update.message.reply_text('Username refreshed.')
+
 def make_party(update, context):
     args = context.args
-    if len(args) != 1:
-        update.message.reply_text('No spaces allowed in parties.')
+    if len(args) == 0:
+        update.message.reply_text('Please provide a name for the party.')
+        return
+    if len(args) > 1:
+        update.message.reply_text('No whitespaces allowed in party names.')
+        return
 
     dbqueries.make_party(args[0], update.message.chat_id)
     update.message.reply_text('Party created.')
@@ -29,11 +37,19 @@ def party_add(update, context):
 
     user = dbqueries.find_user(args[1])
     if user is None:
-        update.message.reply_text('No user found for the given name. Make sure they initiated the bot with /start. If they changed their username since starting the bot, they have to execute /refresh_username.')
+        update.message.reply_text('Username not found. Make sure they initiated the bot with /start. If they changed their username since starting the bot, they have to execute /refresh_username.')
         return
 
     dbqueries.party_add(group_id, user['id'])
     update.message.reply_text('User added.')
+
+def show_parties(update, context):
+    parties = dbqueries.find_parties(update.message.chat_id)
+    if len(parties) == 0:
+        update.message.reply_text("You don't have any parties yet.")
+        return
+
+    update.message.reply_text('Your parties:\n' + '\n'.join(parties))
 
 def inline_handling(update, context):
     query = update.inline_query.query
@@ -60,10 +76,12 @@ def main():
 
     updater = Updater(privatestorage.get_token(), use_context=True)
     dp = updater.dispatcher
-    dp.add_handler(InlineQueryHandler(inline_handling))
+   ''' dp.add_handler(InlineQueryHandler(inline_handling))'''
     dp.add_handler(CommandHandler('start', start))
+    dp.add_handler(CommandHandler('refresh_username', refresh_username))
     dp.add_handler(CommandHandler('make_party', make_party))
     dp.add_handler(CommandHandler('party_add', party_add))
+    dp.add_handler(CommandHandler('show_parties', show_parties))
     dp.add_handler(MessageHandler(Filters.command, unknown))
     updater.start_polling()
     print('Started polling...')

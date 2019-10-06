@@ -24,6 +24,12 @@ def register_user(user):
         cur = conn.cursor()
         cur.execute('INSERT INTO user(id, first_name, username) values (?, ?, ?)', [user.id, user.first_name, user.username])
 
+def refresh_username(user):
+    conn = connect_db()
+    with conn:
+        cur = conn.cursor()
+        cur.execute('UPDATE user SET username = ? WHERE id = ?', [user.username, user.id])
+
 def find_party_id(creator_id, party_name):
     conn = connect_db()
     with conn:
@@ -48,3 +54,15 @@ def party_add(party_id, user_id):
     with conn:
         cur = conn.cursor()
         cur.execute('INSERT INTO party_users(party_id, user_id) VALUES (?, ?)', [party_id, user_id])
+
+def find_parties(user_id):
+    conn = connect_db()
+    with conn:
+        cur = conn.cursor()
+        cur.execute('SELECT name FROM party WHERE creator_id = ? ', [user_id])
+        parties = cur.fetchall()
+        unwrapped_parties = []
+        for party in parties:
+            unwrapped_parties.append(party[0])
+
+        return unwrapped_parties
