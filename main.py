@@ -21,7 +21,10 @@ def make_party(update, context):
         update.message.reply_text('No whitespaces allowed in party names.')
         return
 
-    dbqueries.make_party(args[0], update.message.chat_id)
+    party_name = args[0]
+    user_id = update.message.chat_id
+
+    dbqueries.make_party(party_name, user_id)
     update.message.reply_text('Party created.')
 
 def party_add(update, context):
@@ -76,7 +79,7 @@ def main():
 
     updater = Updater(privatestorage.get_token(), use_context=True)
     dp = updater.dispatcher
-   ''' dp.add_handler(InlineQueryHandler(inline_handling))'''
+    dp.add_handler(InlineQueryHandler(inline_handling))
     dp.add_handler(CommandHandler('start', start))
     dp.add_handler(CommandHandler('refresh_username', refresh_username))
     dp.add_handler(CommandHandler('make_party', make_party))

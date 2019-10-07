@@ -13,10 +13,12 @@ def connect_db():
 
 def make_party(party_name, creator_id):
     conn = connect_db()
+    cur = conn.cursor()
     with conn:
-        cur = conn.cursor()
         cur.execute('INSERT INTO party(name, creator_id) values (?, ?)', [party_name, creator_id])
-    print('Party created')
+
+    cur.execute('SELECT id FROM party WHERE name = ? and creator_id = ?', [party_name, creator_id])
+    party_add(cur.fetchone()[0], creator_id)
 
 def register_user(user):
     conn = connect_db()
