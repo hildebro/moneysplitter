@@ -22,14 +22,6 @@ cursorObj.execute("""
 """)
 
 cursorObj.execute("""
-    CREATE TABLE item(
-        id integer PRIMARY KEY AUTOINCREMENT,
-        name text,
-        amount integer
-    )
-""")
-
-cursorObj.execute("""
     CREATE TABLE party(
         id integer PRIMARY KEY AUTOINCREMENT,
         name text,
@@ -47,10 +39,10 @@ cursorObj.execute("""
 """)
 
 cursorObj.execute("""
-    CREATE TABLE party_items(
+    CREATE TABLE item(
+        item_name integer,
         party_id integer,
-        item_id integer,
-        PRIMARY KEY (party_id, item_id)
+        PRIMARY KEY (party_id, item_name)
     )
 """)
 

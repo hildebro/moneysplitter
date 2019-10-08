@@ -1,6 +1,6 @@
 import logging
 from telegram import InlineQueryResultArticle, InputTextMessageContent
-from telegram.ext import Updater, InlineQueryHandler, CommandHandler, MessageHandler, Filters, InlineQueryHandler
+from telegram.ext import Updater, ChosenInlineResultHandler, InlineQueryHandler, CommandHandler, MessageHandler, Filters
 import dbqueries
 import privatestorage
 
@@ -47,26 +47,37 @@ def party_add(update, context):
     update.message.reply_text('User added.')
 
 def show_parties(update, context):
-    parties = dbqueries.find_parties(update.message.chat_id)
+    parties = dbqueries.find_parties_by_creator(update.message.chat_id)
     if len(parties) == 0:
         update.message.reply_text("You don't have any parties yet.")
         return
 
     update.message.reply_text('Your parties:\n' + '\n'.join(parties))
 
-def inline_handling(update, context):
+def inline_query_handling(update, context):
     query = update.inline_query.query
     if not query:
+        context.bot.answer_inline_query(update.inline_query.id, [])
         return
-    results = list()
-    results.append(
-        InlineQueryResultArticle(
-            id=query.upper(),
-            title='Caps',
-            input_message_content=InputTextMessageContent(query.upper())
+
+    inline_options = []
+    for party in dbqueries.find_parties_by_participant(update.inline_query.from_user['id']):
+        inline_options.append(
+            InlineQueryResultArticle(
+                id=party['id'],
+                title='Add item "{}" to party "{}"'.format(query, party['name']),
+                input_message_content=InputTextMessageContent(
+                    'New item *{}* being added to party *{}*...'.format(query, party['name']),
+                    parse_mode = 'Markdown'
+                )
+            )
         )
-    )
-    context.bot.answer_inline_query(update.inline_query.id, results)
+    context.bot.answer_inline_query(update.inline_query.id, inline_options)
+
+def inline_result_handling(update, context):
+    result = update.chosen_inline_result
+    dbqueries.add_item(result.query, result.result_id)
+    result.from_user.send_message('Item *{}* added successfully'.format(result.query), parse_mode='Markdown')
 
 def unknown(update, context):
     context.bot.send_message(chat_id=update.message.chat_id, text='Unrecognized command.')
@@ -79,7 +90,8 @@ def main():
 
     updater = Updater(privatestorage.get_token(), use_context=True)
     dp = updater.dispatcher
-    dp.add_handler(InlineQueryHandler(inline_handling))
+    dp.add_handler(InlineQueryHandler(inline_query_handling))
+    dp.add_handler(ChosenInlineResultHandler(inline_result_handling))
     dp.add_handler(CommandHandler('start', start))
     dp.add_handler(CommandHandler('refresh_username', refresh_username))
     dp.add_handler(CommandHandler('make_party', make_party))

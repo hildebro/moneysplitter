@@ -57,7 +57,7 @@ def party_add(party_id, user_id):
         cur = conn.cursor()
         cur.execute('INSERT INTO party_users(party_id, user_id) VALUES (?, ?)', [party_id, user_id])
 
-def find_parties(user_id):
+def find_parties_by_creator(user_id):
     conn = connect_db()
     with conn:
         cur = conn.cursor()
@@ -68,3 +68,31 @@ def find_parties(user_id):
             unwrapped_parties.append(party[0])
 
         return unwrapped_parties
+
+def find_parties_by_participant(user_id):
+    conn = connect_db()
+    with conn:
+        cur = conn.cursor()
+        cur.execute(
+            '''
+            SELECT * FROM party p WHERE exists(
+                SELECT null
+                FROM party_users pu
+                WHERE pu.party_id = p.id and pu.user_id = ?)
+            ''',
+            [user_id]
+        )
+        parties = []
+        for party in cur.fetchall():
+            parties.append({
+                'id' : party[0],
+                'name' : party[1],
+                'creator_id' : party[2]
+            })
+        return parties
+
+def add_item(item_name, party_id):
+    conn = connect_db()
+    with conn:
+        cur = conn.cursor()
+        cur.execute('INSERT INTO item(item_name, party_id) VALUES (?, ?)', [item_name, party_id])
