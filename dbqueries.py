@@ -2,6 +2,13 @@ import requests
 import re
 import sqlite3
 
+def unwrap(array):
+    unwrapped_array = []
+    for element in array:
+        unwrapped_array.append(element[0])
+
+    return unwrapped_array
+
 def connect_db():
     conn = None
     try:
@@ -62,12 +69,7 @@ def find_parties_by_creator(user_id):
     with conn:
         cur = conn.cursor()
         cur.execute('SELECT name FROM party WHERE creator_id = ? ', [user_id])
-        parties = cur.fetchall()
-        unwrapped_parties = []
-        for party in parties:
-            unwrapped_parties.append(party[0])
-
-        return unwrapped_parties
+        return unwrap(cur.fetchall())
 
 def find_parties_by_participant(user_id):
     conn = connect_db()
@@ -96,3 +98,21 @@ def add_item(item_name, party_id):
     with conn:
         cur = conn.cursor()
         cur.execute('INSERT INTO item(item_name, party_id) VALUES (?, ?)', [item_name, party_id])
+
+def find_party_items(party_name):
+    conn = connect_db()
+    with conn:
+        cur = conn.cursor()
+        cur.execute(
+            '''
+            SELECT i.item_name
+            FROM item i
+            WHERE EXISTS(
+                SELECT NULL
+                FROM party p
+                WHERE p.id = i.party_id AND p.name = ?
+            )
+            ''',
+            [party_name]
+        )
+        return unwrap(cur.fetchall())

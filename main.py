@@ -54,6 +54,23 @@ def show_parties(update, context):
 
     update.message.reply_text('Your parties:\n' + '\n'.join(parties))
 
+def show_items(update, context):
+    args = context.args
+    if len(args) == 0:
+        update.message.reply_text('Please provide a party name to show its items.')
+        return
+
+    if len(args) > 1:
+        update.message.reply_text('Please provide a single party name.')
+        return
+
+    party_items = dbqueries.find_party_items(args[0])
+    if len(party_items) == 0:
+        update.message.reply_text('That party has no items.')
+        return
+
+    update.message.reply_text('Items in *{}*:\n{}'.format(args[0], '\n'.join(party_items)), parse_mode='Markdown')
+
 def inline_query_handling(update, context):
     query = update.inline_query.query
     if not query:
@@ -97,6 +114,7 @@ def main():
     dp.add_handler(CommandHandler('make_party', make_party))
     dp.add_handler(CommandHandler('party_add', party_add))
     dp.add_handler(CommandHandler('show_parties', show_parties))
+    dp.add_handler(CommandHandler('show_items', show_items))
     dp.add_handler(MessageHandler(Filters.command, unknown))
     updater.start_polling()
     print('Started polling...')
