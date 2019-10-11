@@ -1,5 +1,4 @@
 import sqlite3
-
 from sqlite3 import Error
 
 def sql_connection():
@@ -40,7 +39,7 @@ cursorObj.execute("""
 
 cursorObj.execute("""
     CREATE TABLE item(
-        item_name integer,
+        item_name text,
         party_id integer,
         PRIMARY KEY (party_id, item_name)
     )
@@ -51,6 +50,7 @@ cursorObj.execute("""
         id integer PRIMARY KEY AUTOINCREMENT,
         party_id integer,
         user_id integer,
+        active integer DEFAULT 1,
         price integer
     )
 """)
@@ -58,8 +58,9 @@ cursorObj.execute("""
 cursorObj.execute("""
     CREATE TABLE purchase_items(
         purchase_id integer,
-        item_id integer,
-        PRIMARY KEY (purchase_id, item_id)
+        item_name text,
+        purchase_order integer,
+        PRIMARY KEY (purchase_id, item_name)
     )
 """)
 

@@ -1,8 +1,10 @@
 import logging
-from telegram import InlineQueryResultArticle, InputTextMessageContent
-from telegram.ext import Updater, ChosenInlineResultHandler, InlineQueryHandler, CommandHandler, MessageHandler, Filters
+from telegram import InlineQueryResultArticle, InputTextMessageContent, InlineKeyboardMarkup, InlineKeyboardButton
+from telegram.ext import Updater, ChosenInlineResultHandler, InlineQueryHandler, CommandHandler, MessageHandler, Filters, CallbackQueryHandler, ConversationHandler
 import dbqueries
 import privatestorage
+
+MP_PARTY, MP_ITEM, MP_PRICE = range(3)
 
 def start(update, context):
     dbqueries.register_user(update.message.chat)
@@ -64,12 +66,79 @@ def show_items(update, context):
         update.message.reply_text('Please provide a single party name.')
         return
 
-    party_items = dbqueries.find_party_items(args[0])
+    party_items = dbqueries.find_party_items(party_name = args[0])
     if len(party_items) == 0:
         update.message.reply_text('That party has no items.')
         return
 
     update.message.reply_text('Items in *{}*:\n{}'.format(args[0], '\n'.join(party_items)), parse_mode='Markdown')
+
+def make_purchase(update, context):
+    parties = dbqueries.find_parties_by_participant(update.message.chat_id)
+    keyboard = []
+    for party in parties:
+        keyboard.append([InlineKeyboardButton(party['name'], callback_data=party['id'])])
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    update.message.reply_text('Choose a group to make purchases for:', reply_markup=reply_markup)
+
+    return MP_PARTY
+
+def mp_list_items(update, context):
+    user_id = update.callback_query.message.chat_id
+    party_id = update.callback_query.data
+    purchase_id = dbqueries.start_purchase(user_id, party_id)
+    context.chat_data['purchase_id'] = purchase_id
+    render_items_to_purchase(update, context)
+
+    return MP_ITEM
+
+def mp_buy_item(update, context):
+    query = update.callback_query
+    query_data = query.data.split('_')
+    item_name = query_data[1]
+    dbqueries.buffer_purchase(item_name, context.chat_data['purchase_id'])
+    render_items_to_purchase(update, context)
+
+    return MP_ITEM
+
+def mp_revert_item(update, context):
+    purchase_id = context.chat_data['purchase_id']
+    reverted = dbqueries.revert_purchase(purchase_id)
+    if not reverted:
+        '''todo make popup: nothing to revert'''
+        print('nothing to revert')
+        return
+    render_items_to_purchase(update, context)
+
+    return MP_ITEM
+
+def render_items_to_purchase(update, context):
+    item_names = dbqueries.find_items_to_purchase(context.chat_data['purchase_id'])
+    keyboard = []
+    for item_name in item_names:
+        keyboard.append([InlineKeyboardButton(item_name, callback_data='bi_{}'.format(item_name))])
+
+    keyboard.append([
+        InlineKeyboardButton('Revert', callback_data='ri'),
+        InlineKeyboardButton('Finish', callback_data='fp')
+    ])
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    update.callback_query.edit_message_text(text = 'Choose items to purchase:', reply_markup=reply_markup)
+
+def mp_finish_purchase(update, context):
+    purchase_id = context.chat_data['purchase_id']
+    dbqueries.finish_purchase(purchase_id)
+    update.callback_query.edit_message_text(text = 'Purchase comitted. How much did you spend?')
+
+    return MP_PRICE
+
+def mp_set_price(update, context):
+    dbqueries.set_price(context.chat_data['purchase_id'], update.message.text)
+    update.message.reply_text('Price has been set.')
+    return ConversationHandler.END
+
+def cancel_purchase(update, context):
+    update.message.reply_text('canceled TODO.')
 
 def inline_query_handling(update, context):
     query = update.inline_query.query
@@ -107,6 +176,21 @@ def main():
 
     updater = Updater(privatestorage.get_token(), use_context=True)
     dp = updater.dispatcher
+    dp.add_handler(
+            ConversationHandler(
+                entry_points = [CommandHandler('make_purchase', make_purchase)],
+                states = {
+                    MP_PARTY: [CallbackQueryHandler(mp_list_items)],
+                    MP_ITEM: [
+                        CallbackQueryHandler(mp_buy_item, pattern = '^bi_.*'),
+                        CallbackQueryHandler(mp_revert_item, pattern = '^ri$'),
+                        CallbackQueryHandler(mp_finish_purchase, pattern = '^fp$')
+                    ],
+                    MP_PRICE: [MessageHandler(Filters.text, mp_set_price)]
+                },
+                fallbacks=[CommandHandler('cancel', cancel_purchase)]
+            )
+    )
     dp.add_handler(InlineQueryHandler(inline_query_handling))
     dp.add_handler(ChosenInlineResultHandler(inline_result_handling))
     dp.add_handler(CommandHandler('start', start))
