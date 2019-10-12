@@ -59,6 +59,7 @@ def conv_add_user_pick_party(update, context):
 def conv_add_user_get_name(update, context):
     args = update.message.text.split(' ')
     if len(args) > 1:
+        print('todo enable list of users to be added with @ annotation for groups.')
         update.message.reply_text('Please provide a single username.')
 
         return ADD_USER_NAME
@@ -69,6 +70,7 @@ def conv_add_user_get_name(update, context):
 
         return ADD_USER_NAME
 
+    print('todo ask user, whether they want to join. if they dont, ask if they want to shadowban the inviter.')
     dbqueries.party_add(context.chat_data['party_id'], user['id'])
     update.message.reply_text('User added.')
 
@@ -83,21 +85,25 @@ def show_parties(update, context):
     update.message.reply_text('Your parties:\n' + '\n'.join(parties))
 
 def show_items(update, context):
-    args = context.args
-    if len(args) == 0:
-        update.message.reply_text('Please provide a party name to show its items.')
-        return
+    parties = dbqueries.find_parties_by_participant(update.message.chat_id)
+    keyboard = []
+    for party in parties:
+        keyboard.append([InlineKeyboardButton(party['name'], callback_data = 'showitems_' + str(party['id']))])
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    update.message.reply_text('Choose a party to show items for:', reply_markup=reply_markup)
 
-    if len(args) > 1:
-        update.message.reply_text('Please provide a single party name.')
-        return
-
-    party_items = dbqueries.find_party_items(party_name = args[0])
+def show_items_callback(update, context):
+    query = update.callback_query
+    party_id = query.data.split('_')[1]
+    party_items = dbqueries.find_party_items(party_id = party_id)
     if len(party_items) == 0:
-        update.message.reply_text('That party has no items.')
+        query.edit_message_text(text = 'That party has no items.')
         return
 
-    update.message.reply_text('Items in *{}*:\n{}'.format(args[0], '\n'.join(party_items)), parse_mode='Markdown')
+    query.edit_message_text(
+        text = 'Items in that party:\n' + '\n'.join(party_items),
+        parse_mode='Markdown'
+    )
 
 def conv_purchase_init(update, context):
     parties = dbqueries.find_parties_by_participant(update.message.chat_id)
@@ -243,6 +249,7 @@ def main():
     dp.add_handler(CommandHandler('refresh_username', refresh_username))
     dp.add_handler(CommandHandler('show_parties', show_parties))
     dp.add_handler(CommandHandler('show_items', show_items))
+    dp.add_handler(CallbackQueryHandler(show_items_callback, pattern = '^showitems_[0-9]+$'))
     dp.add_handler(MessageHandler(Filters.command, unknown))
     updater.start_polling()
     print('Started polling...')
