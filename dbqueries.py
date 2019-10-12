@@ -44,7 +44,10 @@ def find_party_id(creator_id, party_name):
     with conn:
         cur = conn.cursor()
         cur.execute('SELECT * from party where creator_id = ? and name = ?', [creator_id, party_name])
-        return cur.fetchone()[0]
+        result = cur.fetchone()
+        if result is None:
+            return None
+        return result[0]
 
 def find_user(username):
     conn = connect_db()
@@ -52,6 +55,9 @@ def find_user(username):
         cur = conn.cursor()
         cur.execute('SELECT * from user where username = ?', [username])
         user = cur.fetchone()
+        if user is None:
+            return None
+
         return {
             'id':user[0],
             'first_name':user[1],
@@ -68,8 +74,15 @@ def find_parties_by_creator(user_id):
     conn = connect_db()
     with conn:
         cur = conn.cursor()
-        cur.execute('SELECT name FROM party WHERE creator_id = ? ', [user_id])
-        return unwrap(cur.fetchall())
+        cur.execute('SELECT * FROM party WHERE creator_id = ? ', [user_id])
+        parties = []
+        for party in cur.fetchall():
+            parties.append({
+                'id' : party[0],
+                'name' : party[1],
+                'creator_id' : party[2]
+            })
+        return parties
 
 def find_parties_by_participant(user_id):
     conn = connect_db()

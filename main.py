@@ -4,7 +4,9 @@ from telegram.ext import Updater, ChosenInlineResultHandler, InlineQueryHandler,
 import dbqueries
 import privatestorage
 
-MP_PARTY, MP_ITEM, MP_PRICE = range(3)
+PARTY_NAME = 0
+ADD_USER_PARTY, ADD_USER_NAME = range(2)
+PURCHASE_PARTY, PURCHASE_ITEM, PURCHASE_PRICE = range(3)
 
 def start(update, context):
     dbqueries.register_user(update.message.chat)
@@ -14,39 +16,63 @@ def refresh_username(update, context):
     dbqueries.refresh_username(update.message.chat)
     update.message.reply_text('Username refreshed.')
 
-def make_party(update, context):
-    args = context.args
-    if len(args) == 0:
-        update.message.reply_text('Please provide a name for the party.')
-        return
-    if len(args) > 1:
-        update.message.reply_text('No whitespaces allowed in party names.')
-        return
+def conv_cancel(update, context):
+    update.message.reply_text('The command has been canceled.')
 
-    party_name = args[0]
+    return ConversationHandler.END
+
+def conv_make_party_init(update, context):
+    update.message.reply_text('Now provide a name for the new party.')
+
+    return PARTY_NAME
+
+def conv_make_party_name(update, context):
+    party_name = update.message.text
     user_id = update.message.chat_id
+
+    if dbqueries.find_party_id(user_id, party_name) is not None:
+        update.message.reply_text('You already have a party with that name. Please provide something new.')
+
+        return PARTY_NAME
 
     dbqueries.make_party(party_name, user_id)
     update.message.reply_text('Party created.')
 
-def party_add(update, context):
-    args = context.args
-    if len(args) != 2:
-        update.message.reply_text('Bad syntax. /party_add {party_name} {username}')
-        return
+    return ConversationHandler.END
 
-    group_id = dbqueries.find_party_id(update.message.chat_id, args[0])
-    if group_id is None:
-        update.message.reply_text('Party name not found. Check available parties with /show_parties.')
-        return
+def conv_add_user_init(update, context):
+    parties = dbqueries.find_parties_by_creator(update.message.chat_id)
+    keyboard = []
+    for party in parties:
+        keyboard.append([InlineKeyboardButton(party['name'], callback_data=party['id'])])
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    update.message.reply_text('Choose a party to add users to:', reply_markup=reply_markup)
 
-    user = dbqueries.find_user(args[1])
+    return ADD_USER_PARTY
+
+def conv_add_user_pick_party(update, context):
+    context.chat_data['party_id'] = update.callback_query.data
+    update.callback_query.edit_message_text(text='Now provide the username of who you want to add.')
+
+    return ADD_USER_NAME
+
+def conv_add_user_get_name(update, context):
+    args = update.message.text.split(' ')
+    if len(args) > 1:
+        update.message.reply_text('Please provide a single username.')
+
+        return ADD_USER_NAME
+
+    user = dbqueries.find_user(args[0])
     if user is None:
-        update.message.reply_text('Username not found. Make sure they initiated the bot with /start. If they changed their username since starting the bot, they have to execute /refresh_username.')
-        return
+        update.message.reply_text('Username not found. Make sure they initiated the bot with /start. If they changed their username since starting the bot, they have to execute /refresh_username. Provide a different name or cancel the transaction with /cancel.')
 
-    dbqueries.party_add(group_id, user['id'])
+        return ADD_USER_NAME
+
+    dbqueries.party_add(context.chat_data['party_id'], user['id'])
     update.message.reply_text('User added.')
+
+    return ConversationHandler.END
 
 def show_parties(update, context):
     parties = dbqueries.find_parties_by_creator(update.message.chat_id)
@@ -73,7 +99,7 @@ def show_items(update, context):
 
     update.message.reply_text('Items in *{}*:\n{}'.format(args[0], '\n'.join(party_items)), parse_mode='Markdown')
 
-def make_purchase(update, context):
+def conv_purchase_init(update, context):
     parties = dbqueries.find_parties_by_participant(update.message.chat_id)
     keyboard = []
     for party in parties:
@@ -81,27 +107,27 @@ def make_purchase(update, context):
     reply_markup = InlineKeyboardMarkup(keyboard)
     update.message.reply_text('Choose a group to make purchases for:', reply_markup=reply_markup)
 
-    return MP_PARTY
+    return PURCHASE_PARTY
 
-def mp_list_items(update, context):
+def conv_purchase_list_items(update, context):
     user_id = update.callback_query.message.chat_id
     party_id = update.callback_query.data
     purchase_id = dbqueries.start_purchase(user_id, party_id)
     context.chat_data['purchase_id'] = purchase_id
     render_items_to_purchase(update, context)
 
-    return MP_ITEM
+    return PURCHASE_ITEM
 
-def mp_buy_item(update, context):
+def conv_purchase_buffer_item(update, context):
     query = update.callback_query
     query_data = query.data.split('_')
     item_name = query_data[1]
     dbqueries.buffer_purchase(item_name, context.chat_data['purchase_id'])
     render_items_to_purchase(update, context)
 
-    return MP_ITEM
+    return PURCHASE_ITEM
 
-def mp_revert_item(update, context):
+def conv_purchase_revert_item(update, context):
     purchase_id = context.chat_data['purchase_id']
     reverted = dbqueries.revert_purchase(purchase_id)
     if not reverted:
@@ -110,7 +136,7 @@ def mp_revert_item(update, context):
         return
     render_items_to_purchase(update, context)
 
-    return MP_ITEM
+    return PURCHASE_ITEM
 
 def render_items_to_purchase(update, context):
     item_names = dbqueries.find_items_to_purchase(context.chat_data['purchase_id'])
@@ -125,19 +151,20 @@ def render_items_to_purchase(update, context):
     reply_markup = InlineKeyboardMarkup(keyboard)
     update.callback_query.edit_message_text(text = 'Choose items to purchase:', reply_markup=reply_markup)
 
-def mp_finish_purchase(update, context):
+def conv_purchase_finish(update, context):
     purchase_id = context.chat_data['purchase_id']
     dbqueries.finish_purchase(purchase_id)
     update.callback_query.edit_message_text(text = 'Purchase comitted. How much did you spend?')
 
-    return MP_PRICE
+    return PURCHASE_PRICE
 
-def mp_set_price(update, context):
+def conv_purchase_set_price(update, context):
     dbqueries.set_price(context.chat_data['purchase_id'], update.message.text)
     update.message.reply_text('Price has been set.')
+
     return ConversationHandler.END
 
-def cancel_purchase(update, context):
+def conv_purchase_cancel(update, context):
     update.message.reply_text('canceled TODO.')
 
 def inline_query_handling(update, context):
@@ -178,25 +205,42 @@ def main():
     dp = updater.dispatcher
     dp.add_handler(
             ConversationHandler(
-                entry_points = [CommandHandler('make_purchase', make_purchase)],
+                entry_points = [CommandHandler('make_party', conv_make_party_init)],
                 states = {
-                    MP_PARTY: [CallbackQueryHandler(mp_list_items)],
-                    MP_ITEM: [
-                        CallbackQueryHandler(mp_buy_item, pattern = '^bi_.*'),
-                        CallbackQueryHandler(mp_revert_item, pattern = '^ri$'),
-                        CallbackQueryHandler(mp_finish_purchase, pattern = '^fp$')
-                    ],
-                    MP_PRICE: [MessageHandler(Filters.text, mp_set_price)]
+                    PARTY_NAME: [MessageHandler(Filters.text, conv_make_party_name)],
                 },
-                fallbacks=[CommandHandler('cancel', cancel_purchase)]
+                fallbacks = [CommandHandler('cancel', conv_cancel)]
+            )
+    )
+    dp.add_handler(
+            ConversationHandler(
+                entry_points = [CommandHandler('add_user', conv_add_user_init)],
+                states = {
+                    ADD_USER_PARTY: [CallbackQueryHandler(conv_add_user_pick_party)],
+                    ADD_USER_NAME: [MessageHandler(Filters.text, conv_add_user_get_name)]
+                },
+                fallbacks = [CommandHandler('cancel', conv_cancel)]
+            )
+    )
+    dp.add_handler(
+            ConversationHandler(
+                entry_points = [CommandHandler('make_purchase', conv_purchase_init)],
+                states = {
+                    PURCHASE_PARTY: [CallbackQueryHandler(conv_purchase_list_items)],
+                    PURCHASE_ITEM: [
+                        CallbackQueryHandler(conv_purchase_buffer_item, pattern = '^bi_.*'),
+                        CallbackQueryHandler(conv_purchase_revert_item, pattern = '^ri$'),
+                        CallbackQueryHandler(conv_purchase_finish, pattern = '^fp$')
+                    ],
+                    PURCHASE_PRICE: [MessageHandler(Filters.text, conv_purchase_set_price)]
+                },
+                fallbacks=[CommandHandler('cancel', conv_cancel)]
             )
     )
     dp.add_handler(InlineQueryHandler(inline_query_handling))
     dp.add_handler(ChosenInlineResultHandler(inline_result_handling))
     dp.add_handler(CommandHandler('start', start))
     dp.add_handler(CommandHandler('refresh_username', refresh_username))
-    dp.add_handler(CommandHandler('make_party', make_party))
-    dp.add_handler(CommandHandler('party_add', party_add))
     dp.add_handler(CommandHandler('show_parties', show_parties))
     dp.add_handler(CommandHandler('show_items', show_items))
     dp.add_handler(MessageHandler(Filters.command, unknown))
