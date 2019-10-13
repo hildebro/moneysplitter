@@ -14,6 +14,7 @@ def start(update, context):
     update.message.reply_text('You are now registered.')
 
 def refresh_username(update, context):
+    # todo update username on every message instead
     dbqueries.refresh_username(update.message.chat)
     update.message.reply_text('Username refreshed.')
 
