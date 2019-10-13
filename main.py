@@ -6,6 +6,7 @@ import privatestorage
 
 PARTY_NAME = 0
 ADD_USER_PARTY, ADD_USER_NAME = range(2)
+ADD_ITEMS_PARTY, ADD_ITEMS_NAME = range(2)
 PURCHASE_PARTY, PURCHASE_ITEM, PURCHASE_PRICE = range(3)
 
 def start(update, context):
@@ -15,6 +16,20 @@ def start(update, context):
 def refresh_username(update, context):
     dbqueries.refresh_username(update.message.chat)
     update.message.reply_text('Username refreshed.')
+
+def show_commands(update, context):
+    commands = '\n'.join([
+        '/start Starts the bot',
+        '/refresh_username Must be called, whenerever you change your telegram username for some functions to work properly',
+        '/make_party Creates a new party',
+        '/show_parties Shows all parties that you have created',
+        '/add_user Adds other telegram users to one of your parties',
+        '/add_items Adds items to a party. Alternatively, you can type @money_splitter_bot in any telegram chat. This could be useful, if you want to notify someone about new items',
+        '/show_items Shows all items of a party',
+        '/make_purchase Starts a purchase for one of your parties',
+        '/cancel Can be used during the execution of other commands in order to cancel them'
+    ])
+    update.message.reply_text(commands)
 
 def conv_cancel(update, context):
     update.message.reply_text('The command has been canceled.')
@@ -59,7 +74,7 @@ def conv_add_user_pick_party(update, context):
 def conv_add_user_get_name(update, context):
     args = update.message.text.split(' ')
     if len(args) > 1:
-        print('todo enable list of users to be added with @ annotation for groups.')
+        # todo enable list of users to be added with @ annotation
         update.message.reply_text('Please provide a single username.')
 
         return ADD_USER_NAME
@@ -70,9 +85,38 @@ def conv_add_user_get_name(update, context):
 
         return ADD_USER_NAME
 
-    print('todo ask user, whether they want to join. if they dont, ask if they want to shadowban the inviter.')
+    # todo ask user, whether they want to join. if they dont, ask if they want to shadowban the inviter
     dbqueries.party_add(context.chat_data['party_id'], user['id'])
     update.message.reply_text('User added.')
+
+    return ConversationHandler.END
+
+def conv_add_items_init(update, context):
+    parties = dbqueries.find_parties_by_creator(update.message.chat_id)
+    keyboard = []
+    for party in parties:
+        keyboard.append([InlineKeyboardButton(party['name'], callback_data=party['id'])])
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    update.message.reply_text('Choose a party to add items to:', reply_markup=reply_markup)
+
+    return ADD_ITEMS_PARTY
+
+def conv_add_items_pick_party(update, context):
+    context.chat_data['party_id'] = update.callback_query.data
+    update.callback_query.edit_message_text(text='Now provide item names to add them to the party. Please send one message per item. Use /finish when you are done.')
+
+    return ADD_ITEMS_NAME
+
+def conv_add_items_get_names(update, context):
+    item_name = update.message.text
+
+    dbqueries.add_item(item_name, context.chat_data['party_id'])
+    update.message.reply_text('Item added. Provide more item names or use /finish.')
+
+    return ADD_ITEMS_NAME
+
+def conv_add_items_finish(update, context):
+    update.message.reply_text('Finished adding items.')
 
     return ConversationHandler.END
 
@@ -82,6 +126,7 @@ def show_parties(update, context):
         update.message.reply_text("You don't have any parties yet.")
         return
 
+    parties = map(lambda party: party['name'], parties)
     update.message.reply_text('Your parties:\n' + '\n'.join(parties))
 
 def show_items(update, context):
@@ -100,10 +145,7 @@ def show_items_callback(update, context):
         query.edit_message_text(text = 'That party has no items.')
         return
 
-    query.edit_message_text(
-        text = 'Items in that party:\n' + '\n'.join(party_items),
-        parse_mode='Markdown'
-    )
+    query.edit_message_text(text = 'Items in that party:\n' + '\n'.join(party_items))
 
 def conv_purchase_init(update, context):
     parties = dbqueries.find_parties_by_participant(update.message.chat_id)
@@ -137,7 +179,7 @@ def conv_purchase_revert_item(update, context):
     purchase_id = context.chat_data['purchase_id']
     reverted = dbqueries.revert_purchase(purchase_id)
     if not reverted:
-        '''todo make popup: nothing to revert'''
+        # todo make popup: nothing to revert
         print('nothing to revert')
         return
     render_items_to_purchase(update, context)
@@ -170,9 +212,6 @@ def conv_purchase_set_price(update, context):
 
     return ConversationHandler.END
 
-def conv_purchase_cancel(update, context):
-    update.message.reply_text('canceled TODO.')
-
 def inline_query_handling(update, context):
     query = update.inline_query.query
     if not query:
@@ -196,10 +235,11 @@ def inline_query_handling(update, context):
 def inline_result_handling(update, context):
     result = update.chosen_inline_result
     dbqueries.add_item(result.query, result.result_id)
+    # todo change to message only displayed when error happens
     result.from_user.send_message('Item *{}* added successfully'.format(result.query), parse_mode='Markdown')
 
 def unknown(update, context):
-    context.bot.send_message(chat_id=update.message.chat_id, text='Unrecognized command.')
+    context.bot.send_message(chat_id=update.message.chat_id, text='Unrecognized command. Use /help for a list of valid commands..')
 
 def main():
     logging.basicConfig(
@@ -210,43 +250,57 @@ def main():
     updater = Updater(privatestorage.get_token(), use_context=True)
     dp = updater.dispatcher
     dp.add_handler(
-            ConversationHandler(
-                entry_points = [CommandHandler('make_party', conv_make_party_init)],
-                states = {
-                    PARTY_NAME: [MessageHandler(Filters.text, conv_make_party_name)],
-                },
-                fallbacks = [CommandHandler('cancel', conv_cancel)]
-            )
+        ConversationHandler(
+            entry_points = [CommandHandler('make_party', conv_make_party_init)],
+            states = {
+                PARTY_NAME: [MessageHandler(Filters.text, conv_make_party_name)],
+            },
+            fallbacks = [CommandHandler('cancel', conv_cancel)]
+        )
     )
     dp.add_handler(
-            ConversationHandler(
-                entry_points = [CommandHandler('add_user', conv_add_user_init)],
-                states = {
-                    ADD_USER_PARTY: [CallbackQueryHandler(conv_add_user_pick_party)],
-                    ADD_USER_NAME: [MessageHandler(Filters.text, conv_add_user_get_name)]
-                },
-                fallbacks = [CommandHandler('cancel', conv_cancel)]
-            )
+        ConversationHandler(
+           entry_points = [CommandHandler('add_user', conv_add_user_init)],
+           states = {
+               ADD_USER_PARTY: [CallbackQueryHandler(conv_add_user_pick_party)],
+               ADD_USER_NAME: [MessageHandler(Filters.text, conv_add_user_get_name)]
+            },
+            fallbacks = [CommandHandler('cancel', conv_cancel)]
+        )
     )
     dp.add_handler(
-            ConversationHandler(
-                entry_points = [CommandHandler('make_purchase', conv_purchase_init)],
-                states = {
-                    PURCHASE_PARTY: [CallbackQueryHandler(conv_purchase_list_items)],
-                    PURCHASE_ITEM: [
-                        CallbackQueryHandler(conv_purchase_buffer_item, pattern = '^bi_.*'),
-                        CallbackQueryHandler(conv_purchase_revert_item, pattern = '^ri$'),
-                        CallbackQueryHandler(conv_purchase_finish, pattern = '^fp$')
-                    ],
-                    PURCHASE_PRICE: [MessageHandler(Filters.text, conv_purchase_set_price)]
-                },
-                fallbacks=[CommandHandler('cancel', conv_cancel)]
-            )
+        ConversationHandler(
+           entry_points = [CommandHandler('add_items', conv_add_items_init)],
+           states = {
+               ADD_ITEMS_PARTY: [CallbackQueryHandler(conv_add_items_pick_party)],
+               ADD_ITEMS_NAME: [
+                   CommandHandler('finish', conv_add_items_finish),
+                   MessageHandler(Filters.text, conv_add_items_get_names)
+                ]
+            },
+            fallbacks = [CommandHandler('cancel', conv_cancel)]
+        )
+    )
+    dp.add_handler(
+        ConversationHandler(
+            entry_points = [CommandHandler('make_purchase', conv_purchase_init)],
+            states = {
+                PURCHASE_PARTY: [CallbackQueryHandler(conv_purchase_list_items)],
+                PURCHASE_ITEM: [
+                    CallbackQueryHandler(conv_purchase_buffer_item, pattern = '^bi_.*'),
+                    CallbackQueryHandler(conv_purchase_revert_item, pattern = '^ri$'),
+                    CallbackQueryHandler(conv_purchase_finish, pattern = '^fp$')
+                ],
+                PURCHASE_PRICE: [MessageHandler(Filters.text, conv_purchase_set_price)]
+            },
+            fallbacks=[CommandHandler('cancel', conv_cancel)]
+        )
     )
     dp.add_handler(InlineQueryHandler(inline_query_handling))
     dp.add_handler(ChosenInlineResultHandler(inline_result_handling))
     dp.add_handler(CommandHandler('start', start))
     dp.add_handler(CommandHandler('refresh_username', refresh_username))
+    dp.add_handler(CommandHandler('help', show_commands))
     dp.add_handler(CommandHandler('show_parties', show_parties))
     dp.add_handler(CommandHandler('show_items', show_items))
     dp.add_handler(CallbackQueryHandler(show_items_callback, pattern = '^showitems_[0-9]+$'))

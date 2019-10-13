@@ -30,7 +30,7 @@ cursorObj.execute("""
 """)
 
 cursorObj.execute("""
-    CREATE TABLE party_users(
+    CREATE TABLE party_user(
         party_id integer,
         user_id integer,
         PRIMARY KEY (party_id, user_id)
@@ -38,10 +38,10 @@ cursorObj.execute("""
 """)
 
 cursorObj.execute("""
-    CREATE TABLE item(
-        item_name text,
+    CREATE TABLE party_item(
+        name text,
         party_id integer,
-        PRIMARY KEY (party_id, item_name)
+        PRIMARY KEY (party_id, name)
     )
 """)
 
@@ -56,11 +56,10 @@ cursorObj.execute("""
 """)
 
 cursorObj.execute("""
-    CREATE TABLE purchase_items(
+    CREATE TABLE purchase_item(
         purchase_id integer,
-        item_name text,
-        purchase_order integer,
-        PRIMARY KEY (purchase_id, item_name)
+        name text,
+        purchase_order integer
     )
 """)
 

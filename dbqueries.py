@@ -68,7 +68,7 @@ def party_add(party_id, user_id):
     conn = connect_db()
     with conn:
         cur = conn.cursor()
-        cur.execute('INSERT INTO party_users(party_id, user_id) VALUES (?, ?)', [party_id, user_id])
+        cur.execute('INSERT INTO party_user(party_id, user_id) VALUES (?, ?)', [party_id, user_id])
 
 def find_parties_by_creator(user_id):
     conn = connect_db()
@@ -92,7 +92,7 @@ def find_parties_by_participant(user_id):
             '''
             SELECT * FROM party p WHERE exists(
                 SELECT null
-                FROM party_users pu
+                FROM party_user pu
                 WHERE pu.party_id = p.id and pu.user_id = ?)
             ''',
             [user_id]
@@ -110,7 +110,7 @@ def add_item(item_name, party_id):
     conn = connect_db()
     with conn:
         cur = conn.cursor()
-        cur.execute('INSERT INTO item(item_name, party_id) VALUES (?, ?)', [item_name, party_id])
+        cur.execute('INSERT INTO party_item(name, party_id) VALUES (?, ?)', [item_name, party_id])
 
 def find_party_items(party_name = '', party_id = 0):
     conn = connect_db()
@@ -119,8 +119,8 @@ def find_party_items(party_name = '', party_id = 0):
         if party_name != '':
             cur.execute(
                 '''
-                SELECT i.item_name
-                FROM item i
+                SELECT i.name
+                FROM party_item i
                 WHERE EXISTS(
                     SELECT NULL
                     FROM party p
@@ -132,13 +132,13 @@ def find_party_items(party_name = '', party_id = 0):
         elif party_id != 0:
             cur.execute(
                 '''
-                SELECT i.item_name
-                FROM item i
+                SELECT i.name
+                FROM party_item i
                 WHERE i.party_id = ?
                 AND NOT EXISTS(
                     SELECT NULL
-                    FROM purchase_items pi
-                    WHERE pi.item_name = i.item_name
+                    FROM purchase_item pi
+                    WHERE pi.name = i.name
                     AND pi.purchase_id in (
                         SELECT p.id
                         FROM purchase p
@@ -159,8 +159,8 @@ def find_items_to_purchase(purchase_id):
         cur = conn.cursor()
         cur.execute(
             '''
-            SELECT i.item_name
-            FROM item i
+            SELECT i.name
+            FROM party_item i
             WHERE i.party_id IN (
                 SELECT p.party_id
                 FROM purchase p
@@ -168,8 +168,8 @@ def find_items_to_purchase(purchase_id):
             )
             AND NOT EXISTS(
                 SELECT NULL
-                FROM purchase_items pi
-                WHERE pi.item_name = i.item_name
+                FROM purchase_item pi
+                WHERE pi.name = i.name
                 AND pi.purchase_id = ?
             )
             ''',
@@ -209,7 +209,7 @@ def buffer_purchase(item_name, purchase_id):
     with conn:
         cur = conn.cursor()
         cur.execute(
-            'INSERT INTO purchase_items(purchase_id, item_name, purchase_order) VALUES (?, ?, ?)',
+            'INSERT INTO purchase_item(purchase_id, name, purchase_order) VALUES (?, ?, ?)',
             [purchase_id, item_name, find_next_order(purchase_id)]
         )
 
@@ -218,7 +218,7 @@ def find_next_order(purchase_id):
     with conn:
         cur = conn.cursor()
         cur.execute(
-            'SELECT MAX(purchase_order) FROM purchase_items where purchase_id = ?',
+            'SELECT MAX(purchase_order) FROM purchase_item where purchase_id = ?',
             [purchase_id]
         )
         max_order = cur.fetchone()[0]
@@ -231,13 +231,13 @@ def revert_purchase(purchase_id):
     conn = connect_db()
     with conn:
         cur = conn.cursor()
-        cur.execute('SELECT MAX(purchase_order) FROM purchase_items WHERE purchase_id = ?', [purchase_id])
+        cur.execute('SELECT MAX(purchase_order) FROM purchase_item WHERE purchase_id = ?', [purchase_id])
         purchase_order = cur.fetchone()[0]
         if purchase_order is None:
             return False
 
         cur.execute(
-                'DELETE FROM purchase_items WHERE purchase_id = ? and purchase_order = ?',
+                'DELETE FROM purchase_item WHERE purchase_id = ? and purchase_order = ?',
                 [purchase_id, purchase_order]
         )
 
@@ -249,9 +249,9 @@ def finish_purchase(purchase_id):
         cur = conn.cursor()
         cur.execute(
             '''
-            DELETE FROM item
-            WHERE item_name IN (
-                SELECT pi.item_name FROM purchase_items pi WHERE pi.purchase_id = ?
+            DELETE FROM party_item
+            WHERE name IN (
+                SELECT pi.name FROM purchase_item pi WHERE pi.purchase_id = ?
             )
             AND party_id IN (
                 SELECT p.party_id FROM purchase p WHERE p.id = ?
