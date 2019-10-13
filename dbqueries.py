@@ -39,15 +39,13 @@ def refresh_username(user):
         cur = conn.cursor()
         cur.execute('UPDATE user SET username = ? WHERE id = ?', [user.username, user.id])
 
-def find_party_id(creator_id, party_name):
+def party_name_exists(creator_id, party_name):
     conn = connect_db()
     with conn:
         cur = conn.cursor()
-        cur.execute('SELECT * from party where creator_id = ? and name = ?', [creator_id, party_name])
+        cur.execute('SELECT COUNT(*) from party where creator_id = ? and name = ?', [creator_id, party_name])
         result = cur.fetchone()
-        if result is None:
-            return None
-        return result[0]
+        return result[0] > 0
 
 def find_user(username):
     conn = connect_db()
@@ -112,44 +110,28 @@ def add_item(item_name, party_id):
         cur = conn.cursor()
         cur.execute('INSERT INTO party_item(name, party_id) VALUES (?, ?)', [item_name, party_id])
 
-def find_party_items(party_name = '', party_id = 0):
+def find_party_items(party_id):
     conn = connect_db()
     with conn:
         cur = conn.cursor()
-        if party_name != '':
-            cur.execute(
-                '''
-                SELECT i.name
-                FROM party_item i
-                WHERE EXISTS(
-                    SELECT NULL
-                    FROM party p
-                    WHERE p.id = i.party_id AND p.name = ?
+        cur.execute(
+            '''
+            SELECT i.name
+            FROM party_item i
+            WHERE i.party_id = ?
+            AND NOT EXISTS(
+                SELECT NULL
+                FROM purchase_item pi
+                WHERE pi.name = i.name
+                AND pi.purchase_id in (
+                    SELECT p.id
+                    FROM purchase p
+                    WHERE p.party_id = i.party_id
                 )
-                ''',
-                [party_name]
             )
-        elif party_id != 0:
-            cur.execute(
-                '''
-                SELECT i.name
-                FROM party_item i
-                WHERE i.party_id = ?
-                AND NOT EXISTS(
-                    SELECT NULL
-                    FROM purchase_item pi
-                    WHERE pi.name = i.name
-                    AND pi.purchase_id in (
-                        SELECT p.id
-                        FROM purchase p
-                        WHERE p.party_id = i.party_id
-                    )
-                )
-                ''',
-                [party_id]
-            )
-        else:
-            return []
+            ''',
+            [party_id]
+        )
 
         return unwrap(cur.fetchall())
 
@@ -178,7 +160,7 @@ def find_items_to_purchase(purchase_id):
 
         return unwrap(cur.fetchall())
 
-def get_active_purchase(user_id, party_id):
+def find_active_purchase(user_id, party_id):
     conn = connect_db()
     with conn:
         cur = conn.cursor()
@@ -192,7 +174,7 @@ def get_active_purchase(user_id, party_id):
         return result[0]
 
 def start_purchase(user_id, party_id):
-    purchase_id = get_active_purchase(user_id, party_id)
+    purchase_id = find_active_purchase(user_id, party_id)
     if purchase_id is not None:
         return purchase_id
 
@@ -201,10 +183,10 @@ def start_purchase(user_id, party_id):
         cur = conn.cursor()
         cur.execute('INSERT INTO purchase(party_id, user_id) VALUES (?, ?)', [party_id, user_id])
 
-    return get_active_purchase(user_id, party_id)
+    return find_active_purchase(user_id, party_id)
 
 
-def buffer_purchase(item_name, purchase_id):
+def buffer_item(item_name, purchase_id):
     conn = connect_db()
     with conn:
         cur = conn.cursor()
@@ -227,7 +209,7 @@ def find_next_order(purchase_id):
 
         return max_order + 1
 
-def revert_purchase(purchase_id):
+def unbuffer_last_item(purchase_id):
     conn = connect_db()
     with conn:
         cur = conn.cursor()
@@ -242,6 +224,13 @@ def revert_purchase(purchase_id):
         )
 
     return True
+
+def abort_purchase(purchase_id):
+    conn = connect_db()
+    with conn:
+        cur = conn.cursor()
+        cur.execute('DELETE FROM purchase_item WHERE purchase_id = ?', [purchase_id])
+        cur.execute('DELETE FROM purchase WHERE id = ?', [purchase_id])
 
 def finish_purchase(purchase_id):
     conn = connect_db()
@@ -261,7 +250,7 @@ def finish_purchase(purchase_id):
         )
         cur.execute('UPDATE purchase SET active = 0 WHERE id = ?', [purchase_id])
 
-def set_price(purchase_id, price):
+def set_purchase_price(purchase_id, price):
     conn = connect_db()
     with conn:
         cur = conn.cursor()

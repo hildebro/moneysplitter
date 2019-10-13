@@ -45,8 +45,8 @@ def conv_make_party_name(update, context):
     party_name = update.message.text
     user_id = update.message.chat_id
 
-    if dbqueries.find_party_id(user_id, party_name) is not None:
-        update.message.reply_text('You already have a party with that name. Please provide something new.')
+    if dbqueries.party_name_exists(user_id, party_name):
+        update.message.reply_text('You already have a party with that name. Please provide a new name or stop the process with /cancel.')
 
         return PARTY_NAME
 
@@ -92,7 +92,7 @@ def conv_add_user_get_name(update, context):
     return ConversationHandler.END
 
 def conv_add_items_init(update, context):
-    parties = dbqueries.find_parties_by_creator(update.message.chat_id)
+    parties = dbqueries.find_parties_by_participant(update.message.chat_id)
     keyboard = []
     for party in parties:
         keyboard.append([InlineKeyboardButton(party['name'], callback_data=party['id'])])
@@ -140,7 +140,7 @@ def show_items(update, context):
 def show_items_callback(update, context):
     query = update.callback_query
     party_id = query.data.split('_')[1]
-    party_items = dbqueries.find_party_items(party_id = party_id)
+    party_items = dbqueries.find_party_items(party_id)
     if len(party_items) == 0:
         query.edit_message_text(text = 'That party has no items.')
         return
@@ -170,14 +170,14 @@ def conv_purchase_buffer_item(update, context):
     query = update.callback_query
     query_data = query.data.split('_')
     item_name = query_data[1]
-    dbqueries.buffer_purchase(item_name, context.chat_data['purchase_id'])
+    dbqueries.buffer_item(item_name, context.chat_data['purchase_id'])
     render_items_to_purchase(update, context)
 
     return PURCHASE_ITEM
 
 def conv_purchase_revert_item(update, context):
     purchase_id = context.chat_data['purchase_id']
-    reverted = dbqueries.revert_purchase(purchase_id)
+    reverted = dbqueries.unbuffer_last_item(purchase_id)
     if not reverted:
         # todo make popup: nothing to revert
         print('nothing to revert')
@@ -185,6 +185,12 @@ def conv_purchase_revert_item(update, context):
     render_items_to_purchase(update, context)
 
     return PURCHASE_ITEM
+
+def conv_purchase_abort(update, context):
+    dbqueries.abort_purchase(context.chat_data['purchase_id'])
+    update.callback_query.edit_message_text(text = 'Purchase aborted.')
+
+    return ConversationHandler.END
 
 def render_items_to_purchase(update, context):
     item_names = dbqueries.find_items_to_purchase(context.chat_data['purchase_id'])
@@ -194,6 +200,9 @@ def render_items_to_purchase(update, context):
 
     keyboard.append([
         InlineKeyboardButton('Revert', callback_data='ri'),
+        InlineKeyboardButton('Abort', callback_data='ap')
+    ])
+    keyboard.append([
         InlineKeyboardButton('Finish', callback_data='fp')
     ])
     reply_markup = InlineKeyboardMarkup(keyboard)
@@ -207,7 +216,7 @@ def conv_purchase_finish(update, context):
     return PURCHASE_PRICE
 
 def conv_purchase_set_price(update, context):
-    dbqueries.set_price(context.chat_data['purchase_id'], update.message.text)
+    dbqueries.set_purchase_price(context.chat_data['purchase_id'], update.message.text)
     update.message.reply_text('Price has been set.')
 
     return ConversationHandler.END
@@ -238,8 +247,11 @@ def inline_result_handling(update, context):
     # todo change to message only displayed when error happens
     result.from_user.send_message('Item *{}* added successfully'.format(result.query), parse_mode='Markdown')
 
-def unknown(update, context):
-    context.bot.send_message(chat_id=update.message.chat_id, text='Unrecognized command. Use /help for a list of valid commands..')
+def unknown_command(update, context):
+    update.message.reply_text('Unrecognized command. Use /help for a list of valid commands..')
+
+def unexpected_text(update, context):
+    update.message.reply_text('I did not expect a text from you at this time. Please refer to /help for instructions. If you called a command which asked you for input, it might have timed out. There might also be an issue on my end. If the problem persists, please write a bug report at https://github.com/hillburn/moneysplitter/issues')
 
 def main():
     logging.basicConfig(
@@ -289,7 +301,8 @@ def main():
                 PURCHASE_ITEM: [
                     CallbackQueryHandler(conv_purchase_buffer_item, pattern = '^bi_.*'),
                     CallbackQueryHandler(conv_purchase_revert_item, pattern = '^ri$'),
-                    CallbackQueryHandler(conv_purchase_finish, pattern = '^fp$')
+                    CallbackQueryHandler(conv_purchase_finish, pattern = '^fp$'),
+                    CallbackQueryHandler(conv_purchase_abort, pattern = '^ap$')
                 ],
                 PURCHASE_PRICE: [MessageHandler(Filters.text, conv_purchase_set_price)]
             },
@@ -304,7 +317,8 @@ def main():
     dp.add_handler(CommandHandler('show_parties', show_parties))
     dp.add_handler(CommandHandler('show_items', show_items))
     dp.add_handler(CallbackQueryHandler(show_items_callback, pattern = '^showitems_[0-9]+$'))
-    dp.add_handler(MessageHandler(Filters.command, unknown))
+    dp.add_handler(MessageHandler(Filters.command, unknown_command))
+    dp.add_handler(MessageHandler(Filters.text, unexpected_text))
     updater.start_polling()
     print('Started polling...')
     updater.idle()
