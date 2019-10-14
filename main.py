@@ -19,13 +19,12 @@ def refresh_username(update, context):
 def show_commands(update, context):
     commands = '\n'.join([
         '/start Starts the bot',
-        '/refresh_username Must be called, whenerever you change your telegram username for some functions to work properly',
-        '/make_party Creates a new party',
-        '/show_parties Shows all parties that you have created',
-        '/add_user Adds other telegram users to one of your parties',
-        '/add_items Adds items to a party. Alternatively, you can type @money_splitter_bot in any telegram chat. This could be useful, if you want to notify someone about new items',
-        '/show_items Shows all items of a party',
-        '/make_purchase Starts a purchase for one of your parties',
+        '/make_checklist Creates a new checklist',
+        '/show_checklists Shows all checklists that you have created',
+        '/add_user Adds other telegram users to one of your checklists',
+        '/add_items Adds items to a checklist',
+        '/show_items Shows all items of a checklist',
+        '/make_purchase Allows you to mark checklist items as purchased',
         '/cancel Can be used during the execution of other commands in order to cancel them'
     ])
     update.message.reply_text(commands)
@@ -35,37 +34,37 @@ def conv_cancel(update, context):
 
     return ConversationHandler.END
 
-def conv_make_party_init(update, context):
-    update.message.reply_text('Now provide a name for the new party.')
+def conv_make_checklist_init(update, context):
+    update.message.reply_text('What name should the new checklist have?')
 
     return PARTY_NAME
 
-def conv_make_party_name(update, context):
-    party_name = update.message.text
+def conv_make_checklist_name(update, context):
+    checklist_name = update.message.text
     user_id = update.message.chat_id
 
-    if dbqueries.party_name_exists(user_id, party_name):
-        update.message.reply_text('You already have a party with that name. Please provide a new name or stop the process with /cancel.')
+    if dbqueries.checklist_name_exists(user_id, checklist_name):
+        update.message.reply_text('You already have a checklist with that name. Please provide a new name or stop the process with /cancel.')
 
         return PARTY_NAME
 
-    dbqueries.make_party(party_name, user_id)
-    update.message.reply_text('Party created.')
+    dbqueries.make_checklist(checklist_name, user_id)
+    update.message.reply_text('Checklist created.')
 
     return ConversationHandler.END
 
 def conv_add_user_init(update, context):
-    parties = dbqueries.find_parties_by_creator(update.message.chat_id)
+    checklists = dbqueries.find_checklists_by_creator(update.message.chat_id)
     keyboard = []
-    for party in parties:
-        keyboard.append([InlineKeyboardButton(party['name'], callback_data=party['id'])])
+    for checklist in checklists:
+        keyboard.append([InlineKeyboardButton(checklist['name'], callback_data=checklist['id'])])
     reply_markup = InlineKeyboardMarkup(keyboard)
-    update.message.reply_text('Choose a party to add users to:', reply_markup=reply_markup)
+    update.message.reply_text('Choose a checklist to add users to:', reply_markup=reply_markup)
 
     return ADD_USER_PARTY
 
-def conv_add_user_pick_party(update, context):
-    context.chat_data['party_id'] = update.callback_query.data
+def conv_add_user_pick_checklist(update, context):
+    context.chat_data['checklist_id'] = update.callback_query.data
     update.callback_query.edit_message_text(text='Now provide the username of who you want to add.')
 
     return ADD_USER_NAME
@@ -73,7 +72,7 @@ def conv_add_user_pick_party(update, context):
 def conv_add_user_get_name(update, context):
     args = update.message.text.split(' ')
     if len(args) > 1:
-        # todo enable list of users to be added with @ annotation
+        # todo enable checklist of users to be added with @ annotation
         update.message.reply_text('Please provide a single username.')
 
         return ADD_USER_NAME
@@ -85,31 +84,31 @@ def conv_add_user_get_name(update, context):
         return ADD_USER_NAME
 
     # todo ask user, whether they want to join. if they dont, ask if they want to shadowban the inviter
-    dbqueries.party_add(context.chat_data['party_id'], user['id'])
+    dbqueries.checklist_add(context.chat_data['checklist_id'], user['id'])
     update.message.reply_text('User added.')
 
     return ConversationHandler.END
 
 def conv_add_items_init(update, context):
-    parties = dbqueries.find_parties_by_participant(update.message.chat_id)
+    checklists = dbqueries.find_checklists_by_participant(update.message.chat_id)
     keyboard = []
-    for party in parties:
-        keyboard.append([InlineKeyboardButton(party['name'], callback_data=party['id'])])
+    for checklist in checklists:
+        keyboard.append([InlineKeyboardButton(checklist['name'], callback_data=checklist['id'])])
     reply_markup = InlineKeyboardMarkup(keyboard)
-    update.message.reply_text('Choose a party to add items to:', reply_markup=reply_markup)
+    update.message.reply_text('Choose a checklist to add items to:', reply_markup=reply_markup)
 
     return ADD_ITEMS_PARTY
 
-def conv_add_items_pick_party(update, context):
-    context.chat_data['party_id'] = update.callback_query.data
-    update.callback_query.edit_message_text(text='Now provide item names to add them to the party. Please send one message per item. Use /finish when you are done.')
+def conv_add_items_pick_checklist(update, context):
+    context.chat_data['checklist_id'] = update.callback_query.data
+    update.callback_query.edit_message_text(text='Now provide item names to add them to the checklist. Please send one message per item. Use /finish when you are done.')
 
     return ADD_ITEMS_NAME
 
 def conv_add_items_get_names(update, context):
     item_name = update.message.text
 
-    dbqueries.add_item(item_name, context.chat_data['party_id'])
+    dbqueries.add_item(item_name, context.chat_data['checklist_id'])
     update.message.reply_text('Item added. Provide more item names or use /finish.')
 
     return ADD_ITEMS_NAME
@@ -119,47 +118,47 @@ def conv_add_items_finish(update, context):
 
     return ConversationHandler.END
 
-def show_parties(update, context):
-    parties = dbqueries.find_parties_by_creator(update.message.chat_id)
-    if len(parties) == 0:
-        update.message.reply_text("You don't have any parties yet.")
+def show_checklists(update, context):
+    checklists = dbqueries.find_checklists_by_creator(update.message.chat_id)
+    if len(checklists) == 0:
+        update.message.reply_text("You don't have any checklists yet.")
         return
 
-    parties = map(lambda party: party['name'], parties)
-    update.message.reply_text('Your parties:\n' + '\n'.join(parties))
+    checklists = map(lambda checklist: checklist['name'], checklists)
+    update.message.reply_text('Your checklists:\n' + '\n'.join(checklists))
 
 def show_items(update, context):
-    parties = dbqueries.find_parties_by_participant(update.message.chat_id)
+    checklists = dbqueries.find_checklists_by_participant(update.message.chat_id)
     keyboard = []
-    for party in parties:
-        keyboard.append([InlineKeyboardButton(party['name'], callback_data = 'showitems_' + str(party['id']))])
+    for checklist in checklists:
+        keyboard.append([InlineKeyboardButton(checklist['name'], callback_data = 'showitems_' + str(checklist['id']))])
     reply_markup = InlineKeyboardMarkup(keyboard)
-    update.message.reply_text('Choose a party to show items for:', reply_markup=reply_markup)
+    update.message.reply_text('Choose a checklist to show items for:', reply_markup=reply_markup)
 
 def show_items_callback(update, context):
     query = update.callback_query
-    party_id = query.data.split('_')[1]
-    party_items = dbqueries.find_party_items(party_id)
-    if len(party_items) == 0:
-        query.edit_message_text(text = 'That party has no items.')
+    checklist_id = query.data.split('_')[1]
+    checklist_items = dbqueries.find_checklist_items(checklist_id)
+    if len(checklist_items) == 0:
+        query.edit_message_text(text = 'That checklist has no items.')
         return
 
-    query.edit_message_text(text = 'Items in that party:\n' + '\n'.join(party_items))
+    query.edit_message_text(text = 'Items in that checklist:\n' + '\n'.join(checklist_items))
 
 def conv_purchase_init(update, context):
-    parties = dbqueries.find_parties_by_participant(update.message.chat_id)
+    checklists = dbqueries.find_checklists_by_participant(update.message.chat_id)
     keyboard = []
-    for party in parties:
-        keyboard.append([InlineKeyboardButton(party['name'], callback_data=party['id'])])
+    for checklist in checklists:
+        keyboard.append([InlineKeyboardButton(checklist['name'], callback_data=checklist['id'])])
     reply_markup = InlineKeyboardMarkup(keyboard)
     update.message.reply_text('Choose a group to make purchases for:', reply_markup=reply_markup)
 
     return PURCHASE_PARTY
 
-def conv_purchase_list_items(update, context):
+def conv_purchase_checklist_items(update, context):
     user_id = update.callback_query.message.chat_id
-    party_id = update.callback_query.data
-    purchase_id = dbqueries.start_purchase(user_id, party_id)
+    checklist_id = update.callback_query.data
+    purchase_id = dbqueries.start_purchase(user_id, checklist_id)
     context.chat_data['purchase_id'] = purchase_id
     render_items_to_purchase(update, context)
 
@@ -227,13 +226,13 @@ def inline_query_handling(update, context):
         return
 
     inline_options = []
-    for party in dbqueries.find_parties_by_participant(update.inline_query.from_user['id']):
+    for checklist in dbqueries.find_checklists_by_participant(update.inline_query.from_user['id']):
         inline_options.append(
             InlineQueryResultArticle(
-                id=party['id'],
-                title='Add item "{}" to party "{}"'.format(query, party['name']),
+                id=checklist['id'],
+                title='Add item "{}" to checklist "{}"'.format(query, checklist['name']),
                 input_message_content=InputTextMessageContent(
-                    'New item *{}* being added to party *{}*...'.format(query, party['name']),
+                    'New item *{}* being added to checklist *{}*...'.format(query, checklist['name']),
                     parse_mode = 'Markdown'
                 )
             )
@@ -247,7 +246,7 @@ def inline_result_handling(update, context):
     result.from_user.send_message('Item *{}* added successfully'.format(result.query), parse_mode='Markdown')
 
 def unknown_command(update, context):
-    update.message.reply_text('Unrecognized command. Use /help for a list of valid commands..')
+    update.message.reply_text('Unrecognized command. Use /help for a checklist of valid commands..')
 
 def unexpected_text(update, context):
     update.message.reply_text('I did not expect a text from you at this time. Please refer to /help for instructions. If you called a command which asked you for input, it might have timed out. There might also be an issue on my end. If the problem persists, please write a bug report at https://github.com/hillburn/moneysplitter/issues')
@@ -263,9 +262,9 @@ def main():
     dp.add_handler(MessageHandler(Filters.all, refresh_username), group = 0)
     dp.add_handler(
         ConversationHandler(
-            entry_points = [CommandHandler('make_party', conv_make_party_init)],
+            entry_points = [CommandHandler('make_checklist', conv_make_checklist_init)],
             states = {
-                PARTY_NAME: [MessageHandler(Filters.text, conv_make_party_name)],
+                PARTY_NAME: [MessageHandler(Filters.text, conv_make_checklist_name)],
             },
             fallbacks = [CommandHandler('cancel', conv_cancel)]
         ),
@@ -275,7 +274,7 @@ def main():
         ConversationHandler(
            entry_points = [CommandHandler('add_user', conv_add_user_init)],
            states = {
-               ADD_USER_PARTY: [CallbackQueryHandler(conv_add_user_pick_party)],
+               ADD_USER_PARTY: [CallbackQueryHandler(conv_add_user_pick_checklist)],
                ADD_USER_NAME: [MessageHandler(Filters.text, conv_add_user_get_name)]
             },
             fallbacks = [CommandHandler('cancel', conv_cancel)]
@@ -286,7 +285,7 @@ def main():
         ConversationHandler(
            entry_points = [CommandHandler('add_items', conv_add_items_init)],
            states = {
-               ADD_ITEMS_PARTY: [CallbackQueryHandler(conv_add_items_pick_party)],
+               ADD_ITEMS_PARTY: [CallbackQueryHandler(conv_add_items_pick_checklist)],
                ADD_ITEMS_NAME: [
                    CommandHandler('finish', conv_add_items_finish),
                    MessageHandler(Filters.text, conv_add_items_get_names)
@@ -300,7 +299,7 @@ def main():
         ConversationHandler(
             entry_points = [CommandHandler('make_purchase', conv_purchase_init)],
             states = {
-                PURCHASE_PARTY: [CallbackQueryHandler(conv_purchase_list_items)],
+                PURCHASE_PARTY: [CallbackQueryHandler(conv_purchase_checklist_items)],
                 PURCHASE_ITEM: [
                     CallbackQueryHandler(conv_purchase_buffer_item, pattern = '^bi_.*'),
                     CallbackQueryHandler(conv_purchase_revert_item, pattern = '^ri$'),
@@ -318,7 +317,7 @@ def main():
     dp.add_handler(CommandHandler('start', start), group = 1)
     dp.add_handler(CommandHandler('refresh_username', refresh_username))
     dp.add_handler(CommandHandler('help', show_commands), group = 1)
-    dp.add_handler(CommandHandler('show_parties', show_parties), group = 1)
+    dp.add_handler(CommandHandler('show_checklists', show_checklists), group = 1)
     dp.add_handler(CommandHandler('show_items', show_items), group = 1)
     dp.add_handler(CallbackQueryHandler(show_items_callback, pattern = '^showitems_[0-9]+$'), group = 1)
     dp.add_handler(MessageHandler(Filters.command, unknown_command), group = 1)

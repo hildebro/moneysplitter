@@ -21,7 +21,7 @@ cursorObj.execute("""
 """)
 
 cursorObj.execute("""
-    CREATE TABLE party(
+    CREATE TABLE checklist(
         id integer PRIMARY KEY AUTOINCREMENT,
         name text,
         creator_id integer,
@@ -30,25 +30,25 @@ cursorObj.execute("""
 """)
 
 cursorObj.execute("""
-    CREATE TABLE party_user(
-        party_id integer,
+    CREATE TABLE checklist_user(
+        checklist_id integer,
         user_id integer,
-        PRIMARY KEY (party_id, user_id)
+        PRIMARY KEY (checklist_id, user_id)
     )
 """)
 
 cursorObj.execute("""
-    CREATE TABLE party_item(
+    CREATE TABLE checklist_item(
         name text,
-        party_id integer,
-        PRIMARY KEY (party_id, name)
+        checklist_id integer,
+        PRIMARY KEY (checklist_id, name)
     )
 """)
 
 cursorObj.execute("""
     CREATE TABLE purchase(
         id integer PRIMARY KEY AUTOINCREMENT,
-        party_id integer,
+        checklist_id integer,
         user_id integer,
         active integer DEFAULT 1,
         price integer

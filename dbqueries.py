@@ -18,14 +18,14 @@ def connect_db():
 
     return conn
 
-def make_party(party_name, creator_id):
+def make_checklist(checklist_name, creator_id):
     conn = connect_db()
     cur = conn.cursor()
     with conn:
-        cur.execute('INSERT INTO party(name, creator_id) values (?, ?)', [party_name, creator_id])
+        cur.execute('INSERT INTO checklist(name, creator_id) values (?, ?)', [checklist_name, creator_id])
 
-    cur.execute('SELECT id FROM party WHERE name = ? and creator_id = ?', [party_name, creator_id])
-    party_add(cur.fetchone()[0], creator_id)
+    cur.execute('SELECT id FROM checklist WHERE name = ? and creator_id = ?', [checklist_name, creator_id])
+    checklist_add(cur.fetchone()[0], creator_id)
 
 def register_user(user):
     conn = connect_db()
@@ -39,11 +39,11 @@ def refresh_username(user):
         cur = conn.cursor()
         cur.execute('UPDATE user SET username = ? WHERE id = ?', [user.username, user.id])
 
-def party_name_exists(creator_id, party_name):
+def checklist_name_exists(creator_id, checklist_name):
     conn = connect_db()
     with conn:
         cur = conn.cursor()
-        cur.execute('SELECT COUNT(*) from party where creator_id = ? and name = ?', [creator_id, party_name])
+        cur.execute('SELECT COUNT(*) from checklist where creator_id = ? and name = ?', [creator_id, checklist_name])
         result = cur.fetchone()
         return result[0] > 0
 
@@ -62,63 +62,63 @@ def find_user(username):
             'username':user[2]
         }
 
-def party_add(party_id, user_id):
+def checklist_add(checklist_id, user_id):
     conn = connect_db()
     with conn:
         cur = conn.cursor()
-        cur.execute('INSERT INTO party_user(party_id, user_id) VALUES (?, ?)', [party_id, user_id])
+        cur.execute('INSERT INTO checklist_user(checklist_id, user_id) VALUES (?, ?)', [checklist_id, user_id])
 
-def find_parties_by_creator(user_id):
+def find_checklists_by_creator(user_id):
     conn = connect_db()
     with conn:
         cur = conn.cursor()
-        cur.execute('SELECT * FROM party WHERE creator_id = ? ', [user_id])
-        parties = []
-        for party in cur.fetchall():
-            parties.append({
-                'id' : party[0],
-                'name' : party[1],
-                'creator_id' : party[2]
+        cur.execute('SELECT * FROM checklist WHERE creator_id = ? ', [user_id])
+        checklists = []
+        for checklist in cur.fetchall():
+            checklists.append({
+                'id' : checklist[0],
+                'name' : checklist[1],
+                'creator_id' : checklist[2]
             })
-        return parties
+        return checklists
 
-def find_parties_by_participant(user_id):
+def find_checklists_by_participant(user_id):
     conn = connect_db()
     with conn:
         cur = conn.cursor()
         cur.execute(
             '''
-            SELECT * FROM party p WHERE exists(
+            SELECT * FROM checklist p WHERE exists(
                 SELECT null
-                FROM party_user pu
-                WHERE pu.party_id = p.id and pu.user_id = ?)
+                FROM checklist_user pu
+                WHERE pu.checklist_id = p.id and pu.user_id = ?)
             ''',
             [user_id]
         )
-        parties = []
-        for party in cur.fetchall():
-            parties.append({
-                'id' : party[0],
-                'name' : party[1],
-                'creator_id' : party[2]
+        checklists = []
+        for checklist in cur.fetchall():
+            checklists.append({
+                'id' : checklist[0],
+                'name' : checklist[1],
+                'creator_id' : checklist[2]
             })
-        return parties
+        return checklists
 
-def add_item(item_name, party_id):
+def add_item(item_name, checklist_id):
     conn = connect_db()
     with conn:
         cur = conn.cursor()
-        cur.execute('INSERT INTO party_item(name, party_id) VALUES (?, ?)', [item_name, party_id])
+        cur.execute('INSERT INTO checklist_item(name, checklist_id) VALUES (?, ?)', [item_name, checklist_id])
 
-def find_party_items(party_id):
+def find_checklist_items(checklist_id):
     conn = connect_db()
     with conn:
         cur = conn.cursor()
         cur.execute(
             '''
             SELECT i.name
-            FROM party_item i
-            WHERE i.party_id = ?
+            FROM checklist_item i
+            WHERE i.checklist_id = ?
             AND NOT EXISTS(
                 SELECT NULL
                 FROM purchase_item pi
@@ -126,11 +126,11 @@ def find_party_items(party_id):
                 AND pi.purchase_id in (
                     SELECT p.id
                     FROM purchase p
-                    WHERE p.party_id = i.party_id
+                    WHERE p.checklist_id = i.checklist_id
                 )
             )
             ''',
-            [party_id]
+            [checklist_id]
         )
 
         return unwrap(cur.fetchall())
@@ -142,9 +142,9 @@ def find_items_to_purchase(purchase_id):
         cur.execute(
             '''
             SELECT i.name
-            FROM party_item i
-            WHERE i.party_id IN (
-                SELECT p.party_id
+            FROM checklist_item i
+            WHERE i.checklist_id IN (
+                SELECT p.checklist_id
                 FROM purchase p
                 WHERE p.id = ?
             )
@@ -160,30 +160,30 @@ def find_items_to_purchase(purchase_id):
 
         return unwrap(cur.fetchall())
 
-def find_active_purchase(user_id, party_id):
+def find_active_purchase(user_id, checklist_id):
     conn = connect_db()
     with conn:
         cur = conn.cursor()
         cur.execute(
-            'SELECT id FROM purchase WHERE party_id = ? and user_id = ? and active = 1',
-            [party_id, user_id]
+            'SELECT id FROM purchase WHERE checklist_id = ? and user_id = ? and active = 1',
+            [checklist_id, user_id]
         )
         result = cur.fetchone()
         if result is None:
             return None
         return result[0]
 
-def start_purchase(user_id, party_id):
-    purchase_id = find_active_purchase(user_id, party_id)
+def start_purchase(user_id, checklist_id):
+    purchase_id = find_active_purchase(user_id, checklist_id)
     if purchase_id is not None:
         return purchase_id
 
     conn = connect_db()
     with conn:
         cur = conn.cursor()
-        cur.execute('INSERT INTO purchase(party_id, user_id) VALUES (?, ?)', [party_id, user_id])
+        cur.execute('INSERT INTO purchase(checklist_id, user_id) VALUES (?, ?)', [checklist_id, user_id])
 
-    return find_active_purchase(user_id, party_id)
+    return find_active_purchase(user_id, checklist_id)
 
 
 def buffer_item(item_name, purchase_id):
@@ -238,12 +238,12 @@ def finish_purchase(purchase_id):
         cur = conn.cursor()
         cur.execute(
             '''
-            DELETE FROM party_item
+            DELETE FROM checklist_item
             WHERE name IN (
                 SELECT pi.name FROM purchase_item pi WHERE pi.purchase_id = ?
             )
-            AND party_id IN (
-                SELECT p.party_id FROM purchase p WHERE p.id = ?
+            AND checklist_id IN (
+                SELECT p.checklist_id FROM purchase p WHERE p.id = ?
             )
             ''',
             [purchase_id, purchase_id]
