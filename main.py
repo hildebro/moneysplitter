@@ -11,12 +11,10 @@ PURCHASE_PARTY, PURCHASE_ITEM, PURCHASE_PRICE = range(3)
 
 def start(update, context):
     dbqueries.register_user(update.message.chat)
-    update.message.reply_text('You are now registered.')
+    update.message.reply_text('Hello! This bot serves two functions:\n1) Allow a group of people to create a common checklist for items which they want to buy together. Individual users can mark items as purchased and define how much money they spend on them.\n2) Calculate the amounts of money that have to be transfered between group members in order for everyone to be even.')
 
 def refresh_username(update, context):
-    # todo update username on every message instead
     dbqueries.refresh_username(update.message.chat)
-    update.message.reply_text('Username refreshed.')
 
 def show_commands(update, context):
     commands = '\n'.join([
@@ -262,6 +260,7 @@ def main():
 
     updater = Updater(privatestorage.get_token(), use_context=True)
     dp = updater.dispatcher
+    dp.add_handler(MessageHandler(Filters.all, refresh_username), group = 0)
     dp.add_handler(
         ConversationHandler(
             entry_points = [CommandHandler('make_party', conv_make_party_init)],
@@ -269,7 +268,8 @@ def main():
                 PARTY_NAME: [MessageHandler(Filters.text, conv_make_party_name)],
             },
             fallbacks = [CommandHandler('cancel', conv_cancel)]
-        )
+        ),
+        group = 1
     )
     dp.add_handler(
         ConversationHandler(
@@ -279,7 +279,8 @@ def main():
                ADD_USER_NAME: [MessageHandler(Filters.text, conv_add_user_get_name)]
             },
             fallbacks = [CommandHandler('cancel', conv_cancel)]
-        )
+        ),
+        group = 1
     )
     dp.add_handler(
         ConversationHandler(
@@ -292,7 +293,8 @@ def main():
                 ]
             },
             fallbacks = [CommandHandler('cancel', conv_cancel)]
-        )
+        ),
+        group = 1
     )
     dp.add_handler(
         ConversationHandler(
@@ -308,18 +310,19 @@ def main():
                 PURCHASE_PRICE: [MessageHandler(Filters.text, conv_purchase_set_price)]
             },
             fallbacks=[CommandHandler('cancel', conv_cancel)]
-        )
+        ),
+        group = 1
     )
-    dp.add_handler(InlineQueryHandler(inline_query_handling))
-    dp.add_handler(ChosenInlineResultHandler(inline_result_handling))
-    dp.add_handler(CommandHandler('start', start))
+    dp.add_handler(InlineQueryHandler(inline_query_handling), group = 1)
+    dp.add_handler(ChosenInlineResultHandler(inline_result_handling), group = 1)
+    dp.add_handler(CommandHandler('start', start), group = 1)
     dp.add_handler(CommandHandler('refresh_username', refresh_username))
-    dp.add_handler(CommandHandler('help', show_commands))
-    dp.add_handler(CommandHandler('show_parties', show_parties))
-    dp.add_handler(CommandHandler('show_items', show_items))
-    dp.add_handler(CallbackQueryHandler(show_items_callback, pattern = '^showitems_[0-9]+$'))
-    dp.add_handler(MessageHandler(Filters.command, unknown_command))
-    dp.add_handler(MessageHandler(Filters.text, unexpected_text))
+    dp.add_handler(CommandHandler('help', show_commands), group = 1)
+    dp.add_handler(CommandHandler('show_parties', show_parties), group = 1)
+    dp.add_handler(CommandHandler('show_items', show_items), group = 1)
+    dp.add_handler(CallbackQueryHandler(show_items_callback, pattern = '^showitems_[0-9]+$'), group = 1)
+    dp.add_handler(MessageHandler(Filters.command, unknown_command), group = 1)
+    dp.add_handler(MessageHandler(Filters.text, unexpected_text), group = 1)
     updater.start_polling()
     print('Started polling...')
     updater.idle()
