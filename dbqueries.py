@@ -47,6 +47,13 @@ def checklist_name_exists(creator_id, checklist_name):
         result = cur.fetchone()
         return result[0] > 0
 
+def check_user_exists(user_id):
+    conn = connect_db()
+    with conn:
+        cur = conn.cursor()
+        cur.execute('SELECT COUNT(*) FROM user WHERE id = ?', [user_id])
+        return cur.fetchone()[0] > 0
+
 def find_user(username):
     conn = connect_db()
     with conn:

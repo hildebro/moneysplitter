@@ -4,43 +4,48 @@ from telegram.ext import Updater, ChosenInlineResultHandler, InlineQueryHandler,
 import dbqueries
 import privatestorage
 
+# conversation states
 NEWCHECKLIST_NAME = 0
 ADDUSER_NAME = 0
 ADDITEMS_NAME = 0
 PURCHASE_ITEM, PURCHASE_PRICE = range(2)
 
+# group 0 methods
 def start(update, context):
-    # todo you already started the bot
+    if dbqueries.check_user_exists(update.message.chat_id):
+        update.message.reply_text('You already started the bot!')
+        refresh_username(update, context)
+        return
+
     dbqueries.register_user(update.message.chat)
     update.message.reply_text('Hello! This bot serves two functions:\n1) Allow a group of people to create a common checklist for items which they want to buy together. Individual users can mark items as purchased and define how much money they spend on them.\n2) Calculate the amounts of money that have to be transfered between group members in order for everyone to be even.')
 
 def refresh_username(update, context):
     dbqueries.refresh_username(update.message.chat)
 
+# main menu rendering
 def main_menu_from_message(update, context):
-    # todo check whether chat_data persists between callbacks
-    checklists = dbqueries.find_checklists_by_creator(update.message.chat_id)
-    keyboard = []
-    for checklist in checklists:
-        keyboard.append([InlineKeyboardButton(checklist['name'], callback_data= 'checklist_{}'.format(checklist['id']))])
-
-    keyboard.append([InlineKeyboardButton('Create new checklist', callback_data='newchecklist')])
-
-    reply_markup = InlineKeyboardMarkup(keyboard)
+    context.chat_data.pop('checklist_id', None)
+    reply_markup = main_menu_reply_markup(update.message.chat_id)
     update.message.reply_text('Choose a checklist to interact with:', reply_markup=reply_markup)
 
-def main_menu_from_callback(update, context):
-    # todo check whether chat_data persists between callbacks
-    checklists = dbqueries.find_checklists_by_creator(update.callback_query.message.chat_id)
+def main_menu_from_callback(update, context, as_new = False):
+    context.chat_data.pop('checklist_id', None)
+    reply_markup = main_menu_reply_markup(update.callback_query.message.chat_id)
+    if as_new:
+        update.callback_query.message.reply_text('Choose a checklist to interact with:', reply_markup=reply_markup)
+        return
+
+    update.callback_query.edit_message_text(text = 'Choose a checklist to interact with:', reply_markup=reply_markup)
+
+def main_menu_reply_markup(user_id):
+    checklists = dbqueries.find_checklists_by_participant(user_id)
     keyboard = []
     for checklist in checklists:
         keyboard.append([InlineKeyboardButton(checklist['name'], callback_data= 'checklist_{}'.format(checklist['id']))])
-
     keyboard.append([InlineKeyboardButton('Create new checklist', callback_data='newchecklist')])
 
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    update.callback_query.edit_message_text(text = 'Choose a checklist to interact with:', reply_markup=reply_markup)
-
+    return InlineKeyboardMarkup(keyboard)
 
 def checklist_options(update, context):
     context.chat_data['checklist_id'] = update.callback_query.data.split('_')[1]
@@ -54,8 +59,8 @@ def checklist_options(update, context):
     update.callback_query.edit_message_text(text = 'Choose an action:', reply_markup=reply_markup)
 
 def conv_cancel(update, context):
-    update.message.reply_text('The command has been canceled.')
-    # todo back to main menu
+    update.message.reply_text('The action has been canceled.')
+    main_menu_from_message(update, context)
 
     return ConversationHandler.END
 
@@ -75,7 +80,7 @@ def conv_newchecklist_check(update, context):
 
     dbqueries.make_checklist(checklist_name, user_id)
     update.message.reply_text('Checklist created.')
-    # todo back to main menu
+    main_menu_from_message(update, context)
 
     return ConversationHandler.END
 
@@ -101,7 +106,7 @@ def conv_adduser_check(update, context):
     # todo ask user, whether they want to join. if they dont, ask if they want to shadowban the inviter
     dbqueries.checklist_add(context.chat_data['checklist_id'], user['id'])
     update.message.reply_text('User added.')
-    # todo back to main menu
+    main_menu_from_message(update, context)
 
     return ConversationHandler.END
 
@@ -119,7 +124,7 @@ def conv_additems_check(update, context):
 
 def conv_additems_finish(update, context):
     update.message.reply_text('Finished adding items.')
-    # tod back to main menu
+    main_menu_from_message(update, context)
 
     return ConversationHandler.END
 
@@ -129,11 +134,9 @@ def show_items(update, context):
     checklist_items = dbqueries.find_checklist_items(checklist_id)
     if len(checklist_items) == 0:
         query.edit_message_text(text = 'That checklist has no items.')
-        # todo back to main menu
-        return
-
-    query.edit_message_text(text = 'Items in that checklist:\n' + '\n'.join(checklist_items))
-    # todo back to main menu
+    else:
+        query.edit_message_text(text = 'Items in that checklist:\n' + '\n'.join(checklist_items))
+    main_menu_from_callback(update, context, True)
 
 def conv_purchase_init(update, context):
     user_id = update.callback_query.message.chat_id
@@ -197,7 +200,7 @@ def conv_purchase_finish(update, context):
 def conv_purchase_set_price(update, context):
     dbqueries.set_purchase_price(context.chat_data['purchase_id'], update.message.text)
     update.message.reply_text('Price has been set.')
-    # todo back to main menu
+    main_menu_from_message(update, context)
 
     return ConversationHandler.END
 
