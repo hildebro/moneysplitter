@@ -142,6 +142,43 @@ def find_checklist_items(checklist_id):
 
         return unwrap(cur.fetchall())
 
+def find_purchases(checklist_id):
+    conn = connect_db()
+    with conn:
+        cur = conn.cursor()
+        cur.execute(
+            '''
+            SELECT u.username, p.price, pi.purchase_id, pi.name
+            FROM purchase_item pi
+            JOIN purchase p on p.id = pi.purchase_id
+            JOIN user u on p.user_id = u.id
+            WHERE p.checklist_id = ?
+            ''',
+            [checklist_id]
+        )
+        results = cur.fetchall()
+        if len(results) == 0:
+            return []
+
+        converted_results = {}
+        for result in results:
+            username = result[0]
+            price = result[1]
+            purchase_id = result[2]
+            item_name = result[3]
+            if username not in converted_results:
+                converted_results[username] = {
+                    'price' : 0.0,
+                    'purchase_ids' : [],
+                    'items' : []
+                }
+            if purchase_id not in converted_results[username]['purchase_ids']:
+                converted_results[username]['purchase_ids'].append(purchase_id)
+                converted_results[username]['price'] += price / 100.0
+            converted_results[username]['items'].append(item_name)
+
+        return converted_results
+
 def find_items_to_purchase(purchase_id):
     conn = connect_db()
     with conn:

@@ -56,7 +56,8 @@ def checklist_options(update, context):
     keyboard.append([InlineKeyboardButton('Show items', callback_data='showitems')])
     keyboard.append([InlineKeyboardButton('Add items', callback_data='additems')])
     keyboard.append([InlineKeyboardButton('Add user', callback_data='adduser')])
-    keyboard.append([InlineKeyboardButton('Start purchase', callback_data='purchase')])
+    keyboard.append([InlineKeyboardButton('Start purchase', callback_data='newpurchase')])
+    keyboard.append([InlineKeyboardButton('Show purchases', callback_data='showpurchases')])
     keyboard.append([InlineKeyboardButton('Back to all checklists', callback_data='mainmenu')])
     reply_markup = InlineKeyboardMarkup(keyboard)
     update.callback_query.edit_message_text(text = 'Choose an action:', reply_markup=reply_markup)
@@ -156,6 +157,21 @@ def show_items(update, context):
                 + ' contains the following items:\n'
                 + '\n'.join(checklist_items)
         )
+    main_menu_from_callback(update, context, True)
+
+def show_purchases(update, context):
+    query = update.callback_query
+    checklist_id = context.chat_data['checklist_id']
+    checklist_name = context.chat_data['checklist_names'][checklist_id]
+    purchases = dbqueries.find_purchases(checklist_id)
+    if len(purchases) == 0:
+        text = checklist_name + ' has no purchases.'
+    else:
+        text = ''
+        for username, purchase in purchases.items():
+            text += '{} has paid {} for the following items:\n'.format(username, purchase['price']) + '\n'.join(purchase['items']) + '\n'
+
+    query.edit_message_text(text = text)
     main_menu_from_callback(update, context, True)
 
 def conv_purchase_init(update, context):
@@ -271,7 +287,7 @@ def main():
     )
     dp.add_handler(
         ConversationHandler(
-            entry_points = [CallbackQueryHandler(conv_purchase_init, pattern = '^purchase$')],
+            entry_points = [CallbackQueryHandler(conv_purchase_init, pattern = '^newpurchase$')],
             states = {
                 PURCHASE_ITEM: [
                     CallbackQueryHandler(conv_purchase_buffer_item, pattern = '^bi_.*'),
@@ -290,6 +306,7 @@ def main():
     #dp.add_handler(ChosenInlineResultHandler(inline_result_handling), group = 1)
 
     dp.add_handler(CallbackQueryHandler(main_menu_from_callback, pattern = '^mainmenu$'), group = 1)
+    dp.add_handler(CallbackQueryHandler(show_purchases, pattern = '^showpurchases$'), group = 1)
     dp.add_handler(CallbackQueryHandler(show_items, pattern = '^showitems$'), group = 1)
     dp.add_handler(CallbackQueryHandler(checklist_options, pattern = '^checklist_[0-9]+$'), group = 1)
 
