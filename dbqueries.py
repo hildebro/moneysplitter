@@ -1,6 +1,7 @@
 import requests
 import re
 import sqlite3
+import os
 
 def unwrap(array):
     unwrapped_array = []
@@ -12,7 +13,7 @@ def unwrap(array):
 def connect_db():
     conn = None
     try:
-        conn = sqlite3.connect('money_splitter.db')
+        conn = sqlite3.connect(os.path.dirname(__file__) + '/money_splitter.db')
     except Error as e:
         print(e)
 
