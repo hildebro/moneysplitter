@@ -26,29 +26,32 @@ def refresh_username(update, context):
 # main menu rendering
 def main_menu_from_message(update, context):
     context.chat_data.pop('checklist_id', None)
-    reply_markup = main_menu_reply_markup(update.message.chat_id)
+    context.chat_data['checklist_names'] = {}
+    reply_markup = main_menu_reply_markup(context, update.message.chat_id)
     update.message.reply_text('Choose a checklist to interact with:', reply_markup=reply_markup)
 
 def main_menu_from_callback(update, context, as_new = False):
     context.chat_data.pop('checklist_id', None)
-    reply_markup = main_menu_reply_markup(update.callback_query.message.chat_id)
+    context.chat_data['checklist_names'] = {}
+    reply_markup = main_menu_reply_markup(context, update.callback_query.message.chat_id)
     if as_new:
         update.callback_query.message.reply_text('Choose a checklist to interact with:', reply_markup=reply_markup)
         return
 
     update.callback_query.edit_message_text(text = 'Choose a checklist to interact with:', reply_markup=reply_markup)
 
-def main_menu_reply_markup(user_id):
+def main_menu_reply_markup(context, user_id):
     checklists = dbqueries.find_checklists_by_participant(user_id)
     keyboard = []
     for checklist in checklists:
+        context.chat_data['checklist_names'][checklist['id']] = checklist['name']
         keyboard.append([InlineKeyboardButton(checklist['name'], callback_data= 'checklist_{}'.format(checklist['id']))])
     keyboard.append([InlineKeyboardButton('Create new checklist', callback_data='newchecklist')])
 
     return InlineKeyboardMarkup(keyboard)
 
 def checklist_options(update, context):
-    context.chat_data['checklist_id'] = update.callback_query.data.split('_')[1]
+    context.chat_data['checklist_id'] = int(update.callback_query.data.split('_')[1])
     keyboard = []
     keyboard.append([InlineKeyboardButton('Show items', callback_data='showitems')])
     keyboard.append([InlineKeyboardButton('Add items', callback_data='additems')])
@@ -104,21 +107,33 @@ def conv_adduser_check(update, context):
         return ADDUSER_NAME
 
     # todo ask user, whether they want to join. if they dont, ask if they want to shadowban the inviter
-    dbqueries.checklist_add(context.chat_data['checklist_id'], user['id'])
-    update.message.reply_text('User added.')
+    checklist_id = context.chat_data['checklist_id']
+    dbqueries.checklist_add(checklist_id, user['id'])
+    update.message.reply_text(
+        '{} was added to {}.'.format(
+            user['username'],
+            context.chat_data['checklist_names'][checklist_id]
+        )
+    )
     main_menu_from_message(update, context)
 
     return ConversationHandler.END
 
 def conv_additems_init(update, context):
-    update.callback_query.edit_message_text(text='Now send me an item name to add to the list. Send one message per item. Use /finish when you are done.')
+    checklist_name = context.chat_data['checklist_names'][context.chat_data['checklist_id']]
+    update.callback_query.edit_message_text(text='Send me item names (one at a time) to add them to {}. Use /finish when you are done.'.format(checklist_name))
 
     return ADDITEMS_NAME
 
 def conv_additems_check(update, context):
     item_name = update.message.text
-    dbqueries.add_item(item_name, context.chat_data['checklist_id'])
-    update.message.reply_text('Item added. Provide more names or stop adding by using /finish.')
+    checklist_id = context.chat_data['checklist_id']
+    dbqueries.add_item(item_name, checklist_id)
+    update.message.reply_text(
+        '{} added to {}. Provide more items or stop the action with /finish.'.format(
+            item_name, context.chat_data['checklist_names'][checklist_id]
+        )
+    )
 
     return ADDITEMS_NAME
 
@@ -131,11 +146,16 @@ def conv_additems_finish(update, context):
 def show_items(update, context):
     query = update.callback_query
     checklist_id = context.chat_data['checklist_id']
+    checklist_name = context.chat_data['checklist_names'][checklist_id]
     checklist_items = dbqueries.find_checklist_items(checklist_id)
     if len(checklist_items) == 0:
-        query.edit_message_text(text = 'That checklist has no items.')
+        query.edit_message_text(text = checklist_name + ' has no items.')
     else:
-        query.edit_message_text(text = 'Items in that checklist:\n' + '\n'.join(checklist_items))
+        query.edit_message_text(text =
+                checklist_name
+                + ' contains the following items:\n'
+                + '\n'.join(checklist_items)
+        )
     main_menu_from_callback(update, context, True)
 
 def conv_purchase_init(update, context):
