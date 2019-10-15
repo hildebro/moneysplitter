@@ -170,7 +170,7 @@ def conv_purchase_revert_item(update, context):
 def conv_purchase_abort(update, context):
     dbqueries.abort_purchase(context.chat_data['purchase_id'])
     update.callback_query.edit_message_text(text = 'Purchase aborted.')
-    # todo back to main menu
+    main_menu_from_callback(update, context, True)
 
     return ConversationHandler.END
 
