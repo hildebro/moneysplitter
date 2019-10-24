@@ -118,6 +118,15 @@ def add_item(item_name, checklist_id):
         cur = conn.cursor()
         cur.execute('INSERT INTO checklist_item(name, checklist_id) VALUES (?, ?)', [item_name, checklist_id])
 
+def remove_item(item_name, checklist_id):
+    conn = connect_db()
+    with conn:
+        cur = conn.cursor()
+        cur.execute(
+            'DELETE FROM checklist_item WHERE name = ? and checklist_id = ?',
+            [item_name, checklist_id]
+        )
+
 def find_checklist_items(checklist_id):
     conn = connect_db()
     with conn:

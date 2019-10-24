@@ -8,6 +8,7 @@ import privatestorage
 NEWCHECKLIST_NAME = 0
 ADDUSER_NAME = 0
 ADDITEMS_NAME = 0
+REMOVEITEMS_NAME = 0
 PURCHASE_ITEM, PURCHASE_PRICE = range(2)
 
 # group 0 methods
@@ -55,6 +56,7 @@ def checklist_options(update, context):
     keyboard = []
     keyboard.append([InlineKeyboardButton('Show items', callback_data='showitems')])
     keyboard.append([InlineKeyboardButton('Add items', callback_data='additems')])
+    keyboard.append([InlineKeyboardButton('Remove items', callback_data='removeitems')])
     keyboard.append([InlineKeyboardButton('Add user', callback_data='adduser')])
     keyboard.append([InlineKeyboardButton('Start purchase', callback_data='newpurchase')])
     keyboard.append([InlineKeyboardButton('Show purchases', callback_data='showpurchases')])
@@ -144,6 +146,43 @@ def conv_additems_finish(update, context):
 
     return ConversationHandler.END
 
+def conv_removeitems_init(update, context):
+    render_items_to_remove(update, context)
+
+    return REMOVEITEMS_NAME
+
+def conv_removeitems_check(update, context):
+    query = update.callback_query
+    item_name = query.data.split('_')[1]
+    checklist_id = context.chat_data['checklist_id']
+    dbqueries.remove_item(item_name, checklist_id)
+    render_items_to_remove(update, context)
+
+    return REMOVEITEMS_NAME
+
+def conv_removeitems_finish(update, context):
+    update.callback_query.edit_message_text(text = 'Finished removing items.')
+    main_menu_from_callback(update, context)
+
+    return ConversationHandler.END
+
+def render_items_to_remove(update, context):
+    item_names = dbqueries.find_checklist_items(context.chat_data['checklist_id'])
+    keyboard = []
+    for item_name in item_names:
+        keyboard.append([InlineKeyboardButton(item_name, callback_data='ri_{}'.format(item_name))])
+
+    # todo either buffer table like with purchases or use chat data for buffer
+    #keyboard.append([
+    #    InlineKeyboardButton('Revert', callback_data='ri'),
+    #    InlineKeyboardButton('Abort', callback_data='ap')
+    #])
+    keyboard.append([
+        InlineKeyboardButton('Finish', callback_data='finish')
+    ])
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    update.callback_query.edit_message_text(text = 'Choose items to remove from the list:', reply_markup=reply_markup)
+
 def show_items(update, context):
     query = update.callback_query
     checklist_id = context.chat_data['checklist_id']
@@ -158,6 +197,7 @@ def show_items(update, context):
                 + '\n'.join(checklist_items)
         )
     main_menu_from_callback(update, context, True)
+
 
 def show_purchases(update, context):
     query = update.callback_query
@@ -287,10 +327,23 @@ def main():
     )
     dp.add_handler(
         ConversationHandler(
+            entry_points = [CallbackQueryHandler(conv_removeitems_init, pattern = '^removeitems$')],
+            states = {
+                REMOVEITEMS_NAME: [
+                    CallbackQueryHandler(conv_removeitems_check, pattern = '^ri_.+'),
+                    CallbackQueryHandler(conv_removeitems_finish, pattern = '^finish$')
+                ]
+            },
+            fallbacks = [CommandHandler('cancel', conv_cancel)]
+        ),
+        group = 1
+    )
+    dp.add_handler(
+        ConversationHandler(
             entry_points = [CallbackQueryHandler(conv_purchase_init, pattern = '^newpurchase$')],
             states = {
                 PURCHASE_ITEM: [
-                    CallbackQueryHandler(conv_purchase_buffer_item, pattern = '^bi_.*'),
+                    CallbackQueryHandler(conv_purchase_buffer_item, pattern = '^bi_.+'),
                     CallbackQueryHandler(conv_purchase_revert_item, pattern = '^ri$'),
                     CallbackQueryHandler(conv_purchase_finish, pattern = '^fp$'),
                     CallbackQueryHandler(conv_purchase_abort, pattern = '^ap$')
