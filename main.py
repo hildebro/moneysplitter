@@ -280,6 +280,34 @@ def conv_purchase_set_price(update, context):
 
     return ConversationHandler.END
 
+def inlinequery_send_invite(update, context):
+    query = update.inline_query.query
+
+    inline_options = []
+    for checklist in dbqueries.find_checklists_by_participant(update.inline_query.from_user['id']):
+        if query and not checklist['name'].lower().startswith(query.lower()):
+                continue
+
+        inline_options.append(
+            InlineQueryResultArticle(
+                id=checklist['id'],
+                title=checklist['name'],
+                input_message_content=InputTextMessageContent(
+                    "You are invited to join the checklist {}. Press the button under this message to confirm. If you don't know what this means, check out @PurchaseSplitterBot for more info.".format(checklist['name'])
+                ),
+                reply_markup=InlineKeyboardMarkup([[
+                    InlineKeyboardButton('Join checklist', callback_data='joinchecklist_{}'.format(checklist['id']))
+                ]])
+            )
+        )
+    context.bot.answer_inline_query(update.inline_query.id, inline_options)
+
+def join_checklist(update, context):
+    checklist_id = update.callback_query.data.split('_')[1]
+    user_id = update.callback_query.from_user.id
+    dbqueries.checklist_add(checklist_id, user_id)
+    update.callback_query.answer('Successfully joined checklist!')
+
 def main():
     logging.basicConfig(
         level = logging.INFO,
@@ -355,13 +383,13 @@ def main():
         group = 1
     )
 
-    #dp.add_handler(InlineQueryHandler(inline_query_handling), group = 1)
-    #dp.add_handler(ChosenInlineResultHandler(inline_result_handling), group = 1)
+    dp.add_handler(InlineQueryHandler(inlinequery_send_invite), group = 1)
 
     dp.add_handler(CallbackQueryHandler(main_menu_from_callback, pattern = '^mainmenu$'), group = 1)
     dp.add_handler(CallbackQueryHandler(show_purchases, pattern = '^showpurchases$'), group = 1)
     dp.add_handler(CallbackQueryHandler(show_items, pattern = '^showitems$'), group = 1)
     dp.add_handler(CallbackQueryHandler(checklist_options, pattern = '^checklist_[0-9]+$'), group = 1)
+    dp.add_handler(CallbackQueryHandler(join_checklist, pattern = '^joinchecklist_[0-9]+$'), group = 1)
 
     dp.add_handler(MessageHandler(Filters.all, main_menu_from_message), group = 1)
 
