@@ -309,3 +309,21 @@ def set_purchase_price(purchase_id, price):
     with conn:
         cur = conn.cursor()
         cur.execute('UPDATE purchase SET price = ? WHERE id = ?', [float(price) * 100, purchase_id])
+
+def is_creator(checklist_id, user_id):
+    conn = connect_db()
+    with conn:
+        cur = conn.cursor()
+        cur.execute('SELECT COUNT(*) FROM checklist WHERE id = ? AND creator_id = ?', [checklist_id, user_id])
+
+        return cur.fetchone()[0] == 1
+
+def delete_checklist(checklist_id, user_id):
+    if not is_creator(checklist_id, user_id):
+        # todo exception, because a user shouldn't even get to this message when he isn't the creator
+        return
+
+    conn = connect_db()
+    with conn:
+        cur = conn.cursor()
+        cur.execute('DELETE FROM checklist where id = ?', [checklist_id])

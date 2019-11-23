@@ -10,6 +10,7 @@ ADDUSER_NAME = 0
 ADDITEMS_NAME = 0
 REMOVEITEMS_NAME = 0
 PURCHASE_ITEM, PURCHASE_PRICE = range(2)
+DELETECHECKLIST_CONFIRM = 0
 
 # group 0 methods
 def start(update, context):
@@ -56,13 +57,34 @@ def checklist_options(update, context):
     keyboard = []
     keyboard.append([InlineKeyboardButton('Show items', callback_data='showitems')])
     keyboard.append([InlineKeyboardButton('Add items', callback_data='additems')])
-    keyboard.append([InlineKeyboardButton('Remove items', callback_data='removeitems')])
-    keyboard.append([InlineKeyboardButton('Add user', callback_data='adduser')])
     keyboard.append([InlineKeyboardButton('Start purchase', callback_data='newpurchase')])
-    keyboard.append([InlineKeyboardButton('Show purchases', callback_data='showpurchases')])
+    keyboard.append([InlineKeyboardButton('Advanced Options', callback_data='advancedoptions')])
     keyboard.append([InlineKeyboardButton('Back to all checklists', callback_data='mainmenu')])
     reply_markup = InlineKeyboardMarkup(keyboard)
     update.callback_query.edit_message_text(text = 'Choose an action:', reply_markup=reply_markup)
+
+def advanced_options(update, context):
+    checklist_id = context.chat_data['checklist_id']
+    keyboard = []
+    keyboard.append([InlineKeyboardButton('Show purchases', callback_data='showpurchases')])
+    keyboard.append([InlineKeyboardButton('Remove items', callback_data='removeitems')])
+    keyboard.append([InlineKeyboardButton('Add user', callback_data='adduser')])
+    if dbqueries.is_creator(checklist_id, update.callback_query.from_user.id):
+        keyboard.append([InlineKeyboardButton('Delete checklist', callback_data='deletechecklist')])
+    keyboard.append([InlineKeyboardButton('Back to default options', callback_data='checklist_{}'.format(checklist_id))])
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    update.callback_query.edit_message_text(text = 'Choose an action:', reply_markup=reply_markup)
+
+def conv_deletechecklist_init(update, context):
+    update.callback_query.edit_message_text(text = 'You are about to delete the selected checklist. If you really want to do this, type /delete. Otherwise, type /cancel.')
+
+    return DELETECHECKLIST_CONFIRM
+
+def conv_deletechecklist_execute(update, context):
+    checklist_id = context.chat_data['checklist_id']
+    dbqueries.delete_checklist(checklist_id, update.message.chat_id)
+    update.message.reply_text('Checklist deleted.')
+
 
 def conv_cancel(update, context):
     update.message.reply_text('The action has been canceled.')
@@ -383,12 +405,26 @@ def main():
         group = 1
     )
 
+    dp.add_handler(
+        ConversationHandler(
+            entry_points = [CallbackQueryHandler(conv_deletechecklist_init, pattern = '^deletechecklist$')],
+            states = {
+                DELETECHECKLIST_CONFIRM: [
+                    CommandHandler('delete', conv_deletechecklist_execute)
+                ],
+            },
+            fallbacks=[CommandHandler('cancel', conv_cancel)]
+        ),
+        group = 1
+    )
+
     dp.add_handler(InlineQueryHandler(inlinequery_send_invite), group = 1)
 
     dp.add_handler(CallbackQueryHandler(main_menu_from_callback, pattern = '^mainmenu$'), group = 1)
     dp.add_handler(CallbackQueryHandler(show_purchases, pattern = '^showpurchases$'), group = 1)
     dp.add_handler(CallbackQueryHandler(show_items, pattern = '^showitems$'), group = 1)
     dp.add_handler(CallbackQueryHandler(checklist_options, pattern = '^checklist_[0-9]+$'), group = 1)
+    dp.add_handler(CallbackQueryHandler(advanced_options, pattern = '^advancedoptions$'), group = 1)
     dp.add_handler(CallbackQueryHandler(join_checklist, pattern = '^joinchecklist_[0-9]+$'), group = 1)
 
     dp.add_handler(MessageHandler(Filters.all, main_menu_from_message), group = 1)
