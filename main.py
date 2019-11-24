@@ -1,4 +1,5 @@
 import logging
+import operator
 from telegram import InlineQueryResultArticle, InputTextMessageContent, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import Updater, ChosenInlineResultHandler, InlineQueryHandler, CommandHandler, MessageHandler, Filters, CallbackQueryHandler, ConversationHandler
 import dbqueries
@@ -10,6 +11,7 @@ ADDUSER_NAME = 0
 ADDITEMS_NAME = 0
 REMOVEITEMS_NAME = 0
 PURCHASE_ITEM, PURCHASE_PRICE = range(2)
+EQUALIZE_SELECT = 0
 DELETECHECKLIST_CONFIRM = 0
 
 # group 0 methods
@@ -67,6 +69,7 @@ def advanced_options(update, context):
     checklist_id = context.chat_data['checklist_id']
     keyboard = []
     keyboard.append([InlineKeyboardButton('Show purchases', callback_data='showpurchases')])
+    keyboard.append([InlineKeyboardButton('Equalize', callback_data='equalize')])
     keyboard.append([InlineKeyboardButton('Remove items', callback_data='removeitems')])
     keyboard.append([InlineKeyboardButton('Add user', callback_data='adduser')])
     if dbqueries.is_creator(checklist_id, update.callback_query.from_user.id):
@@ -225,13 +228,13 @@ def show_purchases(update, context):
     query = update.callback_query
     checklist_id = context.chat_data['checklist_id']
     checklist_name = context.chat_data['checklist_names'][checklist_id]
-    purchases = dbqueries.find_purchases(checklist_id)
+    purchases = dbqueries.find_purchases_by_checklist(checklist_id)
     if len(purchases) == 0:
         text = checklist_name + ' has no purchases.'
     else:
         text = ''
-        for username, purchase in purchases.items():
-            text += '{} has paid {} for the following items:\n'.format(username, purchase['price']) + '\n'.join(purchase['items']) + '\n'
+        for purchase in purchases.values():
+            text += '{} has paid {} for the following items:\n'.format(purchase['username'], purchase['price']) + '\n'.join(purchase['items']) + '\n'
 
     query.edit_message_text(text = text)
     main_menu_from_callback(update, context, True)
@@ -299,6 +302,121 @@ def conv_purchase_set_price(update, context):
     dbqueries.set_purchase_price(context.chat_data['purchase_id'], update.message.text)
     update.message.reply_text('Price has been set.')
     main_menu_from_message(update, context)
+
+    return ConversationHandler.END
+
+def conv_equalize_init(update, context):
+    context.user_data['buffered_purchases'] = []
+    render_purchases_to_equalize(update, context)
+
+    return EQUALIZE_SELECT
+
+def conv_equalize_buffer_purchase(update, context):
+    query = update.callback_query
+    query_data = query.data.split('_')
+    purchase_id = query_data[1]
+    context.user_data['buffered_purchases'].append(int(purchase_id))
+    render_purchases_to_equalize(update, context)
+
+    return EQUALIZE_SELECT
+
+def conv_equalize_revert_purchase(update, context):
+    buffered_purchases = context.user_data['buffered_purchases']
+    if not buffered_purchases:
+        # todo make popup: nothing to revert
+        print('nothing to revert')
+        return
+
+    buffered_purchases.pop()
+    render_purchases_to_equalize(update, context)
+
+    return EQUALIZE_SELECT
+
+def render_purchases_to_equalize(update, context):
+    purchases = dbqueries.find_purchases_to_equalize(context.chat_data['checklist_id'])
+    keyboard = []
+    for purchase in purchases:
+        if purchase[0] not in context.user_data['buffered_purchases']:
+            keyboard.append([InlineKeyboardButton(
+                '{} spent {}'.format(purchase[2], purchase[1]/100),
+                callback_data='bp_{}'.format(purchase[0])
+            )])
+
+    keyboard.append([
+        InlineKeyboardButton('Revert', callback_data='rp'),
+        InlineKeyboardButton('Abort', callback_data='ae')
+    ])
+    keyboard.append([
+        InlineKeyboardButton('Finish', callback_data='fe')
+    ])
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    update.callback_query.edit_message_text(text = 'Choose purchases to equalize:', reply_markup=reply_markup)
+
+def conv_equalize_abort(update, context):
+    update.callback_query.edit_message_text(text = 'Equalization aborted.')
+    main_menu_from_callback(update, context, True)
+
+    return ConversationHandler.END
+
+def conv_equalize_finish(update, context):
+    summed_purchases = {}
+    average_price = 0
+    # sum up purchase prices
+    purchases = dbqueries.find_purchases(context.user_data['buffered_purchases'])
+    for purchase in purchases:
+        average_price += purchase[1]
+        if purchase[0] not in summed_purchases:
+            summed_purchases[purchase[0]] = purchase[1]
+        else:
+            summed_purchases[purchase[0]] += purchase[1]
+
+    # add entry with price of 0 for everyone who hasn't purchased anything
+    participants = dbqueries.find_checklist_participants(context.chat_data['checklist_id'])
+    for participant in participants:
+        if participant[0] not in summed_purchases:
+            summed_purchases[participant[0]] = 0
+
+    # sort by price (has to be a tuple now)
+    sorted_purchases = sorted(summed_purchases.items(), key=operator.itemgetter(1))
+    average_price /= len(summed_purchases)
+    lowboi = 0
+    highboi = len(sorted_purchases) - 1
+    transactions = []
+    while lowboi < highboi:
+        to_give = average_price - sorted_purchases[lowboi][1]
+        if to_give == 0:
+            lowboi += 1
+            continue
+
+        to_get = sorted_purchases[highboi][1] - average_price
+        if to_get == 0:
+            highboi -= 1
+            continue
+
+        if to_give > to_get:
+            to_give = to_get
+
+        sorted_purchases[lowboi] = (sorted_purchases[lowboi][0], sorted_purchases[lowboi][1] + to_give)
+        sorted_purchases[highboi] = (sorted_purchases[highboi][0], sorted_purchases[highboi][1] - to_give)
+
+        transactions.append({
+            'from': sorted_purchases[lowboi][0],
+            'to': sorted_purchases[highboi][0],
+            'amount': to_give
+        })
+
+    dbqueries.equalize_purchases(context.user_data['buffered_purchases'])
+
+    transaction_message = 'The chosen purchases have been equalized under the assumption that the following equalizations will be done:\n'
+    for transaction in transactions:
+        transaction_message += '{} has to send {} to {}\n'.format(
+            dbqueries.find_username(transaction['from']),
+            transaction['amount'] / 100,
+            dbqueries.find_username(transaction['to'])
+        )
+    update.callback_query.edit_message_text(text = transaction_message)
+
+    main_menu_from_callback(update, context, True)
 
     return ConversationHandler.END
 
@@ -399,6 +517,21 @@ def main():
                     CallbackQueryHandler(conv_purchase_abort, pattern = '^ap$')
                 ],
                 PURCHASE_PRICE: [MessageHandler(Filters.text, conv_purchase_set_price)]
+            },
+            fallbacks=[CommandHandler('cancel', conv_cancel)]
+        ),
+        group = 1
+    )
+    dp.add_handler(
+        ConversationHandler(
+            entry_points = [CallbackQueryHandler(conv_equalize_init, pattern = '^equalize$')],
+            states = {
+                EQUALIZE_SELECT: [
+                    CallbackQueryHandler(conv_equalize_buffer_purchase, pattern = '^bp_.+'),
+                    CallbackQueryHandler(conv_equalize_revert_purchase, pattern = '^rp$'),
+                    CallbackQueryHandler(conv_equalize_finish, pattern = '^fe$'),
+                    CallbackQueryHandler(conv_equalize_abort, pattern = '^ae$')
+                ]
             },
             fallbacks=[CommandHandler('cancel', conv_cancel)]
         ),

@@ -152,7 +152,7 @@ def find_checklist_items(checklist_id):
 
         return unwrap(cur.fetchall())
 
-def find_purchases(checklist_id):
+def find_purchases_by_checklist(checklist_id):
     conn = connect_db()
     with conn:
         cur = conn.cursor()
@@ -162,7 +162,7 @@ def find_purchases(checklist_id):
             FROM purchase_item pi
             JOIN purchase p on p.id = pi.purchase_id
             JOIN user u on p.user_id = u.id
-            WHERE p.checklist_id = ?
+            WHERE p.checklist_id = ? AND p.equalized = 0
             ''',
             [checklist_id]
         )
@@ -176,16 +176,13 @@ def find_purchases(checklist_id):
             price = result[1]
             purchase_id = result[2]
             item_name = result[3]
-            if username not in converted_results:
-                converted_results[username] = {
-                    'price' : 0.0,
-                    'purchase_ids' : [],
+            if purchase_id not in converted_results:
+                converted_results[purchase_id] = {
+                    'username': username,
+                    'price' : price/100,
                     'items' : []
                 }
-            if purchase_id not in converted_results[username]['purchase_ids']:
-                converted_results[username]['purchase_ids'].append(purchase_id)
-                converted_results[username]['price'] += price / 100.0
-            converted_results[username]['items'].append(item_name)
+            converted_results[purchase_id]['items'].append(item_name)
 
         return converted_results
 
@@ -327,3 +324,69 @@ def delete_checklist(checklist_id, user_id):
     with conn:
         cur = conn.cursor()
         cur.execute('DELETE FROM checklist where id = ?', [checklist_id])
+
+def find_purchases_to_equalize(checklist_id):
+    conn = connect_db()
+    with conn:
+        cur = conn.cursor()
+        cur.execute('''
+            SELECT p.id, p.price, u.username
+            FROM purchase p
+            JOIN user u on p.user_id = u.id
+            WHERE
+                p.checklist_id = ? AND
+                p.active = 0 AND
+                p.equalized = 0
+        ''', [checklist_id])
+
+        return cur.fetchall()
+
+def find_purchases(purchase_ids):
+    conn = connect_db()
+    with conn:
+        cur = conn.cursor()
+        cur.execute('''
+            SELECT user_id, price
+            FROM purchase
+            WHERE id IN({seq})
+            '''.format(seq=','.join(['?']*len(purchase_ids))),
+            purchase_ids
+        )
+
+        return cur.fetchall()
+
+def find_checklist_participants(checklist_id):
+    conn = connect_db()
+    with conn:
+        cur = conn.cursor()
+        cur.execute('''
+            SELECT user_id
+            FROM checklist_user
+            WHERE checklist_id = ?
+        ''', [checklist_id])
+
+        return cur.fetchall()
+
+def find_username(user_id):
+    conn = connect_db()
+    with conn:
+        cur = conn.cursor()
+        cur.execute('''
+            SELECT username
+            FROM user
+            WHERE id = ?
+        ''', [user_id])
+
+        return cur.fetchone()[0]
+
+def equalize_purchases(purchase_ids):
+    conn = connect_db()
+    with conn:
+        cur = conn.cursor()
+        cur.execute('''
+                UPDATE purchase
+                SET equalized = 1
+                WHERE id IN ({seq})
+            '''.format(seq=','.join(['?']*len(purchase_ids))),
+            purchase_ids
+        )

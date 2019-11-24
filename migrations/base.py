@@ -55,6 +55,7 @@ cursorObj.execute("""
         checklist_id integer,
         user_id integer,
         active integer DEFAULT 1,
+        equalized integer DEFAULT 0,
         price integer,
         FOREIGN KEY (checklist_id) REFERENCES checklist(id) ON DELETE SET NULL,
         FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE SET NULL
