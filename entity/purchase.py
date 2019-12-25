@@ -1,9 +1,10 @@
 # coding=utf-8
 
-from sqlalchemy import Column, String, Integer, Boolean, ForeignKey, UniqueConstraint
+from sqlalchemy import Column, Integer, Boolean, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship
 
 from entity.base import Base
+
 
 class Purchase(Base):
     __tablename__ = 'purchases'
@@ -24,4 +25,3 @@ class Purchase(Base):
     def __init__(self, checklist, buyer):
         self.checklist = checklist
         self.buyer = buyer
-

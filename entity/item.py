@@ -5,6 +5,7 @@ from sqlalchemy.orm import relationship
 
 from entity.base import Base
 
+
 class Item(Base):
     __tablename__ = 'items'
 
@@ -22,4 +23,3 @@ class Item(Base):
     def __init__(self, name, checklist):
         self.name = name
         self.checklist = checklist
-

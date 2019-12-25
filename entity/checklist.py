@@ -5,6 +5,7 @@ from sqlalchemy.orm import relationship
 
 from entity.base import Base
 
+
 class Checklist(Base):
     __tablename__ = 'checklists'
 
@@ -20,4 +21,3 @@ class Checklist(Base):
     def __init__(self, name, creator):
         self.name = name
         self.creator = creator
-

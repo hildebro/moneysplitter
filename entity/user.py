@@ -4,6 +4,7 @@ from sqlalchemy import Column, String, Integer
 
 from entity.base import Base
 
+
 class User(Base):
     __tablename__ = 'users'
 
@@ -17,7 +18,6 @@ class User(Base):
         self.first_name = first_name
         self.last_name = last_name
 
-    def getDisplayName():
+    def get_display_name(self):
         # todo first available thing: fullname, first name, username
         return self.username
-
