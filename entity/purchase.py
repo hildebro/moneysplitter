@@ -1,5 +1,3 @@
-# coding=utf-8
-
 from sqlalchemy import Column, Integer, Boolean, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship
 

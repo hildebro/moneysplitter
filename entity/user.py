@@ -1,5 +1,3 @@
-# coding=utf-8
-
 from sqlalchemy import Column, String, Integer
 
 from entity.base import Base
@@ -13,7 +11,8 @@ class User(Base):
     first_name = Column(String)
     last_name = Column(String)
 
-    def __init__(self, username, first_name, last_name):
+    def __init__(self, external_id, username, first_name, last_name):
+        self.id = external_id
         self.username = username
         self.first_name = first_name
         self.last_name = last_name

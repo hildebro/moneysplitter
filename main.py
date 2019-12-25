@@ -1,8 +1,12 @@
 import logging
 import operator
+
 from telegram import InlineQueryResultArticle, InputTextMessageContent, InlineKeyboardMarkup, InlineKeyboardButton
-from telegram.ext import Updater, ChosenInlineResultHandler, InlineQueryHandler, CommandHandler, MessageHandler, Filters, CallbackQueryHandler, ConversationHandler
+from telegram.ext import Updater, InlineQueryHandler, CommandHandler, MessageHandler, Filters, CallbackQueryHandler, \
+    ConversationHandler
+
 import dbqueries
+import entity.user_queries as user_queries
 import privatestorage
 
 # conversation states
@@ -14,18 +18,25 @@ PURCHASE_ITEM, PURCHASE_PRICE = range(2)
 EQUALIZE_SELECT = 0
 DELETECHECKLIST_CONFIRM = 0
 
+
 # group 0 methods
 def start(update, context):
-    if dbqueries.check_user_exists(update.message.chat_id):
+    user = update.message.from_user
+    if user_queries.exists(user.id):
         update.message.reply_text('You already started the bot!')
         refresh_username(update, context)
         return
 
-    dbqueries.register_user(update.message.chat)
-    update.message.reply_text('Hello! This bot serves two functions:\n1) Allow a group of people to create a common checklist for items which they want to buy together. Individual users can mark items as purchased and define how much money they spend on them.\n2) Calculate the amounts of money that have to be transfered between group members in order for everyone to be even.')
+    user_queries.register(update.message.from_user)
+    update.message.reply_text('Hello! This bot serves two functions:\n1) Allow a group of people to create a common '
+                              'checklist for items which they want to buy together. Individual users can mark items '
+                              'as purchased and define how much money they spend on them.\n2) Calculate the amounts '
+                              'of money that have to be transferred between group members in order for everyone to be '
+                              'even.')
+
 
 def refresh_username(update, context):
-    dbqueries.refresh_username(update.message.chat)
+    user_queries.refresh(update.message.from_user)
 
 # main menu rendering
 def main_menu_from_message(update, context):
