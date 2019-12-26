@@ -16,10 +16,6 @@ class Purchase(Base):
     equalized = Column(Boolean, default=False)
     price = Column(Integer)
 
-    __table_args__ = (
-        UniqueConstraint('name', 'checklist_id'),
-    )
-
     def __init__(self, checklist, buyer):
         self.checklist = checklist
         self.buyer = buyer

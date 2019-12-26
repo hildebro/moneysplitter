@@ -6,7 +6,8 @@ from telegram.ext import Updater, InlineQueryHandler, CommandHandler, MessageHan
     ConversationHandler
 
 import dbqueries
-import entity.user_queries as user_queries
+import entity.queries.checklist_queries as checklist_queries
+import entity.queries.user_queries as user_queries
 import privatestorage
 
 # conversation states
@@ -38,6 +39,7 @@ def start(update, context):
 def refresh_username(update, context):
     user_queries.refresh(update.message.from_user)
 
+
 # main menu rendering
 def main_menu_from_message(update, context):
     context.chat_data.pop('checklist_id', None)
@@ -45,7 +47,8 @@ def main_menu_from_message(update, context):
     reply_markup = main_menu_reply_markup(context, update.message.chat_id)
     update.message.reply_text('Choose a checklist to interact with:', reply_markup=reply_markup)
 
-def main_menu_from_callback(update, context, as_new = False):
+
+def main_menu_from_callback(update, context, as_new=False):
     context.chat_data.pop('checklist_id', None)
     context.chat_data['checklist_names'] = {}
     reply_markup = main_menu_reply_markup(context, update.callback_query.message.chat_id)
@@ -53,14 +56,15 @@ def main_menu_from_callback(update, context, as_new = False):
         update.callback_query.message.reply_text('Choose a checklist to interact with:', reply_markup=reply_markup)
         return
 
-    update.callback_query.edit_message_text(text = 'Choose a checklist to interact with:', reply_markup=reply_markup)
+    update.callback_query.edit_message_text(text='Choose a checklist to interact with:', reply_markup=reply_markup)
+
 
 def main_menu_reply_markup(context, user_id):
-    checklists = dbqueries.find_checklists_by_participant(user_id)
+    checklists = checklist_queries.find_by_participant(user_id)
     keyboard = []
     for checklist in checklists:
-        context.chat_data['checklist_names'][checklist['id']] = checklist['name']
-        keyboard.append([InlineKeyboardButton(checklist['name'], callback_data= 'checklist_{}'.format(checklist['id']))])
+        context.chat_data['checklist_names'][checklist.id] = checklist.name
+        keyboard.append([InlineKeyboardButton(checklist.name, callback_data='checklist_{}'.format(checklist.id))])
     keyboard.append([InlineKeyboardButton('Create new checklist', callback_data='newchecklist')])
 
     return InlineKeyboardMarkup(keyboard)
