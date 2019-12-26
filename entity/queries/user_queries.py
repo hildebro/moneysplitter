@@ -18,6 +18,13 @@ def register(telegram_user):
     session.close()
 
 
+def find(user_id):
+    session = Session()
+    user = session.query(User).filter(User.id == user_id).one()
+    session.close()
+    return user
+
+
 def refresh(telegram_user):
     session = Session()
     user = session.query(User).filter(User.id == telegram_user.id).one()

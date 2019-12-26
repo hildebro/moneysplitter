@@ -110,21 +110,24 @@ def conv_cancel(update, context):
 
     return ConversationHandler.END
 
-def conv_newchecklist_init(update, context):
-    update.callback_query.edit_message_text(text = 'What name should the new checklist have?')
+
+def conv_new_checklist_init(update, context):
+    update.callback_query.edit_message_text(text='What name should the new checklist have?')
 
     return NEWCHECKLIST_NAME
 
-def conv_newchecklist_check(update, context):
-    checklist_name = update.message.text
-    user_id = update.message.chat_id
 
-    if dbqueries.checklist_name_exists(user_id, checklist_name):
-        update.message.reply_text('You already have a checklist with that name. Please provide a new name or stop the process with /cancel.')
+def conv_new_checklist_check(update, context):
+    checklist_name = update.message.text
+    user_id = update.message.from_user.id
+
+    if checklist_queries.exists(user_id, checklist_name):
+        update.message.reply_text('You already have a checklist with that name. Please provide a new name or stop the '
+                                  'process with /cancel.')
 
         return NEWCHECKLIST_NAME
 
-    dbqueries.make_checklist(checklist_name, user_id)
+    checklist_queries.create(user_id, checklist_name)
     update.message.reply_text('Checklist created.')
     main_menu_from_message(update, context)
 
@@ -477,11 +480,11 @@ def main():
     # group 1: actual interactions with the bot
     dp.add_handler(
         ConversationHandler(
-            entry_points = [CallbackQueryHandler(conv_newchecklist_init, pattern = '^newchecklist$')],
-            states = {
-                NEWCHECKLIST_NAME: [MessageHandler(Filters.text, conv_newchecklist_check)],
+            entry_points=[CallbackQueryHandler(conv_new_checklist_init, pattern='^newchecklist$')],
+            states={
+                NEWCHECKLIST_NAME: [MessageHandler(Filters.text, conv_new_checklist_check)],
             },
-            fallbacks = [CommandHandler('cancel', conv_cancel)]
+            fallbacks=[CommandHandler('cancel', conv_cancel)]
         ),
         group = 1
     )
