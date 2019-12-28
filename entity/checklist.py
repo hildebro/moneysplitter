@@ -4,8 +4,8 @@ from sqlalchemy.orm import relationship
 from entity.base import Base
 
 checklist_participants = Table('checklist_participants', Base.metadata,
-                               Column('checklist_id', Integer, ForeignKey('checklists.id')),
-                               Column('user_id', Integer, ForeignKey('users.id'))
+                               Column('checklist_id', Integer, ForeignKey('checklists.id', ondelete='CASCADE')),
+                               Column('user_id', Integer, ForeignKey('users.id', ondelete='CASCADE'))
                                )
 
 

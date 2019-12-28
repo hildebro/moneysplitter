@@ -96,15 +96,22 @@ def advanced_options(update, context):
     reply_markup = InlineKeyboardMarkup(keyboard)
     update.callback_query.edit_message_text(text='Choose an action:', reply_markup=reply_markup)
 
-def conv_deletechecklist_init(update, context):
-    update.callback_query.edit_message_text(text = 'You are about to delete the selected checklist. If you really want to do this, type /delete. Otherwise, type /cancel.')
+
+def conv_delete_checklist_init(update, context):
+    update.callback_query.edit_message_text(text='You are about to delete the selected checklist. If you really '
+                                                 'want to do this, type /delete. Otherwise, type /cancel.')
 
     return DELETECHECKLIST_CONFIRM
 
-def conv_deletechecklist_execute(update, context):
+
+def conv_delete_checklist_execute(update, context):
     checklist_id = context.chat_data['checklist_id']
-    dbqueries.delete_checklist(checklist_id, update.message.chat_id)
+    checklist_queries.delete(checklist_id, update.message.chat_id)
     update.message.reply_text('Checklist deleted.')
+
+    main_menu_from_message(update, context)
+
+    return ConversationHandler.END
 
 
 def conv_cancel(update, context):
@@ -561,10 +568,10 @@ def main():
 
     dp.add_handler(
         ConversationHandler(
-            entry_points = [CallbackQueryHandler(conv_deletechecklist_init, pattern = '^deletechecklist$')],
-            states = {
+            entry_points=[CallbackQueryHandler(conv_delete_checklist_init, pattern='^deletechecklist$')],
+            states={
                 DELETECHECKLIST_CONFIRM: [
-                    CommandHandler('delete', conv_deletechecklist_execute)
+                    CommandHandler('delete', conv_delete_checklist_execute)
                 ],
             },
             fallbacks=[CommandHandler('cancel', conv_cancel)]

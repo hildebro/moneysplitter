@@ -41,3 +41,13 @@ def is_creator(checklist_id, user_id):
         .filter(Checklist.id == checklist_id).one()
     session.close()
     return checklist.creator_id == user_id
+
+
+def delete(checklist_id, user_id):
+    if not is_creator(checklist_id, user_id):
+        raise Exception
+
+    session = Session()
+    session.query(Checklist).filter(Checklist.id == checklist_id).delete()
+    session.commit()
+    session.close()
