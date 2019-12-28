@@ -85,8 +85,7 @@ def advanced_options(update, context):
     checklist_id = context.chat_data['checklist_id']
     keyboard = [[InlineKeyboardButton('Show purchases', callback_data='showpurchases')],
                 [InlineKeyboardButton('Equalize', callback_data='equalize')],
-                [InlineKeyboardButton('Remove items', callback_data='removeitems')],
-                [InlineKeyboardButton('Add user', callback_data='adduser')]]
+                [InlineKeyboardButton('Remove items', callback_data='removeitems')]]
     if checklist_queries.is_creator(checklist_id, update.callback_query.from_user.id):
         keyboard.append([InlineKeyboardButton('Delete checklist', callback_data='deletechecklist')])
 
@@ -143,37 +142,6 @@ def conv_new_checklist_check(update, context):
 
     return ConversationHandler.END
 
-def conv_adduser_init(update, context):
-    update.callback_query.edit_message_text(text = 'What is the username of the person you want to add?')
-
-    return ADDUSER_NAME
-
-def conv_adduser_check(update, context):
-    args = update.message.text.split(' ')
-    if len(args) > 1:
-        # todo enable checklist of users to be added with @ annotation
-        update.message.reply_text('Please provide a single username.')
-
-        return ADDUSER_NAME
-
-    user = dbqueries.find_user(args[0])
-    if user is None:
-        update.message.reply_text('Username not found. Make sure they initiated the bot with /start. If they changed their username since starting the bot, they have to execute /refresh_username. Provide a different name or cancel the transaction with /cancel.')
-
-        return ADDUSER_NAME
-
-    # todo ask user, whether they want to join. if they dont, ask if they want to shadowban the inviter
-    checklist_id = context.chat_data['checklist_id']
-    dbqueries.checklist_add(checklist_id, user['id'])
-    update.message.reply_text(
-        '{} was added to {}.'.format(
-            user['username'],
-            context.chat_data['checklist_names'][checklist_id]
-        )
-    )
-    main_menu_from_message(update, context)
-
-    return ConversationHandler.END
 
 def conv_additems_init(update, context):
     checklist_name = context.chat_data['checklist_names'][context.chat_data['checklist_id']]
@@ -495,16 +463,6 @@ def main():
                 NEWCHECKLIST_NAME: [MessageHandler(Filters.text, conv_new_checklist_check)],
             },
             fallbacks=[CommandHandler('cancel', conv_cancel)]
-        ),
-        group = 1
-    )
-    dp.add_handler(
-        ConversationHandler(
-            entry_points = [CallbackQueryHandler(conv_adduser_init, pattern = '^adduser$')],
-            states = {
-                ADDUSER_NAME: [MessageHandler(Filters.text, conv_adduser_check)]
-            },
-            fallbacks = [CommandHandler('cancel', conv_cancel)]
         ),
         group = 1
     )
