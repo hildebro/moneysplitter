@@ -187,7 +187,7 @@ def conv_remove_items_check(update, context):
     return REMOVEITEMS_NAME
 
 
-def conv_removeitems_finish(update, context):
+def conv_remove_items_finish(update, context):
     update.callback_query.edit_message_text(text='Finished removing items.')
     main_menu_from_callback(update, context)
 
@@ -209,21 +209,22 @@ def render_items_to_remove(update, context):
         InlineKeyboardButton('Finish', callback_data='finish')
     ])
     reply_markup = InlineKeyboardMarkup(keyboard)
-    update.callback_query.edit_message_text(text = 'Choose items to remove from the list:', reply_markup=reply_markup)
+    update.callback_query.edit_message_text(text='Choose items to remove from the list:', reply_markup=reply_markup)
+
 
 def show_items(update, context):
     query = update.callback_query
     checklist_id = context.chat_data['checklist_id']
     checklist_name = context.chat_data['checklist_names'][checklist_id]
-    checklist_items = dbqueries.find_checklist_items(checklist_id)
+    checklist_items = item_queries.find_by_checklist(checklist_id)
     if len(checklist_items) == 0:
-        query.edit_message_text(text = checklist_name + ' has no items.')
+        query.edit_message_text(text=checklist_name + ' has no items.')
     else:
-        query.edit_message_text(text =
-                checklist_name
-                + ' contains the following items:\n'
-                + '\n'.join(checklist_items)
+        query.edit_message_text(
+            text='{} contains the following items:\n{}'.format(checklist_name, '\n'.join(
+                map(lambda checklist_item: checklist_item.name, checklist_items)))
         )
+
     main_menu_from_callback(update, context, True)
 
 
@@ -493,7 +494,7 @@ def main():
             states={
                 REMOVEITEMS_NAME: [
                     CallbackQueryHandler(conv_remove_items_check, pattern='^ri_.+'),
-                    CallbackQueryHandler(conv_removeitems_finish, pattern='^finish$')
+                    CallbackQueryHandler(conv_remove_items_finish, pattern='^finish$')
                 ]
             },
             fallbacks=[CommandHandler('cancel', conv_cancel)]
