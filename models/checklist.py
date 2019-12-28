@@ -1,15 +1,15 @@
 from sqlalchemy import Column, String, Integer, ForeignKey, UniqueConstraint, Table
 from sqlalchemy.orm import relationship
 
-from entity.base import Base
+from db import base
 
-checklist_participants = Table('checklist_participants', Base.metadata,
+checklist_participants = Table('checklist_participants', base.metadata,
                                Column('checklist_id', Integer, ForeignKey('checklists.id', ondelete='CASCADE')),
                                Column('user_id', Integer, ForeignKey('users.id', ondelete='CASCADE'))
                                )
 
 
-class Checklist(Base):
+class Checklist(base):
     __tablename__ = 'checklists'
 
     id = Column(Integer, primary_key=True)

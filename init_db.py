@@ -1,12 +1,6 @@
+"""Drop and create a new database with schema."""
+from db import engine, base
 # noinspection PyUnresolvedReferences
-import entity.checklist
-# noinspection PyUnresolvedReferences
-import entity.item
-# noinspection PyUnresolvedReferences
-import entity.purchase
-# noinspection PyUnresolvedReferences
-import entity.user
+from models import *
 
-from entity.base import engine, Base
-
-Base.metadata.create_all(engine)
+base.metadata.create_all(engine)

@@ -6,9 +6,10 @@ from telegram.ext import Updater, InlineQueryHandler, CommandHandler, MessageHan
     ConversationHandler
 
 import dbqueries
-import entity.queries.checklist_queries as checklist_queries
-import entity.queries.user_queries as user_queries
 import privatestorage
+import queries.checklist_queries as checklist_queries
+import queries.item_queries as item_queries
+import queries.user_queries as user_queries
 
 # conversation states
 NEWCHECKLIST_NAME = 0
@@ -143,16 +144,18 @@ def conv_new_checklist_check(update, context):
     return ConversationHandler.END
 
 
-def conv_additems_init(update, context):
+def conv_add_items_init(update, context):
     checklist_name = context.chat_data['checklist_names'][context.chat_data['checklist_id']]
-    update.callback_query.edit_message_text(text='Send me item names (one at a time) to add them to {}. Use /finish when you are done.'.format(checklist_name))
+    update.callback_query.edit_message_text(text='Send me item names (one at a time) to add them to {}. Use /finish '
+                                                 'when you are done.'.format(checklist_name))
 
     return ADDITEMS_NAME
 
-def conv_additems_check(update, context):
+
+def conv_add_items_check(update, context):
     item_name = update.message.text
     checklist_id = context.chat_data['checklist_id']
-    dbqueries.add_item(item_name, checklist_id)
+    item_queries.create(item_name, checklist_id)
     update.message.reply_text(
         '{} added to {}. Provide more items or stop the action with /finish.'.format(
             item_name, context.chat_data['checklist_names'][checklist_id]
@@ -161,11 +164,13 @@ def conv_additems_check(update, context):
 
     return ADDITEMS_NAME
 
-def conv_additems_finish(update, context):
+
+def conv_add_items_finish(update, context):
     update.message.reply_text('Finished adding items.')
     main_menu_from_message(update, context)
 
     return ConversationHandler.END
+
 
 def conv_removeitems_init(update, context):
     render_items_to_remove(update, context)
@@ -444,6 +449,7 @@ def join_checklist(update, context):
     dbqueries.checklist_add(checklist_id, user_id)
     update.callback_query.answer('Successfully joined checklist!')
 
+
 def main():
     logging.basicConfig(
         level = logging.INFO,
@@ -468,14 +474,14 @@ def main():
     )
     dp.add_handler(
         ConversationHandler(
-           entry_points = [CallbackQueryHandler(conv_additems_init, pattern = '^additems$')],
-           states = {
-               ADDITEMS_NAME: [
-                   CommandHandler('finish', conv_additems_finish),
-                   MessageHandler(Filters.text, conv_additems_check)
+            entry_points=[CallbackQueryHandler(conv_add_items_init, pattern='^additems$')],
+            states={
+                ADDITEMS_NAME: [
+                    CommandHandler('finish', conv_add_items_finish),
+                    MessageHandler(Filters.text, conv_add_items_check)
                 ]
             },
-            fallbacks = [CommandHandler('cancel', conv_cancel)]
+            fallbacks=[CommandHandler('cancel', conv_cancel)]
         ),
         group = 1
     )

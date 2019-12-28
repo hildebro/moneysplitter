@@ -1,10 +1,10 @@
-from entity.base import Session
-from entity.checklist import Checklist
-from entity.queries import user_queries
+from db import get_session
+from models.checklist import Checklist
+from queries import user_queries
 
 
 def exists(creator_id, checklist_name):
-    session = Session()
+    session = get_session()
     checklist_query = session \
         .query(Checklist) \
         .filter(Checklist.creator_id == creator_id,
@@ -18,14 +18,14 @@ def create(creator_id, checklist_name):
     creator = user_queries.find(creator_id)
     checklist = Checklist(checklist_name, creator)
     checklist.participants = [creator]
-    session = Session()
+    session = get_session()
     session.add(checklist)
     session.commit()
     session.close()
 
 
 def find_by_participant(user_id):
-    session = Session()
+    session = get_session()
     checklists = session \
         .query(Checklist) \
         .filter(Checklist.participants.any(id=user_id)) \
@@ -35,7 +35,7 @@ def find_by_participant(user_id):
 
 
 def is_creator(checklist_id, user_id):
-    session = Session()
+    session = get_session()
     checklist = session \
         .query(Checklist) \
         .filter(Checklist.id == checklist_id).one()
@@ -47,7 +47,7 @@ def delete(checklist_id, user_id):
     if not is_creator(checklist_id, user_id):
         raise Exception
 
-    session = Session()
+    session = get_session()
     session.query(Checklist).filter(Checklist.id == checklist_id).delete()
     session.commit()
     session.close()
