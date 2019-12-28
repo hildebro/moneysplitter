@@ -32,3 +32,12 @@ def find_by_participant(user_id):
         .all()
     session.close()
     return checklists
+
+
+def is_creator(checklist_id, user_id):
+    session = Session()
+    checklist = session \
+        .query(Checklist) \
+        .filter(Checklist.id == checklist_id).one()
+    session.close()
+    return checklist.creator_id == user_id

@@ -69,29 +69,32 @@ def main_menu_reply_markup(context, user_id):
 
     return InlineKeyboardMarkup(keyboard)
 
+
 def checklist_options(update, context):
     context.chat_data['checklist_id'] = int(update.callback_query.data.split('_')[1])
-    keyboard = []
-    keyboard.append([InlineKeyboardButton('Show items', callback_data='showitems')])
-    keyboard.append([InlineKeyboardButton('Add items', callback_data='additems')])
-    keyboard.append([InlineKeyboardButton('Start purchase', callback_data='newpurchase')])
-    keyboard.append([InlineKeyboardButton('Advanced Options', callback_data='advancedoptions')])
-    keyboard.append([InlineKeyboardButton('Back to all checklists', callback_data='mainmenu')])
+    keyboard = [[InlineKeyboardButton('Show items', callback_data='showitems')],
+                [InlineKeyboardButton('Add items', callback_data='additems')],
+                [InlineKeyboardButton('Start purchase', callback_data='newpurchase')],
+                [InlineKeyboardButton('Advanced Options', callback_data='advancedoptions')],
+                [InlineKeyboardButton('Back to all checklists', callback_data='mainmenu')]]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    update.callback_query.edit_message_text(text = 'Choose an action:', reply_markup=reply_markup)
+    update.callback_query.edit_message_text(text='Choose an action:', reply_markup=reply_markup)
+
 
 def advanced_options(update, context):
     checklist_id = context.chat_data['checklist_id']
-    keyboard = []
-    keyboard.append([InlineKeyboardButton('Show purchases', callback_data='showpurchases')])
-    keyboard.append([InlineKeyboardButton('Equalize', callback_data='equalize')])
-    keyboard.append([InlineKeyboardButton('Remove items', callback_data='removeitems')])
-    keyboard.append([InlineKeyboardButton('Add user', callback_data='adduser')])
-    if dbqueries.is_creator(checklist_id, update.callback_query.from_user.id):
+    keyboard = [[InlineKeyboardButton('Show purchases', callback_data='showpurchases')],
+                [InlineKeyboardButton('Equalize', callback_data='equalize')],
+                [InlineKeyboardButton('Remove items', callback_data='removeitems')],
+                [InlineKeyboardButton('Add user', callback_data='adduser')]]
+    if checklist_queries.is_creator(checklist_id, update.callback_query.from_user.id):
         keyboard.append([InlineKeyboardButton('Delete checklist', callback_data='deletechecklist')])
-    keyboard.append([InlineKeyboardButton('Back to default options', callback_data='checklist_{}'.format(checklist_id))])
+
+    keyboard.append(
+        [InlineKeyboardButton('Back to default options', callback_data='checklist_{}'.format(checklist_id))]
+    )
     reply_markup = InlineKeyboardMarkup(keyboard)
-    update.callback_query.edit_message_text(text = 'Choose an action:', reply_markup=reply_markup)
+    update.callback_query.edit_message_text(text='Choose an action:', reply_markup=reply_markup)
 
 def conv_deletechecklist_init(update, context):
     update.callback_query.edit_message_text(text = 'You are about to delete the selected checklist. If you really want to do this, type /delete. Otherwise, type /cancel.')
