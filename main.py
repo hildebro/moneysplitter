@@ -172,37 +172,39 @@ def conv_add_items_finish(update, context):
     return ConversationHandler.END
 
 
-def conv_removeitems_init(update, context):
+def conv_remove_items_init(update, context):
     render_items_to_remove(update, context)
 
     return REMOVEITEMS_NAME
 
-def conv_removeitems_check(update, context):
+
+def conv_remove_items_check(update, context):
     query = update.callback_query
-    item_name = query.data.split('_')[1]
-    checklist_id = context.chat_data['checklist_id']
-    dbqueries.remove_item(item_name, checklist_id)
+    item_id = query.data.split('_')[1]
+    item_queries.remove(item_id)
     render_items_to_remove(update, context)
 
     return REMOVEITEMS_NAME
+
 
 def conv_removeitems_finish(update, context):
-    update.callback_query.edit_message_text(text = 'Finished removing items.')
+    update.callback_query.edit_message_text(text='Finished removing items.')
     main_menu_from_callback(update, context)
 
     return ConversationHandler.END
 
+
 def render_items_to_remove(update, context):
-    item_names = dbqueries.find_checklist_items(context.chat_data['checklist_id'])
+    items = item_queries.find_by_checklist(context.chat_data['checklist_id'])
     keyboard = []
-    for item_name in item_names:
-        keyboard.append([InlineKeyboardButton(item_name, callback_data='ri_{}'.format(item_name))])
+    for item in items:
+        keyboard.append([InlineKeyboardButton(item.name, callback_data='ri_{}'.format(item.id))])
 
     # todo either buffer table like with purchases or use chat data for buffer
-    #keyboard.append([
+    # keyboard.append([
     #    InlineKeyboardButton('Revert', callback_data='ri'),
     #    InlineKeyboardButton('Abort', callback_data='ap')
-    #])
+    # ])
     keyboard.append([
         InlineKeyboardButton('Finish', callback_data='finish')
     ])
@@ -487,14 +489,14 @@ def main():
     )
     dp.add_handler(
         ConversationHandler(
-            entry_points = [CallbackQueryHandler(conv_removeitems_init, pattern = '^removeitems$')],
-            states = {
+            entry_points=[CallbackQueryHandler(conv_remove_items_init, pattern='^removeitems$')],
+            states={
                 REMOVEITEMS_NAME: [
-                    CallbackQueryHandler(conv_removeitems_check, pattern = '^ri_.+'),
-                    CallbackQueryHandler(conv_removeitems_finish, pattern = '^finish$')
+                    CallbackQueryHandler(conv_remove_items_check, pattern='^ri_.+'),
+                    CallbackQueryHandler(conv_removeitems_finish, pattern='^finish$')
                 ]
             },
-            fallbacks = [CommandHandler('cancel', conv_cancel)]
+            fallbacks=[CommandHandler('cancel', conv_cancel)]
         ),
         group = 1
     )

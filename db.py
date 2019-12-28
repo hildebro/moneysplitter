@@ -11,4 +11,4 @@ base = declarative_base(bind=engine)
 def get_session():
     """Get a new db session."""
     session = scoped_session(sessionmaker(bind=engine))
-    return session
+    return session()
