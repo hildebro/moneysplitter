@@ -1,10 +1,27 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import ConversationHandler
+from telegram.ext import ConversationHandler, CallbackQueryHandler, MessageHandler, Filters, CommandHandler
 
 from handlers.main_menu_handler import render_checklists, render_checklists_from_callback
+from main import conv_cancel
 from queries import purchase_queries, item_queries
 
 ITEM_STATE, PRICE_STATE = range(2)
+
+
+def get_conversation_handler():
+    return ConversationHandler(
+        entry_points=[CallbackQueryHandler(initialize, pattern='^newpurchase$')],
+        states={
+            ITEM_STATE: [
+                CallbackQueryHandler(buffer_item, pattern='^bi_.+'),
+                CallbackQueryHandler(revert_item, pattern='^ri$'),
+                CallbackQueryHandler(finish, pattern='^fp$'),
+                CallbackQueryHandler(abort, pattern='^ap$')
+            ],
+            PRICE_STATE: [MessageHandler(Filters.text, set_price)]
+        },
+        fallbacks=[CommandHandler('cancel', conv_cancel)]
+    )
 
 
 def initialize(update, context):

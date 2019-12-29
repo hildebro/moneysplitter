@@ -1,19 +1,35 @@
 import operator
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import ConversationHandler
+from telegram.ext import ConversationHandler, CallbackQueryHandler, CommandHandler
 
 from handlers.main_menu_handler import render_checklists_from_callback
+from main import conv_cancel
 from queries import user_queries, purchase_queries, checklist_queries
 
-PURCHASE_STATE = 0
+BASE_STATE = 0
+
+
+def get_conversation_handler():
+    return ConversationHandler(
+        entry_points=[CallbackQueryHandler(initialize, pattern='^equalize$')],
+        states={
+            BASE_STATE: [
+                CallbackQueryHandler(buffer_purchase, pattern='^bp_.+'),
+                CallbackQueryHandler(revert_purchase, pattern='^rp$'),
+                CallbackQueryHandler(finish, pattern='^fe$'),
+                CallbackQueryHandler(abort, pattern='^ae$')
+            ]
+        },
+        fallbacks=[CommandHandler('cancel', conv_cancel)]
+    )
 
 
 def initialize(update, context):
     context.user_data['buffered_purchases'] = []
     render_purchases_to_equalize(update, context)
 
-    return PURCHASE_STATE
+    return BASE_STATE
 
 
 def buffer_purchase(update, context):
@@ -23,7 +39,7 @@ def buffer_purchase(update, context):
     context.user_data['buffered_purchases'].append(int(purchase_id))
     render_purchases_to_equalize(update, context)
 
-    return PURCHASE_STATE
+    return BASE_STATE
 
 
 def revert_purchase(update, context):
@@ -35,7 +51,7 @@ def revert_purchase(update, context):
     buffered_purchases.pop()
     render_purchases_to_equalize(update, context)
 
-    return PURCHASE_STATE
+    return BASE_STATE
 
 
 def render_purchases_to_equalize(update, context):
