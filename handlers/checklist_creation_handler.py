@@ -9,7 +9,7 @@ BASE_STATE = 0
 
 def get_conversation_handler():
     return ConversationHandler(
-        entry_points=[CallbackQueryHandler(initialize, pattern='^newchecklist$')],
+        entry_points=[CallbackQueryHandler(initialize, pattern='^new_checklist$')],
         states={
             BASE_STATE: [MessageHandler(Filters.text, create)],
         },

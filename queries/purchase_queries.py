@@ -45,7 +45,7 @@ def find_by_checklist(checklist_id):
     purchases = session \
         .query(Purchase) \
         .options(joinedload(Purchase.buyer), joinedload(Purchase.items)) \
-        .filter(Purchase.checklist_id == checklist_id, Purchase.active == False) \
+        .filter(Purchase.checklist_id == checklist_id, Purchase.active.is_(False), Purchase.equalized.is_(False)) \
         .all()
     session.close()
     return purchases

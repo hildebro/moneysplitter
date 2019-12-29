@@ -10,7 +10,7 @@ BASE_STATE = 0
 def get_conversation_handler():
     return ConversationHandler(
         entry_points=[
-            CallbackQueryHandler(conv_delete_checklist_init, pattern='^deletechecklist$')],
+            CallbackQueryHandler(conv_delete_checklist_init, pattern='^delete_checklist$')],
         states={
             BASE_STATE: [
                 CommandHandler('delete', conv_delete_checklist_execute)
@@ -28,7 +28,7 @@ def conv_delete_checklist_init(update, context):
 
 
 def conv_delete_checklist_execute(update, context):
-    checklist_id = context.chat_data['checklist_id']
+    checklist_id = context.user_data['checklist_id']
     checklist_queries.delete(checklist_id, update.message.chat_id)
     update.message.reply_text('Checklist deleted.')
 

@@ -4,15 +4,15 @@ from queries import checklist_queries
 
 
 def render_checklists(update, context):
-    context.chat_data.pop('checklist_id', None)
-    context.chat_data['checklist_names'] = {}
+    context.user_data.pop('checklist_id', None)
+    context.user_data['checklist_names'] = {}
     reply_markup = build_checklist_keyboard_markup(context, update.message.chat_id)
     update.message.reply_text('Choose a checklist to interact with:', reply_markup=reply_markup)
 
 
 def render_checklists_from_callback(update, context, as_new=False):
-    context.chat_data.pop('checklist_id', None)
-    context.chat_data['checklist_names'] = {}
+    context.user_data.pop('checklist_id', None)
+    context.user_data['checklist_names'] = {}
     reply_markup = build_checklist_keyboard_markup(context, update.callback_query.message.chat_id)
     if as_new:
         update.callback_query.message.reply_text('Choose a checklist to interact with:', reply_markup=reply_markup)
@@ -25,18 +25,18 @@ def build_checklist_keyboard_markup(context, user_id):
     checklists = checklist_queries.find_by_participant(user_id)
     keyboard = []
     for checklist in checklists:
-        context.chat_data['checklist_names'][checklist.id] = checklist.name
+        context.user_data['checklist_names'][checklist.id] = checklist.name
         keyboard.append([InlineKeyboardButton(checklist.name, callback_data='checklist_{}'.format(checklist.id))])
-    keyboard.append([InlineKeyboardButton('Create new checklist', callback_data='newchecklist')])
+    keyboard.append([InlineKeyboardButton('Create new checklist', callback_data='new_checklist')])
 
     return InlineKeyboardMarkup(keyboard)
 
 
 def render_basic_options(update, context):
-    context.chat_data['checklist_id'] = int(update.callback_query.data.split('_')[1])
+    context.user_data['checklist_id'] = int(update.callback_query.data.split('_')[1])
     keyboard = [[InlineKeyboardButton('Show items', callback_data='show_items')],
-                [InlineKeyboardButton('Add items', callback_data='additems')],
-                [InlineKeyboardButton('Start purchase', callback_data='newpurchase')],
+                [InlineKeyboardButton('Add items', callback_data='add_items')],
+                [InlineKeyboardButton('Start purchase', callback_data='new_purchase')],
                 [InlineKeyboardButton('Advanced Options', callback_data='advanced_options')],
                 [InlineKeyboardButton('Back to all checklists', callback_data='main_menu')]]
     reply_markup = InlineKeyboardMarkup(keyboard)
@@ -44,12 +44,12 @@ def render_basic_options(update, context):
 
 
 def render_advanced_options(update, context):
-    checklist_id = context.chat_data['checklist_id']
+    checklist_id = context.user_data['checklist_id']
     keyboard = [[InlineKeyboardButton('Show purchases', callback_data='show_purchases')],
                 [InlineKeyboardButton('Equalize', callback_data='equalize')],
-                [InlineKeyboardButton('Remove items', callback_data='removeitems')]]
+                [InlineKeyboardButton('Remove items', callback_data='remove_items')]]
     if checklist_queries.is_creator(checklist_id, update.callback_query.from_user.id):
-        keyboard.append([InlineKeyboardButton('Delete checklist', callback_data='deletechecklist')])
+        keyboard.append([InlineKeyboardButton('Delete checklist', callback_data='delete_checklist')])
 
     keyboard.append(
         [InlineKeyboardButton('Back to default options', callback_data='checklist_{}'.format(checklist_id))]

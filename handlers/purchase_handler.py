@@ -10,7 +10,7 @@ ITEM_STATE, PRICE_STATE = range(2)
 
 def get_conversation_handler():
     return ConversationHandler(
-        entry_points=[CallbackQueryHandler(initialize, pattern='^newpurchase$')],
+        entry_points=[CallbackQueryHandler(initialize, pattern='^new_purchase$')],
         states={
             ITEM_STATE: [
                 CallbackQueryHandler(buffer_item, pattern='^bi_.+'),
@@ -26,9 +26,9 @@ def get_conversation_handler():
 
 def initialize(update, context):
     user_id = update.callback_query.message.chat_id
-    checklist_id = context.chat_data['checklist_id']
+    checklist_id = context.user_data['checklist_id']
     purchase = purchase_queries.create(user_id, checklist_id)
-    context.chat_data['purchase_id'] = purchase.id
+    context.user_data['purchase_id'] = purchase.id
     render_items_to_purchase(update, context)
 
     return ITEM_STATE
@@ -38,14 +38,14 @@ def buffer_item(update, context):
     query = update.callback_query
     query_data = query.data.split('_')
     item_id = query_data[1]
-    item_queries.buffer(item_id, context.chat_data['purchase_id'])
+    item_queries.buffer(item_id, context.user_data['purchase_id'])
     render_items_to_purchase(update, context)
 
     return ITEM_STATE
 
 
 def revert_item(update, context):
-    purchase_id = context.chat_data['purchase_id']
+    purchase_id = context.user_data['purchase_id']
     reverted = item_queries.unbuffer(purchase_id)
     if not reverted:
         update.callback_query.answer('Nothing to revert.')
@@ -56,7 +56,7 @@ def revert_item(update, context):
 
 
 def render_items_to_purchase(update, context):
-    items = item_queries.find_for_purchase(context.chat_data['purchase_id'])
+    items = item_queries.find_for_purchase(context.user_data['purchase_id'])
     keyboard = []
     for item in items:
         keyboard.append([InlineKeyboardButton(item.name, callback_data='bi_{}'.format(item.id))])
@@ -73,7 +73,7 @@ def render_items_to_purchase(update, context):
 
 
 def abort(update, context):
-    purchase_queries.abort(context.chat_data['purchase_id'])
+    purchase_queries.abort(context.user_data['purchase_id'])
     update.callback_query.edit_message_text(text='Purchase aborted.')
     render_checklists_from_callback(update, context, True)
 
@@ -81,7 +81,7 @@ def abort(update, context):
 
 
 def finish(update, context):
-    purchase_id = context.chat_data['purchase_id']
+    purchase_id = context.user_data['purchase_id']
     purchase_queries.finish(purchase_id)
     update.callback_query.edit_message_text(text='Purchase committed. How much did you spend?')
 
@@ -97,7 +97,7 @@ def set_price(update, context):
 
         return PRICE_STATE
 
-    purchase_queries.set_price(context.chat_data['purchase_id'], price)
+    purchase_queries.set_price(context.user_data['purchase_id'], price)
     update.message.reply_text('Price has been set.')
     render_checklists(update, context)
 

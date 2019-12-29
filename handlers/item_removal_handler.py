@@ -10,7 +10,7 @@ BASE_STATE = 0
 
 def get_conversation_handler():
     return ConversationHandler(
-        entry_points=[CallbackQueryHandler(initialize, pattern='^removeitems$')],
+        entry_points=[CallbackQueryHandler(initialize, pattern='^remove_items$')],
         states={
             BASE_STATE: [
                 CallbackQueryHandler(remove_item, pattern='^ri_.+'),
@@ -44,7 +44,7 @@ def finish(update, context):
 
 
 def render_items_to_remove(update, context):
-    items = item_queries.find_by_checklist(context.chat_data['checklist_id'])
+    items = item_queries.find_by_checklist(context.user_data['checklist_id'])
     keyboard = []
     for item in items:
         keyboard.append([InlineKeyboardButton(item.name, callback_data='ri_{}'.format(item.id))])

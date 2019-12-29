@@ -4,8 +4,8 @@ from queries import item_queries, purchase_queries
 
 def show_items(update, context):
     query = update.callback_query
-    checklist_id = context.chat_data['checklist_id']
-    checklist_name = context.chat_data['checklist_names'][checklist_id]
+    checklist_id = context.user_data['checklist_id']
+    checklist_name = context.user_data['checklist_names'][checklist_id]
     checklist_items = item_queries.find_by_checklist(checklist_id)
     if len(checklist_items) == 0:
         query.edit_message_text(text=checklist_name + ' has no items.')
@@ -20,8 +20,8 @@ def show_items(update, context):
 
 def show_purchases(update, context):
     query = update.callback_query
-    checklist_id = context.chat_data['checklist_id']
-    checklist_name = context.chat_data['checklist_names'][checklist_id]
+    checklist_id = context.user_data['checklist_id']
+    checklist_name = context.user_data['checklist_names'][checklist_id]
     purchases = purchase_queries.find_by_checklist(checklist_id)
     if len(purchases) == 0:
         text = checklist_name + ' has no purchases.'
