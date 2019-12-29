@@ -239,7 +239,7 @@ def show_purchases(update, context):
         text = ''
         for purchase in purchases:
             text += '{} has paid {} for the following items:\n'.format(purchase.buyer.username,
-                                                                       purchase.price) + '\n'.join(
+                                                                       purchase.get_price()) + '\n'.join(
                 map(lambda item: item.name, purchase.items)) + '\n'
 
     query.edit_message_text(text=text)
@@ -312,7 +312,15 @@ def conv_purchase_finish(update, context):
 
 
 def conv_purchase_set_price(update, context):
-    purchase_queries.set_price(context.chat_data['purchase_id'], update.message.text)
+    price_text = update.message.text.replace(',', '.')
+    try:
+        price = float(price_text)
+    except ValueError:
+        update.message.reply_text('Please enter a valid number (no thousands separators allowed).')
+
+        return PURCHASE_PRICE
+
+    purchase_queries.set_price(context.chat_data['purchase_id'], price)
     update.message.reply_text('Price has been set.')
     main_menu_from_message(update, context)
 
@@ -355,7 +363,7 @@ def render_purchases_to_equalize(update, context):
     for purchase in purchases:
         if purchase.id not in context.user_data['buffered_purchases']:
             keyboard.append([InlineKeyboardButton(
-                '{} spent {}'.format(purchase.buyer.username, purchase.price),
+                '{} spent {}'.format(purchase.buyer.username, purchase.get_price()),
                 callback_data='bp_{}'.format(purchase.id)
             )])
 
@@ -383,11 +391,11 @@ def conv_equalize_finish(update, context):
     # sum up purchase prices
     purchases = purchase_queries.find_by_ids(context.user_data['buffered_purchases'])
     for purchase in purchases:
-        average_price += purchase.price
+        average_price += purchase.get_price()
         if purchase.buyer.id not in summed_purchases:
-            summed_purchases[purchase.buyer.id] = purchase.price
+            summed_purchases[purchase.buyer.id] = purchase.get_price()
         else:
-            summed_purchases[purchase.buyer.id] += purchase.price
+            summed_purchases[purchase.buyer.id] += purchase.get_price()
 
     # add entry with price of 0 for everyone who hasn't purchased anything
     participants = checklist_queries.find_participants(context.chat_data['checklist_id'])

@@ -20,3 +20,9 @@ class Purchase(base):
     def __init__(self, buyer_id, checklist_id):
         self.buyer_id = buyer_id
         self.checklist_id = checklist_id
+
+    def get_price(self):
+        return self.price / 100.0
+
+    def set_price(self, price):
+        self.price = int(price * 100)

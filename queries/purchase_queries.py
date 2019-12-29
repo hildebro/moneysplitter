@@ -35,7 +35,7 @@ def finish(purchase_id):
 def set_price(purchase_id, price):
     session = get_session()
     purchase = session.query(Purchase).filter(Purchase.id == purchase_id).one()
-    purchase.price = price
+    purchase.set_price(price)
     session.commit()
     session.close()
 
