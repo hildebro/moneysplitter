@@ -1,5 +1,4 @@
 import logging
-import operator
 
 from telegram import InlineQueryResultArticle, InputTextMessageContent, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import Updater, InlineQueryHandler, CommandHandler, MessageHandler, Filters, CallbackQueryHandler, \
@@ -8,93 +7,16 @@ from telegram.ext import Updater, InlineQueryHandler, CommandHandler, MessageHan
 import privatestorage
 import queries.checklist_queries as checklist_queries
 import queries.item_queries as item_queries
-import queries.user_queries as user_queries
-# conversation states
+from handlers import purchase_handler, equalizer_handler, group_0_handler
+from handlers.main_menu_handler import render_checklists, render_checklists_from_callback, render_basic_options, \
+    render_advanced_options
 from queries import purchase_queries
 
 NEWCHECKLIST_NAME = 0
 ADDUSER_NAME = 0
 ADDITEMS_NAME = 0
 REMOVEITEMS_NAME = 0
-PURCHASE_ITEM, PURCHASE_PRICE = range(2)
-EQUALIZE_SELECT = 0
 DELETECHECKLIST_CONFIRM = 0
-
-
-# group 0 methods
-def start(update, context):
-    user = update.message.from_user
-    if user_queries.exists(user.id):
-        update.message.reply_text('You already started the bot!')
-        refresh_username(update, context)
-        return
-
-    user_queries.register(update.message.from_user)
-    update.message.reply_text('Hello! This bot serves two functions:\n1) Allow a group of people to create a common '
-                              'checklist for items which they want to buy together. Individual users can mark items '
-                              'as purchased and define how much money they spend on them.\n2) Calculate the amounts '
-                              'of money that have to be transferred between group members in order for everyone to be '
-                              'even.')
-
-
-def refresh_username(update, context):
-    user_queries.refresh(update.message.from_user)
-
-
-# main menu rendering
-def main_menu_from_message(update, context):
-    context.chat_data.pop('checklist_id', None)
-    context.chat_data['checklist_names'] = {}
-    reply_markup = main_menu_reply_markup(context, update.message.chat_id)
-    update.message.reply_text('Choose a checklist to interact with:', reply_markup=reply_markup)
-
-
-def main_menu_from_callback(update, context, as_new=False):
-    context.chat_data.pop('checklist_id', None)
-    context.chat_data['checklist_names'] = {}
-    reply_markup = main_menu_reply_markup(context, update.callback_query.message.chat_id)
-    if as_new:
-        update.callback_query.message.reply_text('Choose a checklist to interact with:', reply_markup=reply_markup)
-        return
-
-    update.callback_query.edit_message_text(text='Choose a checklist to interact with:', reply_markup=reply_markup)
-
-
-def main_menu_reply_markup(context, user_id):
-    checklists = checklist_queries.find_by_participant(user_id)
-    keyboard = []
-    for checklist in checklists:
-        context.chat_data['checklist_names'][checklist.id] = checklist.name
-        keyboard.append([InlineKeyboardButton(checklist.name, callback_data='checklist_{}'.format(checklist.id))])
-    keyboard.append([InlineKeyboardButton('Create new checklist', callback_data='newchecklist')])
-
-    return InlineKeyboardMarkup(keyboard)
-
-
-def checklist_options(update, context):
-    context.chat_data['checklist_id'] = int(update.callback_query.data.split('_')[1])
-    keyboard = [[InlineKeyboardButton('Show items', callback_data='showitems')],
-                [InlineKeyboardButton('Add items', callback_data='additems')],
-                [InlineKeyboardButton('Start purchase', callback_data='newpurchase')],
-                [InlineKeyboardButton('Advanced Options', callback_data='advancedoptions')],
-                [InlineKeyboardButton('Back to all checklists', callback_data='mainmenu')]]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    update.callback_query.edit_message_text(text='Choose an action:', reply_markup=reply_markup)
-
-
-def advanced_options(update, context):
-    checklist_id = context.chat_data['checklist_id']
-    keyboard = [[InlineKeyboardButton('Show purchases', callback_data='showpurchases')],
-                [InlineKeyboardButton('Equalize', callback_data='equalize')],
-                [InlineKeyboardButton('Remove items', callback_data='removeitems')]]
-    if checklist_queries.is_creator(checklist_id, update.callback_query.from_user.id):
-        keyboard.append([InlineKeyboardButton('Delete checklist', callback_data='deletechecklist')])
-
-    keyboard.append(
-        [InlineKeyboardButton('Back to default options', callback_data='checklist_{}'.format(checklist_id))]
-    )
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    update.callback_query.edit_message_text(text='Choose an action:', reply_markup=reply_markup)
 
 
 def conv_delete_checklist_init(update, context):
@@ -109,14 +31,14 @@ def conv_delete_checklist_execute(update, context):
     checklist_queries.delete(checklist_id, update.message.chat_id)
     update.message.reply_text('Checklist deleted.')
 
-    main_menu_from_message(update, context)
+    render_checklists(update, context)
 
     return ConversationHandler.END
 
 
 def conv_cancel(update, context):
     update.message.reply_text('The action has been canceled.')
-    main_menu_from_message(update, context)
+    render_checklists(update, context)
 
     return ConversationHandler.END
 
@@ -139,7 +61,7 @@ def conv_new_checklist_check(update, context):
 
     checklist_queries.create(user_id, checklist_name)
     update.message.reply_text('Checklist created.')
-    main_menu_from_message(update, context)
+    render_checklists(update, context)
 
     return ConversationHandler.END
 
@@ -167,7 +89,7 @@ def conv_add_items_check(update, context):
 
 def conv_add_items_finish(update, context):
     update.message.reply_text('Finished adding items.')
-    main_menu_from_message(update, context)
+    render_checklists(update, context)
 
     return ConversationHandler.END
 
@@ -189,7 +111,7 @@ def conv_remove_items_check(update, context):
 
 def conv_remove_items_finish(update, context):
     update.callback_query.edit_message_text(text='Finished removing items.')
-    main_menu_from_callback(update, context)
+    render_checklists_from_callback(update, context)
 
     return ConversationHandler.END
 
@@ -225,7 +147,7 @@ def show_items(update, context):
                 map(lambda checklist_item: checklist_item.name, checklist_items)))
         )
 
-    main_menu_from_callback(update, context, True)
+    render_checklists_from_callback(update, context, True)
 
 
 def show_purchases(update, context):
@@ -243,210 +165,7 @@ def show_purchases(update, context):
                 map(lambda item: item.name, purchase.items)) + '\n'
 
     query.edit_message_text(text=text)
-    main_menu_from_callback(update, context, True)
-
-
-def conv_purchase_init(update, context):
-    user_id = update.callback_query.message.chat_id
-    checklist_id = context.chat_data['checklist_id']
-    purchase = purchase_queries.create(user_id, checklist_id)
-    context.chat_data['purchase_id'] = purchase.id
-    render_items_to_purchase(update, context)
-
-    return PURCHASE_ITEM
-
-
-def conv_purchase_buffer_item(update, context):
-    query = update.callback_query
-    query_data = query.data.split('_')
-    item_id = query_data[1]
-    item_queries.buffer(item_id, context.chat_data['purchase_id'])
-    render_items_to_purchase(update, context)
-
-    return PURCHASE_ITEM
-
-
-def conv_purchase_revert_item(update, context):
-    purchase_id = context.chat_data['purchase_id']
-    reverted = item_queries.unbuffer(purchase_id)
-    if not reverted:
-        # todo make popup: nothing to revert
-        print('nothing to revert')
-        return
-    render_items_to_purchase(update, context)
-
-    return PURCHASE_ITEM
-
-
-def conv_purchase_abort(update, context):
-    purchase_queries.abort(context.chat_data['purchase_id'])
-    update.callback_query.edit_message_text(text='Purchase aborted.')
-    main_menu_from_callback(update, context, True)
-
-    return ConversationHandler.END
-
-
-def render_items_to_purchase(update, context):
-    items = item_queries.find_for_purchase(context.chat_data['purchase_id'])
-    keyboard = []
-    for item in items:
-        keyboard.append([InlineKeyboardButton(item.name, callback_data='bi_{}'.format(item.id))])
-
-    keyboard.append([
-        InlineKeyboardButton('Revert', callback_data='ri'),
-        InlineKeyboardButton('Abort', callback_data='ap')
-    ])
-    keyboard.append([
-        InlineKeyboardButton('Finish', callback_data='fp')
-    ])
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    update.callback_query.edit_message_text(text='Choose items to purchase:', reply_markup=reply_markup)
-
-
-def conv_purchase_finish(update, context):
-    purchase_id = context.chat_data['purchase_id']
-    purchase_queries.finish(purchase_id)
-    update.callback_query.edit_message_text(text='Purchase committed. How much did you spend?')
-
-    return PURCHASE_PRICE
-
-
-def conv_purchase_set_price(update, context):
-    price_text = update.message.text.replace(',', '.')
-    try:
-        price = float(price_text)
-    except ValueError:
-        update.message.reply_text('Please enter a valid number (no thousands separators allowed).')
-
-        return PURCHASE_PRICE
-
-    purchase_queries.set_price(context.chat_data['purchase_id'], price)
-    update.message.reply_text('Price has been set.')
-    main_menu_from_message(update, context)
-
-    return ConversationHandler.END
-
-
-def conv_equalize_init(update, context):
-    context.user_data['buffered_purchases'] = []
-    render_purchases_to_equalize(update, context)
-
-    return EQUALIZE_SELECT
-
-
-def conv_equalize_buffer_purchase(update, context):
-    query = update.callback_query
-    query_data = query.data.split('_')
-    purchase_id = query_data[1]
-    context.user_data['buffered_purchases'].append(int(purchase_id))
-    render_purchases_to_equalize(update, context)
-
-    return EQUALIZE_SELECT
-
-
-def conv_equalize_revert_purchase(update, context):
-    buffered_purchases = context.user_data['buffered_purchases']
-    if not buffered_purchases:
-        # todo make popup: nothing to revert
-        print('nothing to revert')
-        return
-
-    buffered_purchases.pop()
-    render_purchases_to_equalize(update, context)
-
-    return EQUALIZE_SELECT
-
-
-def render_purchases_to_equalize(update, context):
-    purchases = purchase_queries.find_to_equalize(context.chat_data['checklist_id'])
-    keyboard = []
-    for purchase in purchases:
-        if purchase.id not in context.user_data['buffered_purchases']:
-            keyboard.append([InlineKeyboardButton(
-                '{} spent {}'.format(purchase.buyer.username, purchase.get_price()),
-                callback_data='bp_{}'.format(purchase.id)
-            )])
-
-    keyboard.append([
-        InlineKeyboardButton('Revert', callback_data='rp'),
-        InlineKeyboardButton('Abort', callback_data='ae')
-    ])
-    keyboard.append([
-        InlineKeyboardButton('Finish', callback_data='fe')
-    ])
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    update.callback_query.edit_message_text(text='Choose purchases to equalize:', reply_markup=reply_markup)
-
-
-def conv_equalize_abort(update, context):
-    update.callback_query.edit_message_text(text='Equalization aborted.')
-    main_menu_from_callback(update, context, True)
-
-    return ConversationHandler.END
-
-
-def conv_equalize_finish(update, context):
-    summed_purchases = {}
-    average_price = 0
-    # sum up purchase prices
-    purchases = purchase_queries.find_by_ids(context.user_data['buffered_purchases'])
-    for purchase in purchases:
-        average_price += purchase.get_price()
-        if purchase.buyer.id not in summed_purchases:
-            summed_purchases[purchase.buyer.id] = purchase.get_price()
-        else:
-            summed_purchases[purchase.buyer.id] += purchase.get_price()
-
-    # add entry with price of 0 for everyone who hasn't purchased anything
-    participants = checklist_queries.find_participants(context.chat_data['checklist_id'])
-    for participant in participants:
-        if participant.id not in summed_purchases:
-            summed_purchases[participant.id] = 0
-
-    # sort by price (has to be a tuple now)
-    sorted_purchases = sorted(summed_purchases.items(), key=operator.itemgetter(1))
-    average_price /= len(summed_purchases)
-    lowboi = 0
-    highboi = len(sorted_purchases) - 1
-    transactions = []
-    while lowboi < highboi:
-        to_give = average_price - sorted_purchases[lowboi][1]
-        if to_give == 0:
-            lowboi += 1
-            continue
-
-        to_get = sorted_purchases[highboi][1] - average_price
-        if to_get == 0:
-            highboi -= 1
-            continue
-
-        if to_give > to_get:
-            to_give = to_get
-
-        sorted_purchases[lowboi] = (sorted_purchases[lowboi][0], sorted_purchases[lowboi][1] + to_give)
-        sorted_purchases[highboi] = (sorted_purchases[highboi][0], sorted_purchases[highboi][1] - to_give)
-
-        transactions.append({
-            'from': sorted_purchases[lowboi][0],
-            'to': sorted_purchases[highboi][0],
-            'amount': to_give
-        })
-
-    purchase_queries.equalize(context.user_data['buffered_purchases'])
-
-    transaction_message = 'The chosen purchases have been equalized under the assumption that the following ' \
-                          'transactions will be made:\n '
-    for transaction in transactions:
-        transaction_message += '{} has to send {} to {}\n'.format(
-            user_queries.find_username(transaction['from']),
-            transaction['amount'],
-            user_queries.find_username(transaction['to'])
-        )
-    update.callback_query.edit_message_text(text=transaction_message)
-
-    main_menu_from_callback(update, context, True)
-
-    return ConversationHandler.END
+    render_checklists_from_callback(update, context, True)
 
 
 def inline_query_send_invite(update, context):
@@ -489,8 +208,8 @@ def main():
     updater = Updater(privatestorage.get_token(), use_context=True)
     dp = updater.dispatcher
     # group 0: persist new user or update existing ones
-    dp.add_handler(CommandHandler('start', start), group=0)
-    dp.add_handler(MessageHandler(Filters.all, refresh_username), group=0)
+    dp.add_handler(CommandHandler('start', group_0_handler.handle_start_command), group=0)
+    dp.add_handler(MessageHandler(Filters.all, group_0_handler.refresh_username), group=0)
     # group 1: actual interactions with the bot
     dp.add_handler(
         ConversationHandler(
@@ -530,15 +249,15 @@ def main():
     )
     dp.add_handler(
         ConversationHandler(
-            entry_points=[CallbackQueryHandler(conv_purchase_init, pattern='^newpurchase$')],
+            entry_points=[CallbackQueryHandler(purchase_handler.initialize, pattern='^newpurchase$')],
             states={
-                PURCHASE_ITEM: [
-                    CallbackQueryHandler(conv_purchase_buffer_item, pattern='^bi_.+'),
-                    CallbackQueryHandler(conv_purchase_revert_item, pattern='^ri$'),
-                    CallbackQueryHandler(conv_purchase_finish, pattern='^fp$'),
-                    CallbackQueryHandler(conv_purchase_abort, pattern='^ap$')
+                purchase_handler.ITEM_STATE: [
+                    CallbackQueryHandler(purchase_handler.buffer_item, pattern='^bi_.+'),
+                    CallbackQueryHandler(purchase_handler.revert_item, pattern='^ri$'),
+                    CallbackQueryHandler(purchase_handler.finish, pattern='^fp$'),
+                    CallbackQueryHandler(purchase_handler.abort, pattern='^ap$')
                 ],
-                PURCHASE_PRICE: [MessageHandler(Filters.text, conv_purchase_set_price)]
+                purchase_handler.PRICE_STATE: [MessageHandler(Filters.text, purchase_handler.set_price)]
             },
             fallbacks=[CommandHandler('cancel', conv_cancel)]
         ),
@@ -546,13 +265,13 @@ def main():
     )
     dp.add_handler(
         ConversationHandler(
-            entry_points=[CallbackQueryHandler(conv_equalize_init, pattern='^equalize$')],
+            entry_points=[CallbackQueryHandler(equalizer_handler.initialize, pattern='^equalize$')],
             states={
-                EQUALIZE_SELECT: [
-                    CallbackQueryHandler(conv_equalize_buffer_purchase, pattern='^bp_.+'),
-                    CallbackQueryHandler(conv_equalize_revert_purchase, pattern='^rp$'),
-                    CallbackQueryHandler(conv_equalize_finish, pattern='^fe$'),
-                    CallbackQueryHandler(conv_equalize_abort, pattern='^ae$')
+                equalizer_handler.PURCHASE_STATE: [
+                    CallbackQueryHandler(equalizer_handler.buffer_purchase, pattern='^bp_.+'),
+                    CallbackQueryHandler(equalizer_handler.revert_purchase, pattern='^rp$'),
+                    CallbackQueryHandler(equalizer_handler.finish, pattern='^fe$'),
+                    CallbackQueryHandler(equalizer_handler.abort, pattern='^ae$')
                 ]
             },
             fallbacks=[CommandHandler('cancel', conv_cancel)]
@@ -575,14 +294,14 @@ def main():
 
     dp.add_handler(InlineQueryHandler(inline_query_send_invite), group=1)
 
-    dp.add_handler(CallbackQueryHandler(main_menu_from_callback, pattern='^mainmenu$'), group=1)
+    dp.add_handler(CallbackQueryHandler(render_checklists_from_callback, pattern='^mainmenu$'), group=1)
     dp.add_handler(CallbackQueryHandler(show_purchases, pattern='^showpurchases$'), group=1)
     dp.add_handler(CallbackQueryHandler(show_items, pattern='^showitems$'), group=1)
-    dp.add_handler(CallbackQueryHandler(checklist_options, pattern='^checklist_[0-9]+$'), group=1)
-    dp.add_handler(CallbackQueryHandler(advanced_options, pattern='^advancedoptions$'), group=1)
+    dp.add_handler(CallbackQueryHandler(render_basic_options, pattern='^checklist_[0-9]+$'), group=1)
+    dp.add_handler(CallbackQueryHandler(render_advanced_options, pattern='^advancedoptions$'), group=1)
     dp.add_handler(CallbackQueryHandler(join_checklist, pattern='^joinchecklist_[0-9]+$'), group=1)
 
-    dp.add_handler(MessageHandler(Filters.all, main_menu_from_message), group=1)
+    dp.add_handler(MessageHandler(Filters.all, render_checklists), group=1)
 
     updater.start_polling()
     print('Started polling...')
