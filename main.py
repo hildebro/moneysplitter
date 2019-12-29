@@ -5,7 +5,6 @@ from telegram import InlineQueryResultArticle, InputTextMessageContent, InlineKe
 from telegram.ext import Updater, InlineQueryHandler, CommandHandler, MessageHandler, Filters, CallbackQueryHandler, \
     ConversationHandler
 
-import dbqueries
 import privatestorage
 import queries.checklist_queries as checklist_queries
 import queries.item_queries as item_queries
@@ -336,6 +335,7 @@ def conv_equalize_buffer_purchase(update, context):
 
     return EQUALIZE_SELECT
 
+
 def conv_equalize_revert_purchase(update, context):
     buffered_purchases = context.user_data['buffered_purchases']
     if not buffered_purchases:
@@ -440,46 +440,49 @@ def conv_equalize_finish(update, context):
 
     return ConversationHandler.END
 
-def inlinequery_send_invite(update, context):
+
+def inline_query_send_invite(update, context):
     query = update.inline_query.query
 
     inline_options = []
-    for checklist in dbqueries.find_checklists_by_participant(update.inline_query.from_user['id']):
-        if query and not checklist['name'].lower().startswith(query.lower()):
-                continue
+    for checklist in checklist_queries.find_by_creator(update.inline_query.from_user['id']):
+        if query and not checklist.name.lower().startswith(query.lower()):
+            continue
 
         inline_options.append(
             InlineQueryResultArticle(
-                id=checklist['id'],
-                title=checklist['name'],
+                id=checklist.id,
+                title=checklist.name,
                 input_message_content=InputTextMessageContent(
-                    "You are invited to join the checklist {}. Press the button under this message to confirm. If you don't know what this means, check out @PurchaseSplitterBot for more info.".format(checklist['name'])
+                    'You are invited to join the checklist {}. Press the button under this message to confirm. If you '
+                    'don\'t know what this means, check out @PurchaseSplitterBot for more info.'.format(checklist.name)
                 ),
                 reply_markup=InlineKeyboardMarkup([[
-                    InlineKeyboardButton('Join checklist', callback_data='joinchecklist_{}'.format(checklist['id']))
+                    InlineKeyboardButton('Join checklist', callback_data='joinchecklist_{}'.format(checklist.id))
                 ]])
             )
         )
     context.bot.answer_inline_query(update.inline_query.id, inline_options)
 
+
 def join_checklist(update, context):
     checklist_id = update.callback_query.data.split('_')[1]
     user_id = update.callback_query.from_user.id
-    dbqueries.checklist_add(checklist_id, user_id)
+    checklist_queries.join(checklist_id, user_id)
     update.callback_query.answer('Successfully joined checklist!')
 
 
 def main():
     logging.basicConfig(
-        level = logging.INFO,
-        format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        level=logging.INFO,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )
 
     updater = Updater(privatestorage.get_token(), use_context=True)
     dp = updater.dispatcher
     # group 0: persist new user or update existing ones
-    dp.add_handler(CommandHandler('start', start), group = 0)
-    dp.add_handler(MessageHandler(Filters.all, refresh_username), group = 0)
+    dp.add_handler(CommandHandler('start', start), group=0)
+    dp.add_handler(MessageHandler(Filters.all, refresh_username), group=0)
     # group 1: actual interactions with the bot
     dp.add_handler(
         ConversationHandler(
@@ -489,7 +492,7 @@ def main():
             },
             fallbacks=[CommandHandler('cancel', conv_cancel)]
         ),
-        group = 1
+        group=1
     )
     dp.add_handler(
         ConversationHandler(
@@ -502,7 +505,7 @@ def main():
             },
             fallbacks=[CommandHandler('cancel', conv_cancel)]
         ),
-        group = 1
+        group=1
     )
     dp.add_handler(
         ConversationHandler(
@@ -515,38 +518,38 @@ def main():
             },
             fallbacks=[CommandHandler('cancel', conv_cancel)]
         ),
-        group = 1
+        group=1
     )
     dp.add_handler(
         ConversationHandler(
-            entry_points = [CallbackQueryHandler(conv_purchase_init, pattern = '^newpurchase$')],
-            states = {
+            entry_points=[CallbackQueryHandler(conv_purchase_init, pattern='^newpurchase$')],
+            states={
                 PURCHASE_ITEM: [
-                    CallbackQueryHandler(conv_purchase_buffer_item, pattern = '^bi_.+'),
-                    CallbackQueryHandler(conv_purchase_revert_item, pattern = '^ri$'),
-                    CallbackQueryHandler(conv_purchase_finish, pattern = '^fp$'),
-                    CallbackQueryHandler(conv_purchase_abort, pattern = '^ap$')
+                    CallbackQueryHandler(conv_purchase_buffer_item, pattern='^bi_.+'),
+                    CallbackQueryHandler(conv_purchase_revert_item, pattern='^ri$'),
+                    CallbackQueryHandler(conv_purchase_finish, pattern='^fp$'),
+                    CallbackQueryHandler(conv_purchase_abort, pattern='^ap$')
                 ],
                 PURCHASE_PRICE: [MessageHandler(Filters.text, conv_purchase_set_price)]
             },
             fallbacks=[CommandHandler('cancel', conv_cancel)]
         ),
-        group = 1
+        group=1
     )
     dp.add_handler(
         ConversationHandler(
-            entry_points = [CallbackQueryHandler(conv_equalize_init, pattern = '^equalize$')],
-            states = {
+            entry_points=[CallbackQueryHandler(conv_equalize_init, pattern='^equalize$')],
+            states={
                 EQUALIZE_SELECT: [
-                    CallbackQueryHandler(conv_equalize_buffer_purchase, pattern = '^bp_.+'),
-                    CallbackQueryHandler(conv_equalize_revert_purchase, pattern = '^rp$'),
-                    CallbackQueryHandler(conv_equalize_finish, pattern = '^fe$'),
-                    CallbackQueryHandler(conv_equalize_abort, pattern = '^ae$')
+                    CallbackQueryHandler(conv_equalize_buffer_purchase, pattern='^bp_.+'),
+                    CallbackQueryHandler(conv_equalize_revert_purchase, pattern='^rp$'),
+                    CallbackQueryHandler(conv_equalize_finish, pattern='^fe$'),
+                    CallbackQueryHandler(conv_equalize_abort, pattern='^ae$')
                 ]
             },
             fallbacks=[CommandHandler('cancel', conv_cancel)]
         ),
-        group = 1
+        group=1
     )
 
     dp.add_handler(
@@ -559,19 +562,19 @@ def main():
             },
             fallbacks=[CommandHandler('cancel', conv_cancel)]
         ),
-        group = 1
+        group=1
     )
 
-    dp.add_handler(InlineQueryHandler(inlinequery_send_invite), group = 1)
+    dp.add_handler(InlineQueryHandler(inline_query_send_invite), group=1)
 
-    dp.add_handler(CallbackQueryHandler(main_menu_from_callback, pattern = '^mainmenu$'), group = 1)
-    dp.add_handler(CallbackQueryHandler(show_purchases, pattern = '^showpurchases$'), group = 1)
-    dp.add_handler(CallbackQueryHandler(show_items, pattern = '^showitems$'), group = 1)
-    dp.add_handler(CallbackQueryHandler(checklist_options, pattern = '^checklist_[0-9]+$'), group = 1)
-    dp.add_handler(CallbackQueryHandler(advanced_options, pattern = '^advancedoptions$'), group = 1)
-    dp.add_handler(CallbackQueryHandler(join_checklist, pattern = '^joinchecklist_[0-9]+$'), group = 1)
+    dp.add_handler(CallbackQueryHandler(main_menu_from_callback, pattern='^mainmenu$'), group=1)
+    dp.add_handler(CallbackQueryHandler(show_purchases, pattern='^showpurchases$'), group=1)
+    dp.add_handler(CallbackQueryHandler(show_items, pattern='^showitems$'), group=1)
+    dp.add_handler(CallbackQueryHandler(checklist_options, pattern='^checklist_[0-9]+$'), group=1)
+    dp.add_handler(CallbackQueryHandler(advanced_options, pattern='^advancedoptions$'), group=1)
+    dp.add_handler(CallbackQueryHandler(join_checklist, pattern='^joinchecklist_[0-9]+$'), group=1)
 
-    dp.add_handler(MessageHandler(Filters.all, main_menu_from_message), group = 1)
+    dp.add_handler(MessageHandler(Filters.all, main_menu_from_message), group=1)
 
     updater.start_polling()
     print('Started polling...')
@@ -580,4 +583,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

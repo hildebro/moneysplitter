@@ -35,6 +35,16 @@ def find_by_participant(user_id):
     return checklists
 
 
+def find_by_creator(user_id):
+    session = get_session()
+    checklists = session \
+        .query(Checklist) \
+        .filter(Checklist.creator_id == user_id) \
+        .all()
+    session.close()
+    return checklists
+
+
 def find_participants(checklist_id):
     session = get_session()
     participants = session.query(User).filter(User.joined_checklists.any(Checklist.id == checklist_id)).all()
@@ -57,5 +67,14 @@ def delete(checklist_id, user_id):
 
     session = get_session()
     session.query(Checklist).filter(Checklist.id == checklist_id).delete()
+    session.commit()
+    session.close()
+
+
+def join(checklist_id, user_id):
+    user = user_queries.find(user_id)
+    session = get_session()
+    checklist = session.query(Checklist).filter(Checklist.id == checklist_id).one()
+    checklist.participants.append(user)
     session.commit()
     session.close()
