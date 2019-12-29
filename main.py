@@ -319,11 +319,13 @@ def conv_purchase_set_price(update, context):
 
     return ConversationHandler.END
 
+
 def conv_equalize_init(update, context):
     context.user_data['buffered_purchases'] = []
     render_purchases_to_equalize(update, context)
 
     return EQUALIZE_SELECT
+
 
 def conv_equalize_buffer_purchase(update, context):
     query = update.callback_query
@@ -346,14 +348,15 @@ def conv_equalize_revert_purchase(update, context):
 
     return EQUALIZE_SELECT
 
+
 def render_purchases_to_equalize(update, context):
-    purchases = dbqueries.find_purchases_to_equalize(context.chat_data['checklist_id'])
+    purchases = purchase_queries.find_to_equalize(context.chat_data['checklist_id'])
     keyboard = []
     for purchase in purchases:
-        if purchase[0] not in context.user_data['buffered_purchases']:
+        if purchase.id not in context.user_data['buffered_purchases']:
             keyboard.append([InlineKeyboardButton(
-                '{} spent {}'.format(purchase[2], purchase[1]/100),
-                callback_data='bp_{}'.format(purchase[0])
+                '{} spent {}'.format(purchase.buyer.username, purchase.price),
+                callback_data='bp_{}'.format(purchase.id)
             )])
 
     keyboard.append([
@@ -364,31 +367,33 @@ def render_purchases_to_equalize(update, context):
         InlineKeyboardButton('Finish', callback_data='fe')
     ])
     reply_markup = InlineKeyboardMarkup(keyboard)
-    update.callback_query.edit_message_text(text = 'Choose purchases to equalize:', reply_markup=reply_markup)
+    update.callback_query.edit_message_text(text='Choose purchases to equalize:', reply_markup=reply_markup)
+
 
 def conv_equalize_abort(update, context):
-    update.callback_query.edit_message_text(text = 'Equalization aborted.')
+    update.callback_query.edit_message_text(text='Equalization aborted.')
     main_menu_from_callback(update, context, True)
 
     return ConversationHandler.END
+
 
 def conv_equalize_finish(update, context):
     summed_purchases = {}
     average_price = 0
     # sum up purchase prices
-    purchases = dbqueries.find_purchases(context.user_data['buffered_purchases'])
+    purchases = purchase_queries.find_by_ids(context.user_data['buffered_purchases'])
     for purchase in purchases:
-        average_price += purchase[1]
-        if purchase[0] not in summed_purchases:
-            summed_purchases[purchase[0]] = purchase[1]
+        average_price += purchase.price
+        if purchase.buyer.id not in summed_purchases:
+            summed_purchases[purchase.buyer.id] = purchase.price
         else:
-            summed_purchases[purchase[0]] += purchase[1]
+            summed_purchases[purchase.buyer.id] += purchase.price
 
     # add entry with price of 0 for everyone who hasn't purchased anything
-    participants = dbqueries.find_checklist_participants(context.chat_data['checklist_id'])
+    participants = checklist_queries.find_participants(context.chat_data['checklist_id'])
     for participant in participants:
-        if participant[0] not in summed_purchases:
-            summed_purchases[participant[0]] = 0
+        if participant.id not in summed_purchases:
+            summed_purchases[participant.id] = 0
 
     # sort by price (has to be a tuple now)
     sorted_purchases = sorted(summed_purchases.items(), key=operator.itemgetter(1))
@@ -419,16 +424,17 @@ def conv_equalize_finish(update, context):
             'amount': to_give
         })
 
-    dbqueries.equalize_purchases(context.user_data['buffered_purchases'])
+    purchase_queries.equalize(context.user_data['buffered_purchases'])
 
-    transaction_message = 'The chosen purchases have been equalized under the assumption that the following equalizations will be done:\n'
+    transaction_message = 'The chosen purchases have been equalized under the assumption that the following ' \
+                          'transactions will be made:\n '
     for transaction in transactions:
         transaction_message += '{} has to send {} to {}\n'.format(
-            dbqueries.find_username(transaction['from']),
-            transaction['amount'] / 100,
-            dbqueries.find_username(transaction['to'])
+            user_queries.find_username(transaction['from']),
+            transaction['amount'],
+            user_queries.find_username(transaction['to'])
         )
-    update.callback_query.edit_message_text(text = transaction_message)
+    update.callback_query.edit_message_text(text=transaction_message)
 
     main_menu_from_callback(update, context, True)
 
@@ -570,6 +576,7 @@ def main():
     updater.start_polling()
     print('Started polling...')
     updater.idle()
+
 
 if __name__ == '__main__':
     main()

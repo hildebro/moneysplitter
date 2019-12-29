@@ -1,4 +1,5 @@
 from db import get_session
+from models import User
 from models.checklist import Checklist
 from queries import user_queries
 
@@ -32,6 +33,13 @@ def find_by_participant(user_id):
         .all()
     session.close()
     return checklists
+
+
+def find_participants(checklist_id):
+    session = get_session()
+    participants = session.query(User).filter(User.joined_checklists.any(Checklist.id == checklist_id)).all()
+    session.close()
+    return participants
 
 
 def is_creator(checklist_id, user_id):

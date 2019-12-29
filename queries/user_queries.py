@@ -31,3 +31,10 @@ def refresh(telegram_user):
     user.username = telegram_user.username
     session.commit()
     session.close()
+
+
+def find_username(user_id):
+    session = get_session()
+    username = session.query(User.username).filter(User.id == user_id).one()[0]
+    session.close()
+    return username
