@@ -10,8 +10,9 @@ import privatestorage
 import queries.checklist_queries as checklist_queries
 import queries.item_queries as item_queries
 import queries.user_queries as user_queries
-
 # conversation states
+from queries import purchase_queries
+
 NEWCHECKLIST_NAME = 0
 ADDUSER_NAME = 0
 ADDITEMS_NAME = 0
@@ -243,27 +244,30 @@ def show_purchases(update, context):
     query.edit_message_text(text = text)
     main_menu_from_callback(update, context, True)
 
+
 def conv_purchase_init(update, context):
     user_id = update.callback_query.message.chat_id
     checklist_id = context.chat_data['checklist_id']
-    purchase_id = dbqueries.start_purchase(user_id, checklist_id)
-    context.chat_data['purchase_id'] = purchase_id
+    purchase = purchase_queries.create(user_id, checklist_id)
+    context.chat_data['purchase_id'] = purchase.id
     render_items_to_purchase(update, context)
 
     return PURCHASE_ITEM
+
 
 def conv_purchase_buffer_item(update, context):
     query = update.callback_query
     query_data = query.data.split('_')
-    item_name = query_data[1]
-    dbqueries.buffer_item(item_name, context.chat_data['purchase_id'])
+    item_id = query_data[1]
+    item_queries.buffer(item_id, context.chat_data['purchase_id'])
     render_items_to_purchase(update, context)
 
     return PURCHASE_ITEM
 
+
 def conv_purchase_revert_item(update, context):
     purchase_id = context.chat_data['purchase_id']
-    reverted = dbqueries.unbuffer_last_item(purchase_id)
+    reverted = item_queries.unbuffer(purchase_id)
     if not reverted:
         # todo make popup: nothing to revert
         print('nothing to revert')
@@ -272,18 +276,20 @@ def conv_purchase_revert_item(update, context):
 
     return PURCHASE_ITEM
 
+
 def conv_purchase_abort(update, context):
-    dbqueries.abort_purchase(context.chat_data['purchase_id'])
-    update.callback_query.edit_message_text(text = 'Purchase aborted.')
+    purchase_queries.abort(context.chat_data['purchase_id'])
+    update.callback_query.edit_message_text(text='Purchase aborted.')
     main_menu_from_callback(update, context, True)
 
     return ConversationHandler.END
 
+
 def render_items_to_purchase(update, context):
-    item_names = dbqueries.find_items_to_purchase(context.chat_data['purchase_id'])
+    items = item_queries.find_for_purchase(context.chat_data['purchase_id'])
     keyboard = []
-    for item_name in item_names:
-        keyboard.append([InlineKeyboardButton(item_name, callback_data='bi_{}'.format(item_name))])
+    for item in items:
+        keyboard.append([InlineKeyboardButton(item.name, callback_data='bi_{}'.format(item.id))])
 
     keyboard.append([
         InlineKeyboardButton('Revert', callback_data='ri'),
@@ -293,17 +299,19 @@ def render_items_to_purchase(update, context):
         InlineKeyboardButton('Finish', callback_data='fp')
     ])
     reply_markup = InlineKeyboardMarkup(keyboard)
-    update.callback_query.edit_message_text(text = 'Choose items to purchase:', reply_markup=reply_markup)
+    update.callback_query.edit_message_text(text='Choose items to purchase:', reply_markup=reply_markup)
+
 
 def conv_purchase_finish(update, context):
     purchase_id = context.chat_data['purchase_id']
-    dbqueries.finish_purchase(purchase_id)
-    update.callback_query.edit_message_text(text = 'Purchase comitted. How much did you spend?')
+    purchase_queries.finish(purchase_id)
+    update.callback_query.edit_message_text(text='Purchase committed. How much did you spend?')
 
     return PURCHASE_PRICE
 
+
 def conv_purchase_set_price(update, context):
-    dbqueries.set_purchase_price(context.chat_data['purchase_id'], update.message.text)
+    purchase_queries.set_price(context.chat_data['purchase_id'], update.message.text)
     update.message.reply_text('Price has been set.')
     main_menu_from_message(update, context)
 

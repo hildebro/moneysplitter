@@ -16,6 +16,6 @@ class Purchase(base):
     equalized = Column(Boolean, default=False)
     price = Column(Integer)
 
-    def __init__(self, checklist, buyer):
-        self.checklist = checklist
-        self.buyer = buyer
+    def __init__(self, buyer_id, checklist_id):
+        self.buyer_id = buyer_id
+        self.checklist_id = checklist_id

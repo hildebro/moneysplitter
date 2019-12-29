@@ -13,6 +13,7 @@ class Item(base):
     checklist = relationship('Checklist', backref='items', cascade='all, delete-orphan', single_parent=True)
     purchase_id = Column(Integer, ForeignKey('purchases.id', ondelete='SET NULL'))
     purchase = relationship('Purchase', backref='items')
+    purchase_order = Column(Integer)
 
     __table_args__ = (
         UniqueConstraint('name', 'checklist_id'),
