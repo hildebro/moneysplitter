@@ -9,10 +9,10 @@ class Item(base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String)
-    checklist_id = Column(Integer, ForeignKey('checklists.id'))
-    checklist = relationship('Checklist', backref='items', cascade='all, delete-orphan', single_parent=True)
-    purchase_id = Column(Integer, ForeignKey('purchases.id', ondelete='SET NULL'))
-    purchase = relationship('Purchase', backref='items')
+    checklist_id = Column(Integer, ForeignKey('checklists.id', ondelete='cascade'))
+    checklist = relationship('Checklist', back_populates='items')
+    purchase_id = Column(Integer, ForeignKey('purchases.id', ondelete='set null'))
+    purchase = relationship('Purchase', back_populates='items')
     purchase_order = Column(Integer)
 
     __table_args__ = (

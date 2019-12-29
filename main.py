@@ -233,15 +233,17 @@ def show_purchases(update, context):
     query = update.callback_query
     checklist_id = context.chat_data['checklist_id']
     checklist_name = context.chat_data['checklist_names'][checklist_id]
-    purchases = dbqueries.find_purchases_by_checklist(checklist_id)
+    purchases = purchase_queries.find_by_checklist(checklist_id)
     if len(purchases) == 0:
         text = checklist_name + ' has no purchases.'
     else:
         text = ''
-        for purchase in purchases.values():
-            text += '{} has paid {} for the following items:\n'.format(purchase['username'], purchase['price']) + '\n'.join(purchase['items']) + '\n'
+        for purchase in purchases:
+            text += '{} has paid {} for the following items:\n'.format(purchase.buyer.username,
+                                                                       purchase.price) + '\n'.join(
+                map(lambda item: item.name, purchase.items)) + '\n'
 
-    query.edit_message_text(text = text)
+    query.edit_message_text(text=text)
     main_menu_from_callback(update, context, True)
 
 

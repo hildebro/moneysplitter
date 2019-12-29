@@ -1,4 +1,5 @@
 from sqlalchemy import Column, String, Integer
+from sqlalchemy.orm import relationship
 
 from db import base
 
@@ -10,6 +11,9 @@ class User(base):
     username = Column(String, unique=True)
     first_name = Column(String)
     last_name = Column(String)
+    created_checklists = relationship('Checklist', back_populates='creator')
+    joined_checklists = relationship('Checklist', secondary='checklist_participants', back_populates='participants')
+    purchases = relationship('Purchase', back_populates='buyer')
 
     def __init__(self, external_id, username, first_name, last_name):
         self.id = external_id

@@ -1,3 +1,5 @@
+from sqlalchemy.orm import joinedload
+
 from db import get_session
 from models import Item
 from models.purchase import Purchase
@@ -36,3 +38,14 @@ def set_price(purchase_id, price):
     purchase.price = price
     session.commit()
     session.close()
+
+
+def find_by_checklist(checklist_id):
+    session = get_session()
+    purchases = session \
+        .query(Purchase) \
+        .options(joinedload(Purchase.buyer), joinedload(Purchase.items)) \
+        .filter(Purchase.checklist_id == checklist_id, Purchase.active == False) \
+        .all()
+    session.close()
+    return purchases

@@ -21,7 +21,8 @@ def remove(item_id):
 
 def find_by_checklist(checklist_id):
     session = get_session()
-    items = session.query(Item).filter(Item.checklist_id == checklist_id).all()
+    # noinspection PyComparisonWithNone
+    items = session.query(Item).filter(Item.checklist_id == checklist_id, Item.purchase == None).all()
     session.close()
     return items
 

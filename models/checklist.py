@@ -4,8 +4,8 @@ from sqlalchemy.orm import relationship
 from db import base
 
 checklist_participants = Table('checklist_participants', base.metadata,
-                               Column('checklist_id', Integer, ForeignKey('checklists.id', ondelete='CASCADE')),
-                               Column('user_id', Integer, ForeignKey('users.id', ondelete='CASCADE'))
+                               Column('checklist_id', Integer, ForeignKey('checklists.id', ondelete='cascade')),
+                               Column('user_id', Integer, ForeignKey('users.id', ondelete='cascade'))
                                )
 
 
@@ -15,8 +15,10 @@ class Checklist(base):
     id = Column(Integer, primary_key=True)
     name = Column(String)
     creator_id = Column(Integer, ForeignKey('users.id', ondelete='SET NULL'))
-    creator = relationship('User', backref='created_checklists')
-    participants = relationship('User', secondary='checklist_participants', backref='joined_checklists')
+    creator = relationship('User', back_populates='created_checklists')
+    participants = relationship('User', secondary='checklist_participants', back_populates='joined_checklists')
+    items = relationship('Item', back_populates='checklist')
+    purchases = relationship('Purchase', back_populates='checklist')
 
     __table_args__ = (
         UniqueConstraint('name', 'creator_id'),
