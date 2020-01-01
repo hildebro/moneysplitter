@@ -7,18 +7,27 @@ def render_checklists(update, context):
     context.user_data.pop('checklist_id', None)
     context.user_data['checklist_names'] = {}
     reply_markup = build_checklist_keyboard_markup(context, update.message.chat_id)
-    update.message.reply_text('Choose a checklist to interact with:', reply_markup=reply_markup)
+    update.message.reply_text(
+        'This is the *Main Menu*.\n'
+        'All checklists that you are participating in will be listed as buttons. Click on any of them to see more '
+        'options.\n'
+        'You may also create a *new checklist* or *refresh* the buttons to see other people\'s checklist after joining.',
+        reply_markup=reply_markup, parse_mode='Markdown')
 
 
 def render_checklists_from_callback(update, context, as_new=False):
     context.user_data.pop('checklist_id', None)
     context.user_data['checklist_names'] = {}
+    message_text = \
+        'This is the *Main Menu*. All checklists that you are participating in will be listed as buttons. Click on ' \
+        'any of them to see more options.\nYou may also create a *new checklist* or *refresh* the buttons to see ' \
+        'other people\'s checklist after joining.',
     reply_markup = build_checklist_keyboard_markup(context, update.callback_query.message.chat_id)
     if as_new:
-        update.callback_query.message.reply_text('Choose a checklist to interact with:', reply_markup=reply_markup)
+        update.callback_query.message.reply_text(message_text, reply_markup=reply_markup, parse_mode='Markdown')
         return
 
-    update.callback_query.edit_message_text(text='Choose a checklist to interact with:', reply_markup=reply_markup)
+    update.callback_query.edit_message_text(text=message_text, reply_markup=reply_markup, parse_mode='Markdown')
 
 
 def build_checklist_keyboard_markup(context, user_id):
@@ -27,7 +36,8 @@ def build_checklist_keyboard_markup(context, user_id):
     for checklist in checklists:
         context.user_data['checklist_names'][checklist.id] = checklist.name
         keyboard.append([InlineKeyboardButton(checklist.name, callback_data='checklist_{}'.format(checklist.id))])
-    keyboard.append([InlineKeyboardButton('Create new checklist', callback_data='new_checklist')])
+    keyboard.append([InlineKeyboardButton('New checklist...', callback_data='new_checklist')])
+    keyboard.append([InlineKeyboardButton('Refresh', callback_data='refresh_checklists')])
 
     return InlineKeyboardMarkup(keyboard)
 

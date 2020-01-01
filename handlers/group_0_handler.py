@@ -9,11 +9,10 @@ def handle_start_command(update, context):
         return
 
     user_queries.register(update.message.from_user)
-    update.message.reply_text('Hello! This bot serves two functions:\n1) Allow a group of people to create a common '
-                              'checklist for items which they want to buy together. Individual users can mark items '
-                              'as purchased and define how much money they spend on them.\n2) Calculate the amounts '
-                              'of money that have to be transferred between group members in order for everyone to be '
-                              'even.')
+    update.message.reply_text(
+        'Thanks for using Purchase Splitter Bot! If you are here, because you were invited to someone else\'s '
+        'checklist, you can now head back to their invite message and click the button. Otherwise, you can start '
+        'using the bot by creating your own checklist.')
 
 
 def refresh_username(update, context):

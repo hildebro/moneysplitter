@@ -14,6 +14,12 @@ def conv_cancel(update, context):
     return ConversationHandler.END
 
 
+def cancel_conversation(update, context):
+    main_menu_handler.render_checklists_from_callback(update, context)
+
+    return ConversationHandler.END
+
+
 def main():
     # noinspection SpellCheckingInspection
     logging.basicConfig(
@@ -42,6 +48,8 @@ def main():
 
     dp.add_handler(CallbackQueryHandler(basic_callbacks_handler.show_purchases, pattern='^show_purchases$'), group=1)
     dp.add_handler(CallbackQueryHandler(basic_callbacks_handler.show_items, pattern='^show_items$'), group=1)
+    dp.add_handler(CallbackQueryHandler(basic_callbacks_handler.refresh_checklists, pattern='^refresh_checklists$'),
+                   group=1)
     dp.add_handler(CallbackQueryHandler(main_menu_handler.render_checklists_from_callback, pattern='^main_menu$'),
                    group=1)
     dp.add_handler(CallbackQueryHandler(main_menu_handler.render_basic_options, pattern='^checklist_[0-9]+$'), group=1)
