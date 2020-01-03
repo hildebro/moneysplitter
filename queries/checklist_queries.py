@@ -1,3 +1,5 @@
+from sqlalchemy import func
+
 from db import get_session
 from models import User
 from models.checklist import Checklist
@@ -87,3 +89,10 @@ def join(checklist_id, user_id):
     checklist.participants.append(user)
     session.commit()
     session.close()
+
+
+def count_checklists(user_id):
+    session = get_session()
+    count = session.query(func.count(Checklist.id)).filter(Checklist.participants.any(User.id == user_id)).scalar()
+    session.close()
+    return count

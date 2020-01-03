@@ -18,20 +18,15 @@ def render_checklists_from_callback(update, context, as_new=False):
         update.callback_query.message.reply_text(MAIN_MENU_TEXT, reply_markup=reply_markup, parse_mode='Markdown')
         return
 
-    if context.user_data['repaint_needed']:
-        update.callback_query.edit_message_text(text=MAIN_MENU_TEXT, reply_markup=reply_markup, parse_mode='Markdown')
-
-    context.user_data['repaint_needed'] = None
+    update.callback_query.edit_message_text(text=MAIN_MENU_TEXT, reply_markup=reply_markup, parse_mode='Markdown')
 
 
 def build_checklist_keyboard_markup(context, user_id):
-    checklists = checklist_queries.find_by_participant(user_id)
-    context.user_data['repaint_needed'] = \
-        'checklist_names' not in context.user_data or \
-        len(checklists) != len(context.user_data['checklist_names'])
     context.user_data.pop('checklist_id', None)
     context.user_data['checklist_names'] = {}
+
     keyboard = []
+    checklists = checklist_queries.find_by_participant(user_id)
     for checklist in checklists:
         context.user_data['checklist_names'][checklist.id] = checklist.name
         keyboard.append([InlineKeyboardButton(checklist.name, callback_data='checklist_{}'.format(checklist.id))])

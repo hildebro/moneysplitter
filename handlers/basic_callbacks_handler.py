@@ -1,5 +1,5 @@
 from handlers.main_menu_handler import render_checklists_from_callback
-from queries import item_queries, purchase_queries
+from queries import item_queries, purchase_queries, checklist_queries
 
 
 def show_items(update, context):
@@ -37,5 +37,10 @@ def show_purchases(update, context):
 
 
 def refresh_checklists(update, context):
+    if len(context.user_data['checklist_names']) == checklist_queries.count_checklists(
+            update.callback_query.from_user.id):
+        update.callback_query.answer('Nothing new to show!')
+        return
+
     render_checklists_from_callback(update, context, False)
     update.callback_query.answer('Main menu refreshed!')
