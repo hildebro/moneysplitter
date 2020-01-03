@@ -1,6 +1,6 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, InputTextMessageContent, InlineQueryResultArticle
 
-from queries import checklist_queries
+from queries import checklist_queries, user_queries
 
 
 def send_invite_message(update, context):
@@ -28,8 +28,12 @@ def send_invite_message(update, context):
 
 
 def accept_invite_message(update, context):
-    checklist_id = update.callback_query.data.split('_')[-1]
     user_id = update.callback_query.from_user.id
+    if not user_queries.exists(user_id):
+        update.callback_query.answer('Please start the bot before joining a checklist!')
+        return
+
+    checklist_id = update.callback_query.data.split('_')[-1]
     if checklist_queries.is_participant(checklist_id, user_id):
         update.callback_query.answer('You are a participant of that checklist already!')
         return

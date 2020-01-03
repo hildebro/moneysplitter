@@ -15,5 +15,6 @@ def handle_start_command(update, context):
         'using the bot by creating your own checklist.')
 
 
+# noinspection PyUnusedLocal
 def refresh_username(update, context):
     user_queries.refresh(update.message.from_user)
