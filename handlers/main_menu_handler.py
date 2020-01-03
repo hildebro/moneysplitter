@@ -2,36 +2,35 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
 from queries import checklist_queries
 
+MAIN_MENU_TEXT = 'This is the *Main Menu*.\nAll checklists that you are participating in will be listed as buttons. ' \
+                 'Click on any of them to see more options.\nYou may also create a *new checklist* or *refresh* the ' \
+                 'menu after joining someone else\'s checklist.'
+
 
 def render_checklists(update, context):
-    context.user_data.pop('checklist_id', None)
-    context.user_data['checklist_names'] = {}
     reply_markup = build_checklist_keyboard_markup(context, update.message.chat_id)
-    update.message.reply_text(
-        'This is the *Main Menu*.\n'
-        'All checklists that you are participating in will be listed as buttons. Click on any of them to see more '
-        'options.\n'
-        'You may also create a *new checklist* or *refresh* the buttons to see other people\'s checklist after joining.',
-        reply_markup=reply_markup, parse_mode='Markdown')
+    update.message.reply_text(MAIN_MENU_TEXT, reply_markup=reply_markup, parse_mode='Markdown')
 
 
 def render_checklists_from_callback(update, context, as_new=False):
-    context.user_data.pop('checklist_id', None)
-    context.user_data['checklist_names'] = {}
-    message_text = \
-        'This is the *Main Menu*. All checklists that you are participating in will be listed as buttons. Click on ' \
-        'any of them to see more options.\nYou may also create a *new checklist* or *refresh* the buttons to see ' \
-        'other people\'s checklist after joining.',
     reply_markup = build_checklist_keyboard_markup(context, update.callback_query.message.chat_id)
     if as_new:
-        update.callback_query.message.reply_text(message_text, reply_markup=reply_markup, parse_mode='Markdown')
+        update.callback_query.message.reply_text(MAIN_MENU_TEXT, reply_markup=reply_markup, parse_mode='Markdown')
         return
 
-    update.callback_query.edit_message_text(text=message_text, reply_markup=reply_markup, parse_mode='Markdown')
+    if context.user_data['repaint_needed']:
+        update.callback_query.edit_message_text(text=MAIN_MENU_TEXT, reply_markup=reply_markup, parse_mode='Markdown')
+
+    context.user_data['repaint_needed'] = None
 
 
 def build_checklist_keyboard_markup(context, user_id):
     checklists = checklist_queries.find_by_participant(user_id)
+    context.user_data['repaint_needed'] = \
+        'checklist_names' not in context.user_data or \
+        len(checklists) != len(context.user_data['checklist_names'])
+    context.user_data.pop('checklist_id', None)
+    context.user_data['checklist_names'] = {}
     keyboard = []
     for checklist in checklists:
         context.user_data['checklist_names'][checklist.id] = checklist.name
@@ -43,7 +42,7 @@ def build_checklist_keyboard_markup(context, user_id):
 
 
 def render_basic_options(update, context):
-    context.user_data['checklist_id'] = int(update.callback_query.data.split('_')[1])
+    context.user_data['checklist_id'] = int(update.callback_query.data.split('_')[-1])
     keyboard = [[InlineKeyboardButton('Show items', callback_data='show_items')],
                 [InlineKeyboardButton('Add items', callback_data='add_items')],
                 [InlineKeyboardButton('Start purchase', callback_data='new_purchase')],

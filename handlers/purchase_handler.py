@@ -36,8 +36,7 @@ def initialize(update, context):
 
 def buffer_item(update, context):
     query = update.callback_query
-    query_data = query.data.split('_')
-    item_id = query_data[1]
+    item_id = query.data.split('_')[-1]
     item_queries.buffer(item_id, context.user_data['purchase_id'])
     render_items_to_purchase(update, context)
 

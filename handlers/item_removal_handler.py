@@ -29,7 +29,7 @@ def initialize(update, context):
 
 def remove_item(update, context):
     query = update.callback_query
-    item_id = query.data.split('_')[1]
+    item_id = query.data.split('_')[-1]
     item_queries.remove(item_id)
     render_items_to_remove(update, context)
 

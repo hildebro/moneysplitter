@@ -61,6 +61,15 @@ def is_creator(checklist_id, user_id):
     return checklist.creator_id == user_id
 
 
+def is_participant(checklist_id, user_id):
+    session = get_session()
+    checklist = session \
+        .query(Checklist) \
+        .filter(Checklist.id == checklist_id, Checklist.participants.any(User.id == user_id)).scalar()
+    session.close()
+    return checklist is not None
+
+
 def delete(checklist_id, user_id):
     if not is_creator(checklist_id, user_id):
         raise Exception

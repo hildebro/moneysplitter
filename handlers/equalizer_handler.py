@@ -34,8 +34,7 @@ def initialize(update, context):
 
 def buffer_purchase(update, context):
     query = update.callback_query
-    query_data = query.data.split('_')
-    purchase_id = query_data[1]
+    purchase_id = query.data.split('_')[-1]
     context.user_data['buffered_purchases'].append(int(purchase_id))
     render_purchases_to_equalize(update, context)
 

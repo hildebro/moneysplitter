@@ -28,7 +28,11 @@ def send_invite_message(update, context):
 
 
 def accept_invite_message(update, context):
-    checklist_id = update.callback_query.data.split('_')[1]
+    checklist_id = update.callback_query.data.split('_')[-1]
     user_id = update.callback_query.from_user.id
+    if checklist_queries.is_participant(checklist_id, user_id):
+        update.callback_query.answer('You are a participant of that checklist already!')
+        return
+
     checklist_queries.join(checklist_id, user_id)
     update.callback_query.answer('Successfully joined checklist!')

@@ -38,4 +38,4 @@ def show_purchases(update, context):
 
 def refresh_checklists(update, context):
     render_checklists_from_callback(update, context, False)
-    update.callback_query.answer('Your menu has been refreshed!')
+    update.callback_query.answer('Main menu refreshed!')
