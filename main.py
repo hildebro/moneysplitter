@@ -1,7 +1,7 @@
 import logging
 
 from telegram.ext import Updater, InlineQueryHandler, CommandHandler, MessageHandler, Filters, CallbackQueryHandler, \
-    ConversationHandler
+    ConversationHandler, PicklePersistence
 
 import privatestorage
 from handlers import *
@@ -27,7 +27,8 @@ def main():
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )
 
-    updater = Updater(privatestorage.get_token(), use_context=True)
+    persistence = PicklePersistence(filename='bot_state_persistence')
+    updater = Updater(privatestorage.get_token(), use_context=True, persistence=persistence)
     dp = updater.dispatcher
     # group 0: persist new user or update existing ones
     dp.add_handler(CommandHandler('start', group_0_handler.handle_start_command), group=0)
