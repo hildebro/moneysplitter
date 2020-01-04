@@ -30,8 +30,8 @@ def build_checklist_keyboard_markup(context, user_id):
     for checklist in checklists:
         context.user_data['checklist_names'][checklist.id] = checklist.name
         keyboard.append([InlineKeyboardButton(checklist.name, callback_data='checklist_{}'.format(checklist.id))])
-    keyboard.append([InlineKeyboardButton('New checklist...', callback_data='new_checklist')])
-    keyboard.append([InlineKeyboardButton('Refresh', callback_data='refresh_checklists')])
+    keyboard.append([InlineKeyboardButton('🌟 New checklist 🌟', callback_data='new_checklist')])
+    keyboard.append([InlineKeyboardButton('🔄 Refresh 🔄', callback_data='refresh_checklists')])
 
     return InlineKeyboardMarkup(keyboard)
 
