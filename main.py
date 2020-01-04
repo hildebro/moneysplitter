@@ -48,7 +48,7 @@ def main():
                    group=1)
 
     dp.add_handler(CallbackQueryHandler(basic_callbacks_handler.show_purchases, pattern='^show_purchases$'), group=1)
-    dp.add_handler(CallbackQueryHandler(basic_callbacks_handler.show_items, pattern='^show_items$'), group=1)
+    dp.add_handler(CallbackQueryHandler(basic_callbacks_handler.render_item_menu, pattern='^item_menu$'), group=1)
     dp.add_handler(CallbackQueryHandler(basic_callbacks_handler.refresh_checklists, pattern='^refresh_checklists$'),
                    group=1)
     dp.add_handler(CallbackQueryHandler(main_menu_handler.render_main_menu_from_callback, pattern='^main_menu$'),
