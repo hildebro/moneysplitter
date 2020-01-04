@@ -1,6 +1,6 @@
 from telegram.ext import ConversationHandler, CallbackQueryHandler, CommandHandler
 
-from handlers.main_menu_handler import render_checklists
+from handlers.main_menu_handler import render_main_menu
 from main import conv_cancel
 from queries import checklist_queries
 
@@ -32,6 +32,6 @@ def conv_delete_checklist_execute(update, context):
     checklist_queries.delete(checklist_id, update.message.chat_id)
     update.message.reply_text('Checklist deleted.')
 
-    render_checklists(update, context)
+    render_main_menu(update, context)
 
     return ConversationHandler.END

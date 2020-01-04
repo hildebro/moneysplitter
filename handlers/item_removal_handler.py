@@ -1,7 +1,7 @@
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import ConversationHandler, CallbackQueryHandler, CommandHandler
 
-from handlers.main_menu_handler import render_checklists_from_callback
+from handlers.main_menu_handler import render_main_menu_from_callback
 from main import conv_cancel
 from queries import item_queries
 
@@ -38,7 +38,7 @@ def remove_item(update, context):
 
 def finish(update, context):
     update.callback_query.edit_message_text(text='Finished removing items.')
-    render_checklists_from_callback(update, context)
+    render_main_menu_from_callback(update, context)
 
     return ConversationHandler.END
 

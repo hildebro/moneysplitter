@@ -3,7 +3,7 @@ import operator
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ConversationHandler, CallbackQueryHandler, CommandHandler
 
-from handlers.main_menu_handler import render_checklists_from_callback
+from handlers.main_menu_handler import render_main_menu_from_callback
 from main import conv_cancel
 from queries import user_queries, purchase_queries, checklist_queries
 
@@ -76,7 +76,7 @@ def render_purchases_to_equalize(update, context):
 
 def abort(update, context):
     update.callback_query.edit_message_text(text='Equalization aborted.')
-    render_checklists_from_callback(update, context, True)
+    render_main_menu_from_callback(update, context, True)
 
     return ConversationHandler.END
 
@@ -140,6 +140,6 @@ def finish(update, context):
         )
     update.callback_query.edit_message_text(text=transaction_message)
 
-    render_checklists_from_callback(update, context, True)
+    render_main_menu_from_callback(update, context, True)
 
     return ConversationHandler.END

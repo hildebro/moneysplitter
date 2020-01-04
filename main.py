@@ -9,13 +9,13 @@ from handlers import *
 
 def conv_cancel(update, context):
     update.message.reply_text('The action has been canceled.')
-    main_menu_handler.render_checklists(update, context)
+    main_menu_handler.render_main_menu(update, context)
 
     return ConversationHandler.END
 
 
 def cancel_conversation(update, context):
-    main_menu_handler.render_checklists_from_callback(update, context)
+    main_menu_handler.render_main_menu_from_callback(update, context)
 
     return ConversationHandler.END
 
@@ -51,13 +51,13 @@ def main():
     dp.add_handler(CallbackQueryHandler(basic_callbacks_handler.show_items, pattern='^show_items$'), group=1)
     dp.add_handler(CallbackQueryHandler(basic_callbacks_handler.refresh_checklists, pattern='^refresh_checklists$'),
                    group=1)
-    dp.add_handler(CallbackQueryHandler(main_menu_handler.render_checklists_from_callback, pattern='^main_menu$'),
+    dp.add_handler(CallbackQueryHandler(main_menu_handler.render_main_menu_from_callback, pattern='^main_menu$'),
                    group=1)
-    dp.add_handler(CallbackQueryHandler(main_menu_handler.render_basic_options, pattern='^checklist_[0-9]+$'), group=1)
-    dp.add_handler(CallbackQueryHandler(main_menu_handler.render_advanced_options, pattern='^advanced_options$'),
+    dp.add_handler(CallbackQueryHandler(main_menu_handler.render_checklist_menu, pattern='^checklist_[0-9]+$'), group=1)
+    dp.add_handler(CallbackQueryHandler(main_menu_handler.render_advanced_checklist_menu, pattern='^advanced_options$'),
                    group=1)
 
-    dp.add_handler(MessageHandler(Filters.all, main_menu_handler.render_checklists), group=1)
+    dp.add_handler(MessageHandler(Filters.all, main_menu_handler.render_main_menu), group=1)
 
     updater.start_polling()
     print('Started polling...')

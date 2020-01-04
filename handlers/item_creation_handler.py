@@ -1,6 +1,6 @@
 from telegram.ext import ConversationHandler, CallbackQueryHandler, CommandHandler, MessageHandler, Filters
 
-from handlers.main_menu_handler import render_checklists
+from handlers.main_menu_handler import render_main_menu
 from main import conv_cancel
 from queries import item_queries
 
@@ -43,6 +43,6 @@ def add_item(update, context):
 
 def finish(update, context):
     update.message.reply_text('Finished adding items.')
-    render_checklists(update, context)
+    render_main_menu(update, context)
 
     return ConversationHandler.END

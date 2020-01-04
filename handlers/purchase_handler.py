@@ -1,7 +1,7 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ConversationHandler, CallbackQueryHandler, MessageHandler, Filters, CommandHandler
 
-from handlers.main_menu_handler import render_checklists, render_checklists_from_callback
+from handlers.main_menu_handler import render_main_menu, render_main_menu_from_callback
 from main import conv_cancel
 from queries import purchase_queries, item_queries
 
@@ -74,7 +74,7 @@ def render_items_to_purchase(update, context):
 def abort(update, context):
     purchase_queries.abort(context.user_data['purchase_id'])
     update.callback_query.edit_message_text(text='Purchase aborted.')
-    render_checklists_from_callback(update, context, True)
+    render_main_menu_from_callback(update, context, True)
 
     return ConversationHandler.END
 
@@ -98,6 +98,6 @@ def set_price(update, context):
 
     purchase_queries.set_price(context.user_data['purchase_id'], price)
     update.message.reply_text('Price has been set.')
-    render_checklists(update, context)
+    render_main_menu(update, context)
 
     return ConversationHandler.END

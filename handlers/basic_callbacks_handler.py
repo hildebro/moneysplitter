@@ -1,4 +1,4 @@
-from handlers.main_menu_handler import render_checklists_from_callback
+from handlers.main_menu_handler import render_main_menu_from_callback
 from queries import item_queries, purchase_queries, checklist_queries
 
 
@@ -15,7 +15,7 @@ def show_items(update, context):
                 map(lambda checklist_item: checklist_item.name, checklist_items)))
         )
 
-    render_checklists_from_callback(update, context, True)
+    render_main_menu_from_callback(update, context, True)
 
 
 def show_purchases(update, context):
@@ -33,7 +33,7 @@ def show_purchases(update, context):
                 map(lambda item: item.name, purchase.items)) + '\n'
 
     query.edit_message_text(text=text)
-    render_checklists_from_callback(update, context, True)
+    render_main_menu_from_callback(update, context, True)
 
 
 def refresh_checklists(update, context):
@@ -42,5 +42,5 @@ def refresh_checklists(update, context):
         update.callback_query.answer('Nothing new to show!')
         return
 
-    render_checklists_from_callback(update, context, False)
+    render_main_menu_from_callback(update, context, False)
     update.callback_query.answer('Main menu refreshed!')
