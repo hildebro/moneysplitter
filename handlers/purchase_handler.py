@@ -5,7 +5,7 @@ from handlers.main_menu_handler import render_main_menu, render_main_menu_from_c
 from main import conv_cancel
 from queries import purchase_queries, item_queries
 
-PURCHASE_MENU_MESSAGE = 'This is the purchase menu for checklist *{}*. Most recent purchase: TODO'
+PURCHASE_MENU_MESSAGE = 'This is the purchase menu for checklist *{}*.'
 
 
 def render_purchase_menu(update, context):
