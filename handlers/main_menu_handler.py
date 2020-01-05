@@ -49,7 +49,7 @@ def render_checklist_menu(update, context):
     keyboard = [[InlineKeyboardButton('Item Menu', callback_data='item_menu')],
                 [InlineKeyboardButton('Start purchase', callback_data='new_purchase')],
                 [InlineKeyboardButton('Advanced Options', callback_data='advanced_options')],
-                [InlineKeyboardButton('Back to checklist overview', callback_data='main_menu')]]
+                [InlineKeyboardButton('Back to checklist overview', callback_data='checklist_overview')]]
     reply_markup = InlineKeyboardMarkup(keyboard)
     update.callback_query.edit_message_text(
         text=CHECKLIST_MENU_TEXT.format(context.user_data['checklist'].name),

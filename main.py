@@ -50,8 +50,9 @@ def main():
     dp.add_handler(CallbackQueryHandler(basic_callbacks_handler.render_item_menu, pattern='^item_menu$'), group=1)
     dp.add_handler(CallbackQueryHandler(basic_callbacks_handler.refresh_checklists, pattern='^refresh_checklists$'),
                    group=1)
-    dp.add_handler(CallbackQueryHandler(main_menu_handler.render_main_menu_from_callback, pattern='^main_menu$'),
-                   group=1)
+    dp.add_handler(
+        CallbackQueryHandler(main_menu_handler.render_main_menu_from_callback, pattern='^checklist_overview$'),
+        group=1)
     dp.add_handler(CallbackQueryHandler(main_menu_handler.render_checklist_menu, pattern='^checklist_menu_[0-9]+$'),
                    group=1)
     dp.add_handler(CallbackQueryHandler(main_menu_handler.render_advanced_checklist_menu, pattern='^advanced_options$'),

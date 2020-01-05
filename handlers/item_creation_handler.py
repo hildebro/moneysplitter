@@ -1,15 +1,17 @@
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton
 
-from handlers.main_menu_handler import render_main_menu
 from queries import item_queries
 
 
 def add_item(update, context):
-    if context.user_data['checklist'] is None:
+    if 'checklist' not in context.user_data:
         update.message.reply_text(
             'Sorry, I cannot handle messages while you are browsing the checklist overview.\nIf you were trying to '
-            'add items to one of your checklists, you have to enter that checklist\'s main menu first.')
-        render_main_menu(update, context)
+            'add items to one of your checklists, you have to enter that checklist\'s main menu first.',
+            reply_markup=InlineKeyboardMarkup(
+                [[InlineKeyboardButton('Back to checklist overview', callback_data='checklist_overview')]]
+            )
+        )
         return
 
     item_name = update.message.text
