@@ -47,7 +47,7 @@ def render_checklist_menu(update, context):
     checklist_id = int(update.callback_query.data.split('_')[-1])
     context.user_data['checklist'] = context.user_data['all_checklists'][checklist_id]
     keyboard = [[InlineKeyboardButton('Item Menu', callback_data='item_menu')],
-                [InlineKeyboardButton('Start purchase', callback_data='new_purchase')],
+                [InlineKeyboardButton('Purchase Menu', callback_data='purchase_menu')],
                 [InlineKeyboardButton('Advanced Options', callback_data='advanced_options')],
                 [InlineKeyboardButton('Back to checklist overview', callback_data='checklist_overview')]]
     reply_markup = InlineKeyboardMarkup(keyboard)

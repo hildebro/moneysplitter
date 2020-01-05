@@ -5,6 +5,39 @@ from handlers.main_menu_handler import render_main_menu, render_main_menu_from_c
 from main import conv_cancel
 from queries import purchase_queries, item_queries
 
+PURCHASE_MENU_MESSAGE = 'This is the purchase menu for checklist *{}*. Most recent purchase: TODO'
+
+
+def render_purchase_menu(update, context):
+    checklist = context.user_data['checklist']
+    keyboard = [
+        [InlineKeyboardButton('Show unresolved purchases', callback_data='show_purchases')],
+        [InlineKeyboardButton('Start new purchase', callback_data='new_purchase')],
+        [InlineKeyboardButton('Back to main menu', callback_data='checklist_menu_{}'.format(checklist.id))]
+    ]
+    update.callback_query.edit_message_text(text=PURCHASE_MENU_MESSAGE.format(checklist.name),
+                                            reply_markup=InlineKeyboardMarkup(keyboard),
+                                            parse_mode='Markdown')
+
+
+def show_purchases(update, context):
+    query = update.callback_query
+    checklist = context.user_data['checklist']
+    purchases = purchase_queries.find_by_checklist(checklist.id)
+    if len(purchases) == 0:
+        text = checklist.name + ' has no unresolved purchases.'
+    else:
+        text = ''
+        for purchase in purchases:
+            text += '{} has paid {} for the following items:\n'.format(purchase.buyer.username,
+                                                                       purchase.get_price()) + '\n'.join(
+                map(lambda item: item.name, purchase.items)) + '\n'
+
+    query.edit_message_text(text=text, reply_markup=InlineKeyboardMarkup(
+        [[InlineKeyboardButton('Back to purchase menu', callback_data='purchase_menu')]]
+    ))
+
+
 ITEM_STATE, PRICE_STATE = range(2)
 
 
