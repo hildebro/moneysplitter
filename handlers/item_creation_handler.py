@@ -21,20 +21,20 @@ def get_conversation_handler():
 
 
 def initialize(update, context):
-    checklist_name = context.user_data['checklist_names'][context.user_data['checklist_id']]
+    checklist = context.user_data['checklist']
     update.callback_query.edit_message_text(text='Send me item names (one at a time) to add them to {}. Use /finish '
-                                                 'when you are done.'.format(checklist_name))
+                                                 'when you are done.'.format(checklist.name))
 
     return BASE_STATE
 
 
 def add_item(update, context):
     item_name = update.message.text
-    checklist_id = context.user_data['checklist_id']
-    item_queries.create(item_name, checklist_id)
+    checklist = context.user_data['checklist']
+    item_queries.create(item_name, checklist.id)
     update.message.reply_text(
         '{} added to {}. Provide more items or stop the action with /finish.'.format(
-            item_name, context.user_data['checklist_names'][checklist_id]
+            item_name, checklist.name
         )
     )
 

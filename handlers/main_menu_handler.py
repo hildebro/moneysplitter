@@ -24,14 +24,14 @@ def render_main_menu_from_callback(update, context, as_new=False):
 
 
 def build_main_menu_reply_markup(context, user_id):
-    context.user_data.pop('checklist_id', None)
-    context.user_data['checklist_names'] = {}
+    context.user_data.pop('checklist', None)
+    context.user_data['all_checklists'] = {}
 
     keyboard = []
     checklists = checklist_queries.find_by_participant(user_id)
     for checklist in checklists:
-        context.user_data['checklist_names'][checklist.id] = checklist.name
-        keyboard.append([InlineKeyboardButton(checklist.name, callback_data='checklist_{}'.format(checklist.id))])
+        context.user_data['all_checklists'][checklist.id] = checklist
+        keyboard.append([InlineKeyboardButton(checklist.name, callback_data='checklist_menu_{}'.format(checklist.id))])
     keyboard.append([InlineKeyboardButton('🌟 New checklist 🌟', callback_data='new_checklist')])
     keyboard.append([InlineKeyboardButton('🔄 Refresh 🔄', callback_data='refresh_checklists')])
 
@@ -40,7 +40,7 @@ def build_main_menu_reply_markup(context, user_id):
 
 def render_checklist_menu(update, context):
     checklist_id = int(update.callback_query.data.split('_')[-1])
-    context.user_data['checklist_id'] = checklist_id
+    context.user_data['checklist'] = context.user_data['all_checklists'][checklist_id]
     keyboard = [[InlineKeyboardButton('Item Menu', callback_data='item_menu')],
                 [InlineKeyboardButton('Add items', callback_data='add_items')],
                 [InlineKeyboardButton('Start purchase', callback_data='new_purchase')],
@@ -48,12 +48,12 @@ def render_checklist_menu(update, context):
                 [InlineKeyboardButton('Back to all checklists', callback_data='main_menu')]]
     reply_markup = InlineKeyboardMarkup(keyboard)
     update.callback_query.edit_message_text(
-        text=CHECKLIST_MENU_TEXT.format(context.user_data['checklist_names'][checklist_id]),
+        text=CHECKLIST_MENU_TEXT.format(context.user_data['checklist'].name),
         reply_markup=reply_markup, parse_mode='Markdown')
 
 
 def render_advanced_checklist_menu(update, context):
-    checklist_id = context.user_data['checklist_id']
+    checklist_id = context.user_data['checklist'].id
     keyboard = [
         [InlineKeyboardButton('Show purchases', callback_data='show_purchases')],
         [InlineKeyboardButton('Equalize', callback_data='equalize')]
@@ -62,9 +62,9 @@ def render_advanced_checklist_menu(update, context):
         keyboard.append([InlineKeyboardButton('Delete checklist', callback_data='delete_checklist')])
 
     keyboard.append(
-        [InlineKeyboardButton('Back to default options', callback_data='checklist_{}'.format(checklist_id))]
+        [InlineKeyboardButton('Back to default options', callback_data='checklist_menu_{}'.format(checklist_id))]
     )
     reply_markup = InlineKeyboardMarkup(keyboard)
     update.callback_query.edit_message_text(
-        text=ADVANCED_CHECKLIST_MENU_TEXT.format(context.user_data['checklist_names'][checklist_id]),
+        text=ADVANCED_CHECKLIST_MENU_TEXT.format(context.user_data['checklist'].name),
         reply_markup=reply_markup, parse_mode='Markdown')

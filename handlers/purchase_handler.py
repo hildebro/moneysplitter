@@ -26,7 +26,7 @@ def get_conversation_handler():
 
 def initialize(update, context):
     user_id = update.callback_query.message.chat_id
-    checklist_id = context.user_data['checklist_id']
+    checklist_id = context.user_data['checklist'].id
     purchase = purchase_queries.create(user_id, checklist_id)
     context.user_data['purchase_id'] = purchase.id
     render_items_to_purchase(update, context)

@@ -54,7 +54,7 @@ def revert_purchase(update, context):
 
 
 def render_purchases_to_equalize(update, context):
-    purchases = purchase_queries.find_to_equalize(context.user_data['checklist_id'])
+    purchases = purchase_queries.find_to_equalize(context.user_data['checklist'].id)
     keyboard = []
     for purchase in purchases:
         if purchase.id not in context.user_data['buffered_purchases']:
@@ -94,7 +94,7 @@ def finish(update, context):
             summed_purchases[purchase.buyer.id] += purchase.get_price()
 
     # add entry with price of 0 for everyone who hasn't purchased anything
-    participants = checklist_queries.find_participants(context.user_data['checklist_id'])
+    participants = checklist_queries.find_participants(context.user_data['checklist'].id)
     for participant in participants:
         if participant.id not in summed_purchases:
             summed_purchases[participant.id] = 0

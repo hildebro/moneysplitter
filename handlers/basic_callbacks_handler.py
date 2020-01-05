@@ -5,9 +5,9 @@ from queries import item_queries, purchase_queries, checklist_queries
 
 
 def render_item_menu(update, context):
-    checklist_id = context.user_data['checklist_id']
-    checklist_name = context.user_data['checklist_names'][checklist_id]
-    checklist_items = item_queries.find_by_checklist(checklist_id)
+    checklist = context.user_data['checklist']
+    checklist_name = checklist.name
+    checklist_items = item_queries.find_by_checklist(checklist.id)
     if len(checklist_items) == 0:
         text = checklist_name + ' has no items.'
     else:
@@ -16,7 +16,7 @@ def render_item_menu(update, context):
 
     keyboard = [
         [InlineKeyboardButton('Remove items', callback_data='remove_items')],
-        [InlineKeyboardButton('Back to main menu', callback_data='checklist_{}'.format(checklist_id))]
+        [InlineKeyboardButton('Back to main menu', callback_data='checklist_menu_{}'.format(checklist.id))]
     ]
 
     update.callback_query.edit_message_text(text=text, reply_markup=InlineKeyboardMarkup(keyboard),
@@ -25,11 +25,10 @@ def render_item_menu(update, context):
 
 def show_purchases(update, context):
     query = update.callback_query
-    checklist_id = context.user_data['checklist_id']
-    checklist_name = context.user_data['checklist_names'][checklist_id]
-    purchases = purchase_queries.find_by_checklist(checklist_id)
+    checklist = context.user_data['checklist']
+    purchases = purchase_queries.find_by_checklist(checklist.id)
     if len(purchases) == 0:
-        text = checklist_name + ' has no purchases.'
+        text = checklist.name + ' has no purchases.'
     else:
         text = ''
         for purchase in purchases:
@@ -42,7 +41,7 @@ def show_purchases(update, context):
 
 
 def refresh_checklists(update, context):
-    if len(context.user_data['checklist_names']) == checklist_queries.count_checklists(
+    if len(context.user_data['all_checklists']) == checklist_queries.count_checklists(
             update.callback_query.from_user.id):
         update.callback_query.answer('Nothing new to show!')
         return

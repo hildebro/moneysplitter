@@ -28,8 +28,8 @@ def conv_delete_checklist_init(update, context):
 
 
 def conv_delete_checklist_execute(update, context):
-    checklist_id = context.user_data['checklist_id']
-    checklist_queries.delete(checklist_id, update.message.chat_id)
+    checklist = context.user_data['checklist']
+    checklist_queries.delete(checklist.id, update.message.chat_id)
     update.message.reply_text('Checklist deleted.')
 
     render_main_menu(update, context)

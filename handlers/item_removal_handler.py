@@ -44,7 +44,7 @@ def finish(update, context):
 
 
 def render_items_to_remove(update, context):
-    items = item_queries.find_by_checklist(context.user_data['checklist_id'])
+    items = item_queries.find_by_checklist(context.user_data['checklist'].id)
     keyboard = []
     for item in items:
         keyboard.append([InlineKeyboardButton(item.name, callback_data='ri_{}'.format(item.id))])
