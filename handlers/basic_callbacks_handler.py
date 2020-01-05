@@ -1,30 +1,5 @@
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-
 from handlers.main_menu_handler import render_main_menu_from_callback
-from queries import item_queries, purchase_queries, checklist_queries
-
-ITEM_MENU_MESSAGE = \
-    '*{}* contains the following items:\n{}\n\nIf you want to add new items, simply send me a message with a single ' \
-    'item name. You may do this in any menu of this checklist. '
-
-
-def render_item_menu(update, context):
-    checklist = context.user_data['checklist']
-    checklist_name = checklist.name
-    checklist_items = item_queries.find_by_checklist(checklist.id)
-    if len(checklist_items) == 0:
-        text = checklist_name + ' has no items.'
-    else:
-        text = ITEM_MENU_MESSAGE.format(checklist_name,
-                                        '\n'.join(map(lambda checklist_item: checklist_item.name, checklist_items)))
-
-    keyboard = [
-        [InlineKeyboardButton('Remove items', callback_data='remove_items')],
-        [InlineKeyboardButton('Back to main menu', callback_data='checklist_menu_{}'.format(checklist.id))]
-    ]
-
-    update.callback_query.edit_message_text(text=text, reply_markup=InlineKeyboardMarkup(keyboard),
-                                            parse_mode='Markdown')
+from queries import purchase_queries, checklist_queries
 
 
 def show_purchases(update, context):

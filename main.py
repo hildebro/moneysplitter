@@ -37,7 +37,7 @@ def main():
     dp.add_handler(checklist_creation_handler.get_conversation_handler(), group=1)
     dp.add_handler(checklist_removal_handler.get_conversation_handler(), group=1)
 
-    dp.add_handler(item_removal_handler.get_conversation_handler(), group=1)
+    dp.add_handler(item_handler.get_removal_handler(), group=1)
 
     dp.add_handler(purchase_handler.get_conversation_handler(), group=1)
     dp.add_handler(equalizer_handler.get_conversation_handler(), group=1)
@@ -47,7 +47,7 @@ def main():
                    group=1)
 
     dp.add_handler(CallbackQueryHandler(basic_callbacks_handler.show_purchases, pattern='^show_purchases$'), group=1)
-    dp.add_handler(CallbackQueryHandler(basic_callbacks_handler.render_item_menu, pattern='^item_menu$'), group=1)
+    dp.add_handler(CallbackQueryHandler(item_handler.render_item_menu, pattern='^item_menu$'), group=1)
     dp.add_handler(CallbackQueryHandler(basic_callbacks_handler.refresh_checklists, pattern='^refresh_checklists$'),
                    group=1)
     dp.add_handler(
@@ -58,7 +58,7 @@ def main():
     dp.add_handler(CallbackQueryHandler(main_menu_handler.render_advanced_checklist_menu, pattern='^advanced_options$'),
                    group=1)
 
-    dp.add_handler(MessageHandler(Filters.all, item_creation_handler.add_item), group=1)
+    dp.add_handler(MessageHandler(Filters.all, item_handler.add_item), group=1)
 
     updater.start_polling()
     print('Started polling...')
