@@ -50,9 +50,6 @@ def main():
         CallbackQueryHandler(main_menu_handler.render_advanced_checklist_menu, pattern='^advanced_options$'), group=1
     )
 
-    dp.add_handler(CallbackQueryHandler(item_handler.render_item_menu, pattern='^item_menu$'), group=1)
-    dp.add_handler(item_handler.get_removal_handler(), group=1)
-
     dp.add_handler(InlineQueryHandler(inline_query_handler.send_invite_message), group=1)
     dp.add_handler(
         CallbackQueryHandler(inline_query_handler.accept_invite_message, pattern='^join_checklist_[0-9]+$'), group=1
@@ -64,6 +61,9 @@ def main():
 
     dp.add_handler(equalizer_handler.get_conversation_handler(), group=1)
 
+    dp.add_handler(CallbackQueryHandler(item_handler.render_item_menu, pattern='^item_menu$'), group=1)
+    dp.add_handler(CallbackQueryHandler(item_handler.undo_item, pattern='^undo_[0-9]+$'), group=1)
+    dp.add_handler(item_handler.get_removal_handler(), group=1)
     dp.add_handler(MessageHandler(Filters.text, item_handler.add_item), group=1)
 
     updater.start_polling()

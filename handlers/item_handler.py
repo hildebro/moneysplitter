@@ -61,6 +61,22 @@ def add_item(update, context):
     )
 
 
+def undo_item(update, context):
+    item_id = update.callback_query.data.split('_')[-1]
+    item_queries.remove(item_id)
+    checklist = context.user_data['checklist']
+    keyboard = [
+        [
+            InlineKeyboardButton('Back to main menu', callback_data='checklist_menu_{}'.format(checklist.id))
+        ]
+    ]
+    update.callback_query.edit_message_text(
+        text='The item creation has been undone.',
+        reply_markup=InlineKeyboardMarkup(keyboard),
+        parse_mode='Markdown'
+    )
+
+
 BASE_STATE = 0
 
 
