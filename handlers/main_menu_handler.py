@@ -2,11 +2,14 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
 from queries import checklist_queries
 
-MAIN_MENU_TEXT = 'This is the *Main Menu*.\nAll checklists that you are participating in will be listed as buttons. ' \
-                 'Click on any of them to see more options.\nYou may also create a *new checklist* or *refresh* the ' \
-                 'menu after joining someone else\'s checklist.'
-CHECKLIST_MENU_TEXT = 'This is the basic menu for checklist called *{}*. Please choose an action below.'
-ADVANCED_CHECKLIST_MENU_TEXT = 'This is the advanced menu for checklist called *{}*. Please choose an action below.'
+MAIN_MENU_TEXT = \
+    'This is your personal *checklist overview*.\n\nAll checklists that you create or join will be listed here. ' \
+    'Click on a checklist button to enter its main menu.\nYou may also create a *new checklist* or *refresh* this ' \
+    'overview in order for checklists that you have recently joined to appear.'
+CHECKLIST_MENU_TEXT = \
+    'This is the *main menu* for the checklist called *{}* created by {}.\n\nIf you want to interact with this ' \
+    'checklist, please enter one of the submenus. Otherwise, return to the checklist overview'
+ADVANCED_CHECKLIST_MENU_TEXT = 'This is the advanced menu for the checklist called *{}*. Please choose an action below.'
 
 
 def render_main_menu(update, context):
@@ -45,7 +48,7 @@ def render_checklist_menu(update, context):
                 [InlineKeyboardButton('Add items', callback_data='add_items')],
                 [InlineKeyboardButton('Start purchase', callback_data='new_purchase')],
                 [InlineKeyboardButton('Advanced Options', callback_data='advanced_options')],
-                [InlineKeyboardButton('Back to all checklists', callback_data='main_menu')]]
+                [InlineKeyboardButton('Back to checklist overview', callback_data='main_menu')]]
     reply_markup = InlineKeyboardMarkup(keyboard)
     update.callback_query.edit_message_text(
         text=CHECKLIST_MENU_TEXT.format(context.user_data['checklist'].name),
