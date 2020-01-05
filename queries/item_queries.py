@@ -12,9 +12,9 @@ def create(item_name, checklist_id):
     session.close()
 
 
-def remove(item_id):
+def remove_all(ids_to_remove):
     session = get_session()
-    session.query(Item).filter(Item.id == item_id).delete()
+    session.query(Item).filter(Item.id.in_(ids_to_remove)).delete(synchronize_session=False)
     session.commit()
     session.close()
 
