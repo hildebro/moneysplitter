@@ -59,7 +59,6 @@ def render_checklist_menu(update, context):
 def render_advanced_checklist_menu(update, context):
     checklist_id = context.user_data['checklist'].id
     keyboard = [
-        [InlineKeyboardButton('Show purchases', callback_data='show_purchases')],
         [InlineKeyboardButton('Equalize', callback_data='equalize')]
     ]
     if checklist_queries.is_creator(checklist_id, update.callback_query.from_user.id):

@@ -34,8 +34,8 @@ def main():
     dp.add_handler(CommandHandler('start', group_0_handler.handle_start_command), group=0)
     dp.add_handler(MessageHandler(Filters.all, group_0_handler.refresh_username), group=0)
     # group 1: actual interactions with the bot
-    dp.add_handler(checklist_creation_handler.get_conversation_handler(), group=1)
-    dp.add_handler(checklist_removal_handler.get_conversation_handler(), group=1)
+    dp.add_handler(checklist_handler.get_creation_handler(), group=1)
+    dp.add_handler(checklist_handler.get_removal_handler(), group=1)
     dp.add_handler(
         CallbackQueryHandler(basic_callbacks_handler.refresh_checklists, pattern='^refresh_checklists$'), group=1
     )
@@ -64,7 +64,7 @@ def main():
 
     dp.add_handler(equalizer_handler.get_conversation_handler(), group=1)
 
-    dp.add_handler(MessageHandler(Filters.all, item_handler.add_item), group=1)
+    dp.add_handler(MessageHandler(Filters.text, item_handler.add_item), group=1)
 
     updater.start_polling()
     print('Started polling...')
