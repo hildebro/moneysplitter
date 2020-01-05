@@ -7,9 +7,12 @@ from models.item import Item
 
 def create(item_name, checklist_id):
     session = get_session()
-    session.add(Item(item_name, checklist_id))
+    item = Item(item_name, checklist_id)
+    session.add(item)
     session.commit()
+    session.refresh(item)
     session.close()
+    return item
 
 
 def remove_all(ids_to_remove):

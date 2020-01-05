@@ -37,7 +37,6 @@ def main():
     dp.add_handler(checklist_creation_handler.get_conversation_handler(), group=1)
     dp.add_handler(checklist_removal_handler.get_conversation_handler(), group=1)
 
-    dp.add_handler(item_creation_handler.get_conversation_handler(), group=1)
     dp.add_handler(item_removal_handler.get_conversation_handler(), group=1)
 
     dp.add_handler(purchase_handler.get_conversation_handler(), group=1)
@@ -58,7 +57,7 @@ def main():
     dp.add_handler(CallbackQueryHandler(main_menu_handler.render_advanced_checklist_menu, pattern='^advanced_options$'),
                    group=1)
 
-    dp.add_handler(MessageHandler(Filters.all, main_menu_handler.render_main_menu), group=1)
+    dp.add_handler(MessageHandler(Filters.all, item_creation_handler.add_item), group=1)
 
     updater.start_polling()
     print('Started polling...')

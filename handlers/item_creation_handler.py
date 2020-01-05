@@ -1,48 +1,29 @@
-from telegram.ext import ConversationHandler, CallbackQueryHandler, CommandHandler, MessageHandler, Filters
+from telegram import InlineKeyboardMarkup, InlineKeyboardButton
 
 from handlers.main_menu_handler import render_main_menu
-from main import conv_cancel
 from queries import item_queries
-
-BASE_STATE = 0
-
-
-def get_conversation_handler():
-    return ConversationHandler(
-        entry_points=[CallbackQueryHandler(initialize, pattern='^add_items$')],
-        states={
-            BASE_STATE: [
-                CommandHandler('finish', finish),
-                MessageHandler(Filters.text, add_item)
-            ]
-        },
-        fallbacks=[CommandHandler('cancel', conv_cancel)]
-    )
-
-
-def initialize(update, context):
-    checklist = context.user_data['checklist']
-    update.callback_query.edit_message_text(text='Send me item names (one at a time) to add them to {}. Use /finish '
-                                                 'when you are done.'.format(checklist.name))
-
-    return BASE_STATE
 
 
 def add_item(update, context):
+    if context.user_data['checklist'] is None:
+        update.message.reply_text(
+            'Sorry, I cannot handle messages while you are browsing the checklist overview.\nIf you were trying to '
+            'add items to one of your checklists, you have to enter that checklist\'s main menu first.')
+        render_main_menu(update, context)
+        return
+
     item_name = update.message.text
     checklist = context.user_data['checklist']
-    item_queries.create(item_name, checklist.id)
+    item = item_queries.create(item_name, checklist.id)
+    keyboard = [
+        [
+            InlineKeyboardButton('Undo last item', callback_data='undo_{}'.format(item.id)),
+            InlineKeyboardButton('Back to main menu', callback_data='checklist_menu_{}'.format(checklist.id))
+        ]
+    ]
     update.message.reply_text(
-        '{} added to {}. Provide more items or stop the action with /finish.'.format(
-            item_name, checklist.name
-        )
+        'New item *{}* has been added to checklist *{}*. You may add more items or return to the main menu'.format(
+            item_name, checklist.name),
+        reply_markup=InlineKeyboardMarkup(keyboard),
+        parse_mode='Markdown'
     )
-
-    return BASE_STATE
-
-
-def finish(update, context):
-    update.message.reply_text('Finished adding items.')
-    render_main_menu(update, context)
-
-    return ConversationHandler.END

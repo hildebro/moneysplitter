@@ -2,28 +2,30 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
 from queries import checklist_queries
 
-MAIN_MENU_TEXT = \
+CHECKLIST_OVERVIEW_TEXT = \
     'This is your personal *checklist overview*.\n\nAll checklists that you create or join will be listed here. ' \
     'Click on a checklist button to enter its main menu.\nYou may also create a *new checklist* or *refresh* this ' \
     'overview in order for checklists that you have recently joined to appear.'
 CHECKLIST_MENU_TEXT = \
-    'This is the *main menu* for the checklist called *{}* created by {}.\n\nIf you want to interact with this ' \
+    'This is the *main menu* for the checklist called *{}*.\n\nIf you want to interact with this ' \
     'checklist, please enter one of the submenus. Otherwise, return to the checklist overview'
 ADVANCED_CHECKLIST_MENU_TEXT = 'This is the advanced menu for the checklist called *{}*. Please choose an action below.'
 
 
 def render_main_menu(update, context):
     reply_markup = build_main_menu_reply_markup(context, update.message.chat_id)
-    update.message.reply_text(MAIN_MENU_TEXT, reply_markup=reply_markup, parse_mode='Markdown')
+    update.message.reply_text(CHECKLIST_OVERVIEW_TEXT, reply_markup=reply_markup, parse_mode='Markdown')
 
 
 def render_main_menu_from_callback(update, context, as_new=False):
     reply_markup = build_main_menu_reply_markup(context, update.callback_query.message.chat_id)
     if as_new:
-        update.callback_query.message.reply_text(MAIN_MENU_TEXT, reply_markup=reply_markup, parse_mode='Markdown')
+        update.callback_query.message.reply_text(CHECKLIST_OVERVIEW_TEXT, reply_markup=reply_markup,
+                                                 parse_mode='Markdown')
         return
 
-    update.callback_query.edit_message_text(text=MAIN_MENU_TEXT, reply_markup=reply_markup, parse_mode='Markdown')
+    update.callback_query.edit_message_text(text=CHECKLIST_OVERVIEW_TEXT, reply_markup=reply_markup,
+                                            parse_mode='Markdown')
 
 
 def build_main_menu_reply_markup(context, user_id):
@@ -45,7 +47,6 @@ def render_checklist_menu(update, context):
     checklist_id = int(update.callback_query.data.split('_')[-1])
     context.user_data['checklist'] = context.user_data['all_checklists'][checklist_id]
     keyboard = [[InlineKeyboardButton('Item Menu', callback_data='item_menu')],
-                [InlineKeyboardButton('Add items', callback_data='add_items')],
                 [InlineKeyboardButton('Start purchase', callback_data='new_purchase')],
                 [InlineKeyboardButton('Advanced Options', callback_data='advanced_options')],
                 [InlineKeyboardButton('Back to checklist overview', callback_data='main_menu')]]

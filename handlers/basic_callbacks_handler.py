@@ -3,6 +3,10 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from handlers.main_menu_handler import render_main_menu_from_callback
 from queries import item_queries, purchase_queries, checklist_queries
 
+ITEM_MENU_MESSAGE = \
+    '*{}* contains the following items:\n{}\n\nIf you want to add new items, simply send me a message with a single ' \
+    'item name. You may do this in any menu of this checklist. '
+
 
 def render_item_menu(update, context):
     checklist = context.user_data['checklist']
@@ -11,8 +15,8 @@ def render_item_menu(update, context):
     if len(checklist_items) == 0:
         text = checklist_name + ' has no items.'
     else:
-        text = '*{}* contains the following items:\n{}'.format(checklist_name, '\n'.join(
-            map(lambda checklist_item: checklist_item.name, checklist_items)))
+        text = ITEM_MENU_MESSAGE.format(checklist_name,
+                                        '\n'.join(map(lambda checklist_item: checklist_item.name, checklist_items)))
 
     keyboard = [
         [InlineKeyboardButton('Remove items', callback_data='remove_items')],
