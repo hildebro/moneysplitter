@@ -29,13 +29,18 @@ def show_purchases(update, context):
     else:
         text = ''
         for purchase in purchases:
-            text += '{} has paid {} for the following items:\n'.format(purchase.buyer.username,
-                                                                       purchase.get_price()) + '\n'.join(
-                map(lambda item: item.name, purchase.items)) + '\n'
+            text += '*{}* has paid *{}* for the following items:\n'.format(
+                purchase.buyer.username,
+                purchase.get_price()
+            ) + '\n'.join(map(lambda item: item.name, purchase.items)) + '\n'
 
-    query.edit_message_text(text=text, reply_markup=InlineKeyboardMarkup(
-        [[InlineKeyboardButton('Back to purchase menu', callback_data='purchase_menu')]]
-    ))
+    query.edit_message_text(
+        text=text,
+        reply_markup=InlineKeyboardMarkup(
+            [[InlineKeyboardButton('Back to purchase menu', callback_data='purchase_menu')]]
+        ),
+        parse_mode='Markdown'
+    )
 
 
 TYPE_STATE, NAMED_STATE, ITEM_STATE, PRICE_STATE = range(4)
