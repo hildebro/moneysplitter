@@ -38,13 +38,20 @@ def show_purchases(update, context):
     ))
 
 
-ITEM_STATE, PRICE_STATE = range(2)
+TYPE_STATE, NAMED_STATE, ITEM_STATE, PRICE_STATE = range(4)
 
 
 def get_conversation_handler():
     return ConversationHandler(
         entry_points=[CallbackQueryHandler(initialize, pattern='^new_purchase$')],
         states={
+            TYPE_STATE: [
+                CallbackQueryHandler(item_purchase, pattern='^item_purchase$'),
+                CallbackQueryHandler(named_purchase, pattern='^named_purchase$')
+            ],
+            NAMED_STATE: [
+                MessageHandler(Filters.text, set_name)
+            ],
             ITEM_STATE: [
                 CallbackQueryHandler(buffer_item, pattern='^bi_.+'),
                 CallbackQueryHandler(revert_item, pattern='^ri$'),
@@ -62,6 +69,35 @@ def initialize(update, context):
     checklist_id = context.user_data['checklist'].id
     purchase = purchase_queries.create(user_id, checklist_id)
     context.user_data['purchase_id'] = purchase.id
+
+    update.callback_query.edit_message_text(
+        text='Would you like to buy items from the list or create a named purchase?',
+        reply_markup=InlineKeyboardMarkup([
+            [InlineKeyboardButton('Item purchase', callback_data='item_purchase')],
+            [InlineKeyboardButton('Named purchase', callback_data='named_purchase')]
+        ])
+    )
+
+    return TYPE_STATE
+
+
+def named_purchase(update, context):
+    update.callback_query.edit_message_text(text='Please enter a name for your purchase.')
+
+    return NAMED_STATE
+
+
+def set_name(update, context):
+    purchase_id = context.user_data['purchase_id']
+    name = update.message.text
+    item_queries.create_for_named_purchase(name, purchase_id)
+    purchase_queries.finish(purchase_id)
+    update.message.reply_text('Purchase committed. How much did you spend?')
+
+    return PRICE_STATE
+
+
+def item_purchase(update, context):
     render_items_to_purchase(update, context)
 
     return ITEM_STATE
