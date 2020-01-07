@@ -8,6 +8,10 @@ ITEM_MENU_MESSAGE = \
     '*{}* contains the following items:\n{}\n\nIf you want to add new items, simply send me a message with a single ' \
     'item name. You may do this in any menu of this checklist. '
 
+ITEM_MENU_NO_ITEMS_MESSAGE = \
+    '*{}* contains no items.\n\nIf you want to add new items, simply send me a message with a single ' \
+    'item name. You may send item names even when you are not currently inside the item menu.'
+
 ITEM_REMOVAL_MESSAGE = \
     'You are now removing items from checklist *{}*.\n\nClick on items to *(de)select* them for ' \
     'removal.\nWhen you are done, click *Commit* to remove all selected items.\nClick *Abort* to exit ' \
@@ -19,7 +23,7 @@ def render_item_menu(update, context):
     checklist_name = checklist.name
     checklist_items = item_queries.find_by_checklist(checklist.id)
     if len(checklist_items) == 0:
-        text = checklist_name + ' has no items.'
+        text = ITEM_MENU_NO_ITEMS_MESSAGE.format(checklist_name)
     else:
         text = ITEM_MENU_MESSAGE.format(checklist_name,
                                         '\n'.join(map(lambda checklist_item: checklist_item.name, checklist_items)))
