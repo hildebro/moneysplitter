@@ -1,7 +1,7 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ConversationHandler, CallbackQueryHandler, Filters, MessageHandler, CommandHandler
 
-from handlers.main_menu_handler import render_main_menu, render_admin_menu
+from handlers.main_menu_handler import render_checklist_overview, render_admin_menu
 from main import cancel_conversation, conv_cancel
 from queries import checklist_queries
 
@@ -42,7 +42,7 @@ def create(update, context):
 
     checklist_queries.create(user_id, checklist_name)
     update.message.reply_text('Checklist created.')
-    render_main_menu(update, context)
+    render_checklist_overview(update, context)
 
     return ConversationHandler.END
 

@@ -1,40 +1,14 @@
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import CallbackQueryHandler, ConversationHandler, CommandHandler
 
+from handlers.main_menu_handler import render_checklist_menu
 from main import conv_cancel
 from queries import item_queries
-
-ITEM_MENU_MESSAGE = \
-    '*{}* contains the following items:\n{}\n\nIf you want to add new items, simply send me a message with a single ' \
-    'item name. You may do this in any menu of this checklist. '
-
-ITEM_MENU_NO_ITEMS_MESSAGE = \
-    '*{}* contains no items.\n\nIf you want to add new items, simply send me a message with a single ' \
-    'item name. You may send item names even when you are not currently inside the item menu.'
 
 ITEM_REMOVAL_MESSAGE = \
     'You are now removing items from checklist *{}*.\n\nClick on items to *(de)select* them for ' \
     'removal.\nWhen you are done, click *Commit* to remove all selected items.\nClick *Abort* to exit ' \
     'without removals. '
-
-
-def render_item_menu(update, context):
-    checklist = context.user_data['checklist']
-    checklist_name = checklist.name
-    checklist_items = item_queries.find_by_checklist(checklist.id)
-    if len(checklist_items) == 0:
-        text = ITEM_MENU_NO_ITEMS_MESSAGE.format(checklist_name)
-    else:
-        text = ITEM_MENU_MESSAGE.format(checklist_name,
-                                        '\n'.join(map(lambda checklist_item: checklist_item.name, checklist_items)))
-
-    keyboard = [
-        [InlineKeyboardButton('Remove items', callback_data='remove_items')],
-        [InlineKeyboardButton('Back to main menu', callback_data='checklist_menu_{}'.format(checklist.id))]
-    ]
-
-    update.callback_query.edit_message_text(text=text, reply_markup=InlineKeyboardMarkup(keyboard),
-                                            parse_mode='Markdown')
 
 
 def add_item(update, context):
@@ -90,8 +64,8 @@ def get_removal_handler():
         states={
             BASE_STATE: [
                 CallbackQueryHandler(mark_item, pattern='^mark_.+'),
-                CallbackQueryHandler(abort, pattern='^abort$'),
-                CallbackQueryHandler(commit, pattern='^commit$')
+                CallbackQueryHandler(abort, pattern='^abort_[0-9]+$'),
+                CallbackQueryHandler(commit, pattern='^commit_[0-9]+$')
             ]
         },
         fallbacks=[CommandHandler('cancel', conv_cancel)]
@@ -126,7 +100,7 @@ def mark_item(update, context):
 
 def abort(update, context):
     context.user_data['removal_dict'] = None
-    render_item_menu(update, context)
+    render_checklist_menu(update, context)
 
     return ConversationHandler.END
 
@@ -139,21 +113,22 @@ def commit(update, context):
             ids_to_remove.append(item_id)
 
     item_queries.remove_all(ids_to_remove)
-    render_item_menu(update, context)
+    render_checklist_menu(update, context)
 
     return ConversationHandler.END
 
 
 def render_removal_buttons(update, context):
-    keyboard = []
+    checklist = context.user_data['checklist']
     removal_dict = context.user_data['removal_dict']
+
+    keyboard = []
     for item_id in removal_dict:
         keyboard.append([InlineKeyboardButton(removal_dict[item_id], callback_data='mark_{}'.format(item_id))])
-
     keyboard.append([
-        InlineKeyboardButton('Abort', callback_data='abort'),
-        InlineKeyboardButton('Commit', callback_data='commit')
+        InlineKeyboardButton('Abort', callback_data='abort_{}'.format(checklist.id)),
+        InlineKeyboardButton('Commit', callback_data='commit_{}'.format(checklist.id))
     ])
     reply_markup = InlineKeyboardMarkup(keyboard)
-    update.callback_query.edit_message_text(text=ITEM_REMOVAL_MESSAGE.format(context.user_data['checklist'].name),
+    update.callback_query.edit_message_text(text=ITEM_REMOVAL_MESSAGE.format(checklist.name),
                                             reply_markup=reply_markup, parse_mode='Markdown')

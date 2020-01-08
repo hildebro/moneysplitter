@@ -1,29 +1,10 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ConversationHandler, CallbackQueryHandler, MessageHandler, Filters, CommandHandler
 
-from handlers.main_menu_handler import render_main_menu_from_callback
+from handlers.main_menu_handler import render_checklist_menu, \
+    render_checklist_menu_as_new
 from main import conv_cancel
 from queries import purchase_queries, item_queries
-
-PURCHASE_MENU_MESSAGE = 'This is the purchase menu for checklist *{}*.'
-
-
-def render_purchase_menu(update, context, as_new=False):
-    checklist = context.user_data['checklist']
-    keyboard = [
-        [InlineKeyboardButton('Show unresolved purchases', callback_data='show_purchases')],
-        [InlineKeyboardButton('Start new purchase', callback_data='new_purchase')],
-        [InlineKeyboardButton('Resolve purchases', callback_data='equalize')],
-        [InlineKeyboardButton('Back to main menu', callback_data='checklist_menu_{}'.format(checklist.id))]
-    ]
-    if as_new:
-        update.message.reply_text(PURCHASE_MENU_MESSAGE.format(checklist.name),
-                                  reply_markup=InlineKeyboardMarkup(keyboard),
-                                  parse_mode='Markdown')
-    else:
-        update.callback_query.edit_message_text(text=PURCHASE_MENU_MESSAGE.format(checklist.name),
-                                                reply_markup=InlineKeyboardMarkup(keyboard),
-                                                parse_mode='Markdown')
 
 
 def show_purchases(update, context):
@@ -43,7 +24,7 @@ def show_purchases(update, context):
     query.edit_message_text(
         text=text,
         reply_markup=InlineKeyboardMarkup(
-            [[InlineKeyboardButton('Back to purchase menu', callback_data='purchase_menu')]]
+            [[InlineKeyboardButton('Back to main menu', callback_data='checklist_menu_{}'.format(checklist.id))]]
         ),
         parse_mode='Markdown'
     )
@@ -65,9 +46,9 @@ def get_conversation_handler():
             ],
             ITEM_STATE: [
                 CallbackQueryHandler(buffer_item, pattern='^bi_.+'),
-                CallbackQueryHandler(revert_item, pattern='^ri$'),
+                CallbackQueryHandler(revert_item, pattern='^revert_last$'),
                 CallbackQueryHandler(finish, pattern='^fp$'),
-                CallbackQueryHandler(abort, pattern='^ap$')
+                CallbackQueryHandler(abort, pattern='^abort_purchase_[0-9]+$')
             ],
             PRICE_STATE: [MessageHandler(Filters.text, set_price)]
         },
@@ -109,7 +90,7 @@ def set_name(update, context):
 
 
 def item_purchase(update, context):
-    render_items_to_purchase(update, context)
+    render_item_purchase_interface(update, context)
 
     return ITEM_STATE
 
@@ -118,7 +99,7 @@ def buffer_item(update, context):
     query = update.callback_query
     item_id = query.data.split('_')[-1]
     item_queries.buffer(item_id, context.user_data['purchase_id'])
-    render_items_to_purchase(update, context)
+    render_item_purchase_interface(update, context)
 
     return ITEM_STATE
 
@@ -129,20 +110,20 @@ def revert_item(update, context):
     if not reverted:
         update.callback_query.answer('Nothing to revert.')
         return
-    render_items_to_purchase(update, context)
+    render_item_purchase_interface(update, context)
 
     return ITEM_STATE
 
 
-def render_items_to_purchase(update, context):
+def render_item_purchase_interface(update, context):
     items = item_queries.find_for_purchase(context.user_data['purchase_id'])
     keyboard = []
     for item in items:
         keyboard.append([InlineKeyboardButton(item.name, callback_data='bi_{}'.format(item.id))])
 
     keyboard.append([
-        InlineKeyboardButton('Revert', callback_data='ri'),
-        InlineKeyboardButton('Abort', callback_data='ap')
+        InlineKeyboardButton('Revert', callback_data='revert_last'),
+        InlineKeyboardButton('Abort', callback_data='abort_purchase_{}'.format(context.user_data['checklist'].id))
     ])
     keyboard.append([
         InlineKeyboardButton('Finish', callback_data='fp')
@@ -153,8 +134,7 @@ def render_items_to_purchase(update, context):
 
 def abort(update, context):
     purchase_queries.abort(context.user_data['purchase_id'])
-    update.callback_query.edit_message_text(text='Purchase aborted.')
-    render_main_menu_from_callback(update, context, True)
+    render_checklist_menu(update, context)
 
     return ConversationHandler.END
 
@@ -177,7 +157,6 @@ def set_price(update, context):
         return PRICE_STATE
 
     purchase_queries.set_price(context.user_data['purchase_id'], price)
-    update.message.reply_text('Price has been set.')
-    render_purchase_menu(update, context, True)
+    render_checklist_menu_as_new(update, context)
 
     return ConversationHandler.END

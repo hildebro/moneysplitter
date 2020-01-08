@@ -3,7 +3,7 @@ import operator
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ConversationHandler, CallbackQueryHandler, CommandHandler
 
-from handlers.main_menu_handler import render_main_menu_from_callback
+from handlers.main_menu_handler import render_checklist_menu
 from main import conv_cancel
 from queries import user_queries, purchase_queries, checklist_queries
 
@@ -17,8 +17,8 @@ def get_conversation_handler():
             BASE_STATE: [
                 CallbackQueryHandler(buffer_purchase, pattern='^bp_.+'),
                 CallbackQueryHandler(revert_purchase, pattern='^rp$'),
-                CallbackQueryHandler(finish, pattern='^fe$'),
-                CallbackQueryHandler(abort, pattern='^ae$')
+                CallbackQueryHandler(finish, pattern='^finish_equalization_[0-9]+$'),
+                CallbackQueryHandler(abort, pattern='^abort_equalization_[0-9]+$')
             ]
         },
         fallbacks=[CommandHandler('cancel', conv_cancel)]
@@ -65,18 +65,17 @@ def render_purchases_to_equalize(update, context):
 
     keyboard.append([
         InlineKeyboardButton('Revert', callback_data='rp'),
-        InlineKeyboardButton('Abort', callback_data='ae')
+        InlineKeyboardButton('Abort', callback_data='abort_equalization_{}'.format(context.user_data['checklist'].id))
     ])
     keyboard.append([
-        InlineKeyboardButton('Finish', callback_data='fe')
+        InlineKeyboardButton('Finish', callback_data='finish_equalization_{}'.format(context.user_data['checklist'].id))
     ])
     reply_markup = InlineKeyboardMarkup(keyboard)
     update.callback_query.edit_message_text(text='Choose purchases to equalize:', reply_markup=reply_markup)
 
 
 def abort(update, context):
-    update.callback_query.edit_message_text(text='Equalization aborted.')
-    render_main_menu_from_callback(update, context, True)
+    render_checklist_menu(update, context)
 
     return ConversationHandler.END
 
@@ -131,15 +130,14 @@ def finish(update, context):
     purchase_queries.equalize(context.user_data['buffered_purchases'])
 
     transaction_message = 'The chosen purchases have been equalized under the assumption that the following ' \
-                          'transactions will be made:\n '
+                          'transactions will be made:\n'
     for transaction in transactions:
         transaction_message += '{} has to send {} to {}\n'.format(
             user_queries.find_username(transaction['from']),
             transaction['amount'],
             user_queries.find_username(transaction['to'])
         )
+    transaction_message += '\n\nPlease use the /overview command to go back to the menu.'
     update.callback_query.edit_message_text(text=transaction_message)
-
-    render_main_menu_from_callback(update, context, True)
 
     return ConversationHandler.END

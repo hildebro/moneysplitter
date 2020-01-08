@@ -1,4 +1,4 @@
-from handlers.main_menu_handler import render_main_menu_from_callback
+from handlers.main_menu_handler import render_checklist_overview_from_callback
 from queries import checklist_queries
 
 
@@ -8,5 +8,5 @@ def refresh_checklists(update, context):
         update.callback_query.answer('Nothing new to show!')
         return
 
-    render_main_menu_from_callback(update, context, False)
+    render_checklist_overview_from_callback(update, context, False)
     update.callback_query.answer('Main menu refreshed!')

@@ -9,13 +9,13 @@ from handlers import *
 
 def conv_cancel(update, context):
     update.message.reply_text('The action has been canceled.')
-    main_menu_handler.render_main_menu(update, context)
+    main_menu_handler.render_checklist_overview(update, context)
 
     return ConversationHandler.END
 
 
 def cancel_conversation(update, context):
-    main_menu_handler.render_main_menu_from_callback(update, context)
+    main_menu_handler.render_checklist_overview_from_callback(update, context)
 
     return ConversationHandler.END
 
@@ -35,7 +35,7 @@ def main():
     dp.add_handler(MessageHandler(Filters.all, group_0_handler.refresh_username), group=0)
 
     # group 1: actual interactions with the bot
-    dp.add_handler(CommandHandler('overview', main_menu_handler.render_main_menu), group=1)
+    dp.add_handler(CommandHandler('overview', main_menu_handler.render_checklist_overview), group=1)
 
     dp.add_handler(checklist_handler.get_creation_handler(), group=1)
     dp.add_handler(checklist_handler.get_removal_handler(), group=1)
@@ -44,7 +44,8 @@ def main():
     )
 
     dp.add_handler(
-        CallbackQueryHandler(main_menu_handler.render_main_menu_from_callback, pattern='^checklist_overview$'), group=1
+        CallbackQueryHandler(main_menu_handler.render_checklist_overview_from_callback, pattern='^checklist_overview$'),
+        group=1
     )
     dp.add_handler(
         CallbackQueryHandler(main_menu_handler.render_checklist_menu, pattern='^checklist_menu_[0-9]+$'), group=1
@@ -58,13 +59,11 @@ def main():
         CallbackQueryHandler(inline_query_handler.accept_invite_message, pattern='^join_checklist_[0-9]+$'), group=1
     )
 
-    dp.add_handler(CallbackQueryHandler(purchase_handler.render_purchase_menu, pattern='^purchase_menu$'), group=1)
     dp.add_handler(CallbackQueryHandler(purchase_handler.show_purchases, pattern='^show_purchases$'), group=1)
     dp.add_handler(purchase_handler.get_conversation_handler(), group=1)
 
     dp.add_handler(equalizer_handler.get_conversation_handler(), group=1)
 
-    dp.add_handler(CallbackQueryHandler(item_handler.render_item_menu, pattern='^item_menu$'), group=1)
     dp.add_handler(CallbackQueryHandler(item_handler.undo_item, pattern='^undo_[0-9]+$'), group=1)
     dp.add_handler(item_handler.get_removal_handler(), group=1)
     dp.add_handler(MessageHandler(Filters.text, item_handler.add_item), group=1)
