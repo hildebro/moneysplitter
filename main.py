@@ -33,7 +33,10 @@ def main():
     # group 0: persist new user or update existing ones
     dp.add_handler(CommandHandler('start', group_0_handler.handle_start_command), group=0)
     dp.add_handler(MessageHandler(Filters.all, group_0_handler.refresh_username), group=0)
+
     # group 1: actual interactions with the bot
+    dp.add_handler(CommandHandler('overview', main_menu_handler.render_main_menu), group=1)
+
     dp.add_handler(checklist_handler.get_creation_handler(), group=1)
     dp.add_handler(checklist_handler.get_removal_handler(), group=1)
     dp.add_handler(
