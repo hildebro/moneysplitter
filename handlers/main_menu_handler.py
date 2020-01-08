@@ -8,7 +8,7 @@ CHECKLIST_OVERVIEW_TEXT = \
     'overview in order for checklists that you have recently joined to appear.'
 CHECKLIST_MENU_TEXT = \
     'This is the *main menu* for the checklist called *{}*.\n\nIf you want to interact with this ' \
-    'checklist, please enter one of the submenus. Otherwise, return to the checklist overview'
+    'checklist, please enter one of the submenus. Otherwise, return to the checklist overview.'
 ADVANCED_CHECKLIST_MENU_TEXT = 'This is the advanced menu for the checklist called *{}*. Please choose an action below.'
 
 

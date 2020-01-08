@@ -1,23 +1,28 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ConversationHandler, CallbackQueryHandler, MessageHandler, Filters, CommandHandler
 
-from handlers.main_menu_handler import render_main_menu, render_main_menu_from_callback
+from handlers.main_menu_handler import render_main_menu_from_callback
 from main import conv_cancel
 from queries import purchase_queries, item_queries
 
 PURCHASE_MENU_MESSAGE = 'This is the purchase menu for checklist *{}*.'
 
 
-def render_purchase_menu(update, context):
+def render_purchase_menu(update, context, as_new=False):
     checklist = context.user_data['checklist']
     keyboard = [
         [InlineKeyboardButton('Show unresolved purchases', callback_data='show_purchases')],
         [InlineKeyboardButton('Start new purchase', callback_data='new_purchase')],
         [InlineKeyboardButton('Back to main menu', callback_data='checklist_menu_{}'.format(checklist.id))]
     ]
-    update.callback_query.edit_message_text(text=PURCHASE_MENU_MESSAGE.format(checklist.name),
-                                            reply_markup=InlineKeyboardMarkup(keyboard),
-                                            parse_mode='Markdown')
+    if as_new:
+        update.message.reply_text(PURCHASE_MENU_MESSAGE.format(checklist.name),
+                                  reply_markup=InlineKeyboardMarkup(keyboard),
+                                  parse_mode='Markdown')
+    else:
+        update.callback_query.edit_message_text(text=PURCHASE_MENU_MESSAGE.format(checklist.name),
+                                                reply_markup=InlineKeyboardMarkup(keyboard),
+                                                parse_mode='Markdown')
 
 
 def show_purchases(update, context):
@@ -172,6 +177,6 @@ def set_price(update, context):
 
     purchase_queries.set_price(context.user_data['purchase_id'], price)
     update.message.reply_text('Price has been set.')
-    render_main_menu(update, context)
+    render_purchase_menu(update, context, True)
 
     return ConversationHandler.END
