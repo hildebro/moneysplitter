@@ -13,6 +13,7 @@ def render_purchase_menu(update, context, as_new=False):
     keyboard = [
         [InlineKeyboardButton('Show unresolved purchases', callback_data='show_purchases')],
         [InlineKeyboardButton('Start new purchase', callback_data='new_purchase')],
+        [InlineKeyboardButton('Resolve purchases', callback_data='equalize')],
         [InlineKeyboardButton('Back to main menu', callback_data='checklist_menu_{}'.format(checklist.id))]
     ]
     if as_new:

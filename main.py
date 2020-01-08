@@ -47,7 +47,7 @@ def main():
         CallbackQueryHandler(main_menu_handler.render_checklist_menu, pattern='^checklist_menu_[0-9]+$'), group=1
     )
     dp.add_handler(
-        CallbackQueryHandler(main_menu_handler.render_advanced_checklist_menu, pattern='^advanced_options$'), group=1
+        CallbackQueryHandler(main_menu_handler.render_admin_menu, pattern='^admin_menu$'), group=1
     )
 
     dp.add_handler(InlineQueryHandler(inline_query_handler.send_invite_message), group=1)

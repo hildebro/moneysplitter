@@ -1,7 +1,7 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ConversationHandler, CallbackQueryHandler, Filters, MessageHandler, CommandHandler
 
-from handlers.main_menu_handler import render_main_menu, render_advanced_checklist_menu
+from handlers.main_menu_handler import render_main_menu, render_admin_menu
 from main import cancel_conversation, conv_cancel
 from queries import checklist_queries
 
@@ -67,7 +67,7 @@ def initialize_removal(update, context):
         text='You are about to delete the checklist *{}*. This *cannot be undone*. If you are certain about deleting '
              'this checklist, send me the checklist\'s name.'.format(context.user_data['checklist'].name),
         reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton('Back to advanced options', callback_data='advanced_options')]
+            [InlineKeyboardButton('Back to advanced options', callback_data='abort_removal')]
         ]),
         parse_mode='Markdown'
     )
@@ -76,7 +76,7 @@ def initialize_removal(update, context):
 
 
 def abort_removal(update, context):
-    render_advanced_checklist_menu(update, context)
+    render_admin_menu(update, context)
 
     return ConversationHandler.END
 
@@ -89,7 +89,7 @@ def remove(update, context):
             'Your message and the checklist name do not match. Please send the *exact* name.',
             reply_markup=InlineKeyboardMarkup([
                 [InlineKeyboardButton('Back to advanced options',
-                                      callback_data='advanced_options')]
+                                      callback_data='abort_removal')]
             ]),
             parse_mode='Markdown'
         )
