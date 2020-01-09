@@ -1,5 +1,4 @@
 __pycache__
-money_splitter.db
 privatestorage.py
-backup.db
 bot_state_persistence
+.idea
