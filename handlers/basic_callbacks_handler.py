@@ -1,4 +1,4 @@
-from handlers.main_menu_handler import render_checklist_overview_from_callback
+from handlers.menu_handler import render_checklist_overview_from_callback
 from queries import checklist_queries
 
 

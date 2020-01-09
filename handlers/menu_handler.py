@@ -35,8 +35,8 @@ def build_checklist_overview_markup(context, user_id):
     for checklist in checklists:
         context.user_data['all_checklists'][checklist.id] = checklist
         keyboard.append([InlineKeyboardButton(checklist.name, callback_data='checklist_menu_{}'.format(checklist.id))])
+    keyboard.append([InlineKeyboardButton('🔄 Refresh overview 🔄', callback_data='refresh_checklists')])
     keyboard.append([InlineKeyboardButton('🌟 New checklist 🌟', callback_data='new_checklist')])
-    keyboard.append([InlineKeyboardButton('🔄 Refresh 🔄', callback_data='refresh_checklists')])
 
     return InlineKeyboardMarkup(keyboard)
 
@@ -60,18 +60,14 @@ def render_checklist_menu(update, context):
     context.user_data['checklist'] = checklist
 
     update.callback_query.edit_message_text(text=build_checklist_menu_text(checklist),
-                                            reply_markup=build_checklist_menu_markup(
-                                                update.callback_query.from_user.id == checklist.creator_id
-                                            ),
+                                            reply_markup=build_checklist_menu_markup(),
                                             parse_mode='Markdown')
 
 
 def render_checklist_menu_as_new(update, context):
     checklist = context.user_data['checklist']
     update.message.reply_text(build_checklist_menu_text(checklist),
-                              reply_markup=build_checklist_menu_markup(
-                                  update.message.from_user.id == checklist.creator_id
-                              ),
+                              reply_markup=build_checklist_menu_markup(),
                               parse_mode='Markdown')
 
 
@@ -87,30 +83,25 @@ def build_checklist_menu_text(checklist):
     return text
 
 
-def build_checklist_menu_markup(is_admin_menu_allowed):
-    keyboard = [
-        [InlineKeyboardButton('Start new purchase', callback_data='new_purchase')],
-        [InlineKeyboardButton('Show unresolved purchases', callback_data='show_purchases')],
-        [InlineKeyboardButton('Resolve purchases', callback_data='equalize')],
-        [InlineKeyboardButton('Remove items', callback_data='remove_items')]
-    ]
-    if is_admin_menu_allowed:
-        keyboard.append([InlineKeyboardButton('Admin Menu', callback_data='admin_menu')])
-    keyboard.append([InlineKeyboardButton('Back to checklist overview', callback_data='checklist_overview')])
+def build_checklist_menu_markup():
+    keyboard = [[InlineKeyboardButton('🌟 Start a new purchase 🌟', callback_data='new_purchase')],
+                [InlineKeyboardButton('📋 Show unresolved purchases 📋', callback_data='show_purchases')],
+                [InlineKeyboardButton('🧮 Resolve purchases 🧮', callback_data='equalize')],
+                [InlineKeyboardButton('⚙️ Advanced settings ⚙️', callback_data='checklist_settings')],
+                [InlineKeyboardButton('🔙 Checklist overview 🔙', callback_data='checklist_overview')]]
     return InlineKeyboardMarkup(keyboard)
 
 
-def render_admin_menu(update, context):
-    checklist_id = context.user_data['checklist'].id
+def render_checklist_settings(update, context):
+    checklist = context.user_data['checklist']
     keyboard = [
+        [InlineKeyboardButton('🗑️ Remove items 🗑️', callback_data='remove_items')],
+        [InlineKeyboardButton('☣️ Delete checklist ☣️', callback_data='delete_checklist')],
+        [InlineKeyboardButton('🔙 Main menu 🔙', callback_data='checklist_menu_{}'.format(checklist.id))]
     ]
-    if checklist_queries.is_creator(checklist_id, update.callback_query.from_user.id):
-        keyboard.append([InlineKeyboardButton('Delete checklist', callback_data='delete_checklist')])
-
-    keyboard.append(
-        [InlineKeyboardButton('Back to default options', callback_data='checklist_menu_{}'.format(checklist_id))]
-    )
     reply_markup = InlineKeyboardMarkup(keyboard)
     update.callback_query.edit_message_text(
         text=ADVANCED_CHECKLIST_MENU_TEXT.format(context.user_data['checklist'].name),
-        reply_markup=reply_markup, parse_mode='Markdown')
+        reply_markup=reply_markup,
+        parse_mode='Markdown'
+    )

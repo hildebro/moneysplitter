@@ -1,7 +1,7 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ConversationHandler, CallbackQueryHandler, MessageHandler, Filters, CommandHandler
 
-from handlers.main_menu_handler import render_checklist_menu, \
+from handlers.menu_handler import render_checklist_menu, \
     render_checklist_menu_as_new
 from main import conv_cancel
 from queries import purchase_queries, item_queries

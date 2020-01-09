@@ -1,7 +1,7 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ConversationHandler, CallbackQueryHandler, Filters, MessageHandler, CommandHandler
 
-from handlers.main_menu_handler import render_checklist_overview, render_admin_menu
+from handlers.menu_handler import render_checklist_overview, render_checklist_settings
 from main import cancel_conversation, conv_cancel
 from queries import checklist_queries
 
@@ -63,6 +63,11 @@ def get_removal_handler():
 
 # noinspection PyUnusedLocal
 def initialize_removal(update, context):
+    if context.user_data['checklist'].creator_id != update.callback_query.from_user.id:
+        update.callback_query.answer('You are not allowed to do this!')
+
+        return ConversationHandler.END
+
     update.callback_query.edit_message_text(
         text='You are about to delete the checklist *{}*. This *cannot be undone*. If you are certain about deleting '
              'this checklist, send me the checklist\'s name.'.format(context.user_data['checklist'].name),
@@ -76,7 +81,7 @@ def initialize_removal(update, context):
 
 
 def abort_removal(update, context):
-    render_admin_menu(update, context)
+    render_checklist_settings(update, context)
 
     return ConversationHandler.END
 
