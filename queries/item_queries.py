@@ -1,5 +1,3 @@
-from sqlalchemy import func
-
 from db import get_session
 from models import Purchase, Checklist
 from models.item import Item
@@ -58,30 +56,3 @@ def find_for_purchase(purchase_id):
         .all()
     session.close()
     return items
-
-
-def buffer(item_id, purchase_id):
-    session = get_session()
-    highest_order = session.query(func.max(Item.purchase_order)).filter(Item.purchase_id == purchase_id).scalar()
-    if highest_order is None:
-        highest_order = 0
-    item = session.query(Item).filter(Item.id == item_id).one()
-    item.purchase_id = purchase_id
-    item.purchase_order = highest_order + 1
-    session.commit()
-    session.close()
-
-
-def unbuffer(purchase_id):
-    session = get_session()
-    highest_order = session.query(func.max(Item.purchase_order)).filter(Item.purchase_id == purchase_id).scalar()
-    if highest_order is None:
-        session.close()
-        return False
-
-    item = session.query(Item).filter(Item.purchase_id == purchase_id, Item.purchase_order == highest_order).one()
-    item.purchase_id = None
-    item.purchase_order = None
-    session.commit()
-    session.close()
-    return True

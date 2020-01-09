@@ -63,7 +63,7 @@ def get_removal_handler():
         entry_points=[CallbackQueryHandler(initialize, pattern='^remove_items$')],
         states={
             BASE_STATE: [
-                CallbackQueryHandler(mark_item, pattern='^mark_.+'),
+                CallbackQueryHandler(mark_item, pattern='^mark_[0-9]+$'),
                 CallbackQueryHandler(abort, pattern='^abort_[0-9]+$'),
                 CallbackQueryHandler(commit, pattern='^commit_[0-9]+$')
             ]
