@@ -1,9 +1,8 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import ConversationHandler, CallbackQueryHandler, MessageHandler, Filters, CommandHandler
+from telegram.ext import ConversationHandler, CallbackQueryHandler, MessageHandler, Filters
 
 from handlers.menu_handler import render_checklist_menu, \
     render_checklist_menu_as_new
-from main import conv_cancel
 from queries import purchase_queries, item_queries
 
 
@@ -24,7 +23,7 @@ def show_purchases(update, context):
     query.edit_message_text(
         text=text,
         reply_markup=InlineKeyboardMarkup(
-            [[InlineKeyboardButton('Back to main menu', callback_data='checklist_menu_{}'.format(checklist.id))]]
+            [[InlineKeyboardButton('🔙 Main menu 🔙', callback_data='checklist_menu_{}'.format(checklist.id))]]
         ),
         parse_mode='Markdown'
     )
@@ -52,9 +51,9 @@ def get_conversation_handler():
                 CallbackQueryHandler(abort, pattern='^abort_[0-9]+$'),
                 CallbackQueryHandler(ask_price, pattern='^ask_price$')
             ],
-            PRICE_STATE: [MessageHandler(Filters.text, set_price)]
+            PRICE_STATE: [MessageHandler(Filters.text, commit_purchase)]
         },
-        fallbacks=[CommandHandler('cancel', conv_cancel)]
+        fallbacks=[CallbackQueryHandler(abort, pattern='^abort_[0-9]+$')]
     )
 
 
@@ -64,35 +63,48 @@ def initialize(update, context):
         text='Would you like to buy items of this checklist or create a named purchase?',
         reply_markup=InlineKeyboardMarkup([
             [InlineKeyboardButton('🎁 Start item purchase 🎁', callback_data='item_purchase')],
-            [InlineKeyboardButton('🖊️ Start named purchase 🖊️', callback_data='named_purchase')]
+            [InlineKeyboardButton('🖊️ Start named purchase 🖊️', callback_data='named_purchase')],
+            [InlineKeyboardButton('🔙 Abort 🔙',
+                                  callback_data='abort_{}'.format(context.user_data['checklist'].id))]
         ])
     )
 
     return TYPE_STATE
 
 
+# noinspection PyUnusedLocal
 def named_purchase(update, context):
-    update.callback_query.edit_message_text(text='Please send me a message containing the name for your purchase.')
+    update.callback_query.edit_message_text(
+        text='Please send me a message containing the name for your purchase.',
+        reply_markup=InlineKeyboardMarkup([
+            [InlineKeyboardButton('🔙 Abort 🔙',
+                                  callback_data='abort_{}'.format(context.user_data['checklist'].id))]
+        ])
+    )
 
     return NAMED_STATE
 
 
 def set_name(update, context):
-    name = update.message.text
-    item = item_queries.create(name, context.user_data['checklist'].id)
-    # kind of a hack. when entering PRICE_STATE, the method will see this as the user having clicked the new item
-    # this results in a purchase of just this new item, effectively giving the purchase a name /shrug
-    context.user_data['purchase_dict'] = {
-        item.id: '✔️' + item.name + '✔️'
-    }
-    update.message.reply_text('Name has been accepted. Now enter the price for this purchase?')
+    context.user_data['purchase_name'] = update.message.text
+    update.message.reply_text('Purchase name has been accepted. How much money did you spend?',
+                              reply_markup=InlineKeyboardMarkup([
+                                  [InlineKeyboardButton('🔙 Abort 🔙',
+                                                        callback_data='abort_{}'.format(
+                                                            context.user_data['checklist'].id))]
+                              ]))
 
     return PRICE_STATE
 
 
 def item_purchase(update, context):
-    context.user_data['purchase_dict'] = {}
     items = item_queries.find_by_checklist(context.user_data['checklist'].id)
+    if len(items) == 0:
+        update.callback_query.answer('This checklist has no items!')
+
+        return TYPE_STATE
+
+    context.user_data['purchase_dict'] = {}
     for item in items:
         context.user_data['purchase_dict'][item.id] = item.name
     render_item_buttons(update, context)
@@ -123,8 +135,8 @@ def render_item_buttons(update, context):
     for item_id in purchase_dict:
         keyboard.append([InlineKeyboardButton(purchase_dict[item_id], callback_data='mark_{}'.format(item_id))])
     keyboard.append([
-        InlineKeyboardButton('Abort', callback_data='abort_{}'.format(checklist.id)),
-        InlineKeyboardButton('Continue', callback_data='ask_price')
+        InlineKeyboardButton('🔙 Main menu 🔙', callback_data='abort_{}'.format(checklist.id)),
+        InlineKeyboardButton('➡️ Continue ➡️', callback_data='ask_price')
     ])
     reply_markup = InlineKeyboardMarkup(keyboard)
     update.callback_query.edit_message_text(text=ITEM_PURCHASE_MESSAGE.format(checklist.name),
@@ -133,6 +145,7 @@ def render_item_buttons(update, context):
 
 def abort(update, context):
     context.user_data['purchase_dict'] = None
+    context.user_data['purchase_name'] = None
     render_checklist_menu(update, context)
 
     return ConversationHandler.END
@@ -140,27 +153,42 @@ def abort(update, context):
 
 # noinspection PyUnusedLocal
 def ask_price(update, context):
-    update.callback_query.edit_message_text(text='Now please send me a message containing the price of your purchase.')
+    update.callback_query.edit_message_text(text='Now please send me a message containing the price of your purchase.',
+                                            reply_markup=InlineKeyboardMarkup([
+                                                [InlineKeyboardButton('🔙 Main menu 🔙',
+                                                                      callback_data='abort_{}'.format(
+                                                                          context.user_data['checklist'].id))]
+                                            ]))
 
     return PRICE_STATE
 
 
-def set_price(update, context):
+def commit_purchase(update, context):
     price_text = update.message.text.replace(',', '.')
+    checklist_id = context.user_data['checklist'].id
+    user_id = update.message.from_user.id
     try:
         price = float(price_text)
     except ValueError:
-        update.message.reply_text('Please enter a valid number; No currency or thousands separator.')
+        update.message.reply_text('Please enter a valid number; No currency or thousands separator.',
+                                  reply_markup=InlineKeyboardMarkup([
+                                      [InlineKeyboardButton('🔙 Main menu 🔙',
+                                                            callback_data='abort_{}'.format(
+                                                                checklist_id))]
+                                  ]))
 
         return PRICE_STATE
 
-    item_ids_to_purchase = []
-    purchase_dict = context.user_data['purchase_dict']
-    for item_id in purchase_dict:
-        if '✔️' in purchase_dict[item_id]:
-            item_ids_to_purchase.append(item_id)
+    if 'purchase_name' in context.user_data:
+        purchase_queries.create_named_purchase(user_id, checklist_id, context.user_data['purchase_name'], price)
+    else:
+        item_ids_to_purchase = []
+        purchase_dict = context.user_data['purchase_dict']
+        for item_id in purchase_dict:
+            if '✔️' in purchase_dict[item_id]:
+                item_ids_to_purchase.append(item_id)
+        purchase_queries.create_item_purchase(user_id, checklist_id, item_ids_to_purchase, price)
 
-    purchase_queries.create(update.message.from_user.id, context.user_data['checklist'].id, item_ids_to_purchase, price)
     render_checklist_menu_as_new(update, context)
 
     return ConversationHandler.END

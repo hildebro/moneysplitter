@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, ForeignKey, UniqueConstraint
+from sqlalchemy import Column, String, Integer, ForeignKey
 from sqlalchemy.orm import relationship
 
 from db import base
@@ -13,10 +13,6 @@ class Item(base):
     checklist = relationship('Checklist', back_populates='items')
     purchase_id = Column(Integer, ForeignKey('purchases.id', ondelete='set null'))
     purchase = relationship('Purchase', back_populates='items')
-
-    __table_args__ = (
-        UniqueConstraint('name', 'checklist_id'),
-    )
 
     def __init__(self, name, checklist_id):
         self.name = name
