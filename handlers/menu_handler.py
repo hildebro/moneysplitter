@@ -51,7 +51,7 @@ NO_ITEMS = \
     'It contains no items.'
 
 MAIN_MENU_INFO = \
-    'If you want to add new items, simply send me a message containing the item name.'
+    'If you want to *add new items*, simply send me a *message* containing the item name.'
 
 
 def render_checklist_menu(update, context):
