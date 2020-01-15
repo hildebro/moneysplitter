@@ -144,8 +144,8 @@ def render_item_buttons(update, context):
 
 
 def abort(update, context):
-    context.user_data['purchase_dict'] = None
-    context.user_data['purchase_name'] = None
+    context.user_data.pop('purchase_dict', None)
+    context.user_data.pop('purchase_name', None)
     render_checklist_menu(update, context)
 
     return ConversationHandler.END
@@ -180,10 +180,11 @@ def commit_purchase(update, context):
         return PRICE_STATE
 
     if 'purchase_name' in context.user_data:
-        purchase_queries.create_named_purchase(user_id, checklist_id, context.user_data['purchase_name'], price)
+        purchase_name = context.user_data.pop('purchase_name')
+        purchase_queries.create_named_purchase(user_id, checklist_id, purchase_name, price)
     else:
         item_ids_to_purchase = []
-        purchase_dict = context.user_data['purchase_dict']
+        purchase_dict = context.user_data.pop('purchase_dict')
         for item_id in purchase_dict:
             if '✔️' in purchase_dict[item_id]:
                 item_ids_to_purchase.append(item_id)
