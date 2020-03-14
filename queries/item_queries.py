@@ -1,5 +1,5 @@
 from db import get_session
-from models import Purchase, Checklist
+from models import Purchase
 from models.item import Item
 
 
@@ -11,16 +11,6 @@ def create(item_name, checklist_id):
     session.refresh(item)
     session.close()
     return item
-
-
-def create_for_named_purchase(item_name, purchase_id):
-    session = get_session()
-    checklist = session.query(Checklist).filter(Checklist.purchases.any(Purchase.id == purchase_id)).one()
-    item = Item(item_name, checklist.id)
-    item.purchase_id = purchase_id
-    session.add(item)
-    session.commit()
-    session.close()
 
 
 def remove(item_id):
