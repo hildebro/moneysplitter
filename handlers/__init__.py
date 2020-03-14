@@ -6,5 +6,6 @@ from handlers import (
     inline_query_handler,
     item_handler,
     menu_handler,
-    purchase_handler
+    purchase_handler,
+    user_handler
 )

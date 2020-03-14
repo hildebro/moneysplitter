@@ -38,3 +38,10 @@ def find_username(user_id):
     username = session.query(User.username).filter(User.id == user_id).one()[0]
     session.close()
     return username
+
+
+def remove_all(ids_to_remove):
+    session = get_session()
+    session.query(User).filter(User.id.in_(ids_to_remove)).delete(synchronize_session=False)
+    session.commit()
+    session.close()

@@ -58,16 +58,18 @@ def render_checklist_menu(update, context):
     checklist_id = int(update.callback_query.data.split('_')[-1])
     checklist = context.user_data['all_checklists'][checklist_id]
     context.user_data['checklist'] = checklist
+    allow_advanced_options = checklist.creator_id == update.callback_query.from_user.id
 
     update.callback_query.edit_message_text(text=build_checklist_menu_text(checklist),
-                                            reply_markup=build_checklist_menu_markup(),
+                                            reply_markup=build_checklist_menu_markup(allow_advanced_options),
                                             parse_mode='Markdown')
 
 
 def render_checklist_menu_as_new(update, context):
     checklist = context.user_data['checklist']
+    allow_advanced_options = checklist.creator_id == update.message.from_user.id
     update.message.reply_text(build_checklist_menu_text(checklist),
-                              reply_markup=build_checklist_menu_markup(),
+                              reply_markup=build_checklist_menu_markup(allow_advanced_options),
                               parse_mode='Markdown')
 
 
@@ -83,12 +85,15 @@ def build_checklist_menu_text(checklist):
     return text
 
 
-def build_checklist_menu_markup():
-    keyboard = [[InlineKeyboardButton('🌟 Start a new purchase 🌟', callback_data='new_purchase')],
-                [InlineKeyboardButton('📋 Show unresolved purchases 📋', callback_data='show_purchases')],
-                [InlineKeyboardButton('🧮 Resolve purchases 🧮', callback_data='equalize')],
-                [InlineKeyboardButton('⚙️ Advanced settings ⚙️', callback_data='checklist_settings')],
-                [InlineKeyboardButton('🔙 Checklist overview 🔙', callback_data='checklist_overview')]]
+def build_checklist_menu_markup(allow_advanced_options):
+    keyboard = [
+        [InlineKeyboardButton('🌟 Start a new purchase 🌟', callback_data='new_purchase')],
+        [InlineKeyboardButton('📋 Show unresolved purchases 📋', callback_data='show_purchases')],
+        [InlineKeyboardButton('🧮 Resolve purchases 🧮', callback_data='equalize')],
+    ]
+    if allow_advanced_options:
+        keyboard.append([InlineKeyboardButton('⚙️ Advanced settings ⚙️', callback_data='checklist_settings')])
+    keyboard.append([InlineKeyboardButton('🔙 Checklist overview 🔙', callback_data='checklist_overview')])
     return InlineKeyboardMarkup(keyboard)
 
 
@@ -96,6 +101,7 @@ def render_checklist_settings(update, context):
     checklist = context.user_data['checklist']
     keyboard = [
         [InlineKeyboardButton('🗑️ Remove items 🗑️', callback_data='remove_items')],
+        [InlineKeyboardButton('️🏃‍♂️ Remove users ️🏃‍♂️', callback_data='remove_users')],
         [InlineKeyboardButton('☣️ Delete checklist ☣️', callback_data='delete_checklist')],
         [InlineKeyboardButton('🔙 Main menu 🔙', callback_data='checklist_menu_{}'.format(checklist.id))]
     ]
