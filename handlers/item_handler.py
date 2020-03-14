@@ -22,36 +22,43 @@ def add_item(update, context):
         )
         return
 
-    item_name = update.message.text
+    item_names = update.message.text
     checklist = context.user_data['checklist']
-    item = item_queries.create(item_name, checklist.id)
+    items = item_queries.create(item_names, checklist.id)
+    context.user_data['last_items'] = items
+
     keyboard = [
         [
-            InlineKeyboardButton('Undo last item', callback_data='undo_{}'.format(item.id)),
+            InlineKeyboardButton('Undo', callback_data='undo_last_items'),
             InlineKeyboardButton('Back to main menu', callback_data='checklist_menu_{}'.format(checklist.id))
         ]
     ]
     update.message.reply_text(
-        'New item *{}* has been added to checklist *{}*. You may add more items or return to the main menu'.format(
-            item_name, checklist.name),
+        'I successfully added the following items to checklist *{}*:\n\n{}'.format(checklist.name, item_names),
         reply_markup=InlineKeyboardMarkup(keyboard),
         parse_mode='Markdown'
     )
 
 
-def undo_item(update, context):
-    item_id = update.callback_query.data.split('_')[-1]
-    item_queries.remove(item_id)
+def undo_last_items(update, context):
     checklist = context.user_data['checklist']
     keyboard = [
         [
             InlineKeyboardButton('Back to main menu', callback_data='checklist_menu_{}'.format(checklist.id))
         ]
     ]
+
+    last_items = context.user_data.pop('last_items', None)
+    if last_items is None:
+        update.callback_query.edit_message_text(
+            text='Sorry, I did not find any items to undo.',
+            reply_markup=InlineKeyboardMarkup(keyboard)
+        )
+
+    item_queries.remove_all(map(lambda item: item.id, last_items))
     update.callback_query.edit_message_text(
-        text='The item creation has been undone.',
-        reply_markup=InlineKeyboardMarkup(keyboard),
-        parse_mode='Markdown'
+        text='Successfully undid last added items.',
+        reply_markup=InlineKeyboardMarkup(keyboard)
     )
 
 

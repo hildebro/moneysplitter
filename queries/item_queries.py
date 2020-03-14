@@ -3,14 +3,23 @@ from models import Purchase
 from models.item import Item
 
 
-def create(item_name, checklist_id):
-    session = get_session()
-    item = Item(item_name, checklist_id)
-    session.add(item)
-    session.commit()
-    session.refresh(item)
-    session.close()
-    return item
+def create(item_names, checklist_id):
+    item_name_list = item_names.split('\n')
+    item_list = []
+
+    for item_name in item_name_list:
+        if item_name.strip() == '':
+            continue
+
+        item = Item(item_name.strip(), checklist_id)
+        session = get_session()
+        session.add(item)
+        session.commit()
+        session.refresh(item)
+        session.close()
+        item_list.append(item)
+
+    return item_list
 
 
 def remove(item_id):

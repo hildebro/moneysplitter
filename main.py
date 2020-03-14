@@ -65,7 +65,7 @@ def main():
 
     dp.add_handler(equalizer_handler.get_conversation_handler(), group=1)
 
-    dp.add_handler(CallbackQueryHandler(item_handler.undo_item, pattern='^undo_[0-9]+$'), group=1)
+    dp.add_handler(CallbackQueryHandler(item_handler.undo_last_items, pattern='^undo_last_items'), group=1)
     dp.add_handler(item_handler.get_removal_handler(), group=1)
     dp.add_handler(MessageHandler(Filters.text, item_handler.add_item), group=1)
 

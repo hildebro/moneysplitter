@@ -70,9 +70,10 @@ def initialize(update, context):
 
 
 def add_item(update, context):
-    item_name = update.message.text
-    item = item_queries.create(item_name, context.user_data['checklist'].id)
-    context.user_data['purchase_dict'][item.id] = '✔️' + item_name + '✔️'
+    item_names = update.message.text
+    items = item_queries.create(item_names, context.user_data['checklist'].id)
+    for item in items:
+        context.user_data['purchase_dict'][item.id] = '✔️' + item.name + '✔️'
     render_purchase_menu(update, context)
 
     return ITEM_STATE
