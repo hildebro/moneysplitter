@@ -134,6 +134,18 @@ def abort(update, context):
 
 
 def ask_price(update, context):
+    any_marked_items = False
+    purchase_dict = context.user_data['purchase_dict']
+    for item_id in purchase_dict:
+        if '✔️' in purchase_dict[item_id]:
+            any_marked_items = True
+            break
+
+    if not any_marked_items:
+        update.callback_query.answer('You cannot continue without selecting items!')
+
+        return ITEM_STATE
+
     update.callback_query.edit_message_text(text='Now please send me a message containing the price of your purchase.',
                                             reply_markup=InlineKeyboardMarkup([
                                                 [InlineKeyboardButton('🔙 Main menu 🔙',
