@@ -33,13 +33,11 @@ def find_by_participant(user_id):
     return checklists
 
 
-def find_by_creator(user_id):
-    session = get_session()
+def find_by_creator(session, user_id):
     checklists = session \
         .query(Checklist) \
         .filter(Checklist.creator_id == user_id) \
         .all()
-    session.close()
     return checklists
 
 
@@ -50,12 +48,10 @@ def find_participants(checklist_id):
     return participants
 
 
-def is_creator(checklist_id, user_id):
-    session = get_session()
+def is_creator(session, checklist_id, user_id):
     checklist = session \
         .query(Checklist) \
         .filter(Checklist.id == checklist_id).one()
-    session.close()
     return checklist.creator_id == user_id
 
 
@@ -67,7 +63,7 @@ def is_participant(session, checklist_id, user_id):
 
 
 def delete(session, checklist_id, user_id):
-    if not is_creator(checklist_id, user_id):
+    if not is_creator(session, checklist_id, user_id):
         raise Exception
 
     session.query(Checklist).filter(Checklist.id == checklist_id).delete()

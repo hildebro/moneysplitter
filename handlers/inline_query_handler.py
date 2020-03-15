@@ -4,11 +4,12 @@ from db import session_wrapper
 from queries import checklist_queries, user_queries
 
 
-def send_invite_message(update, context):
+@session_wrapper
+def send_invite_message(session, update, context):
     query = update.inline_query.query
 
     inline_options = []
-    for checklist in checklist_queries.find_by_creator(update.inline_query.from_user['id']):
+    for checklist in checklist_queries.find_by_creator(session, update.inline_query.from_user['id']):
         if query and not checklist.name.lower().startswith(query.lower()):
             continue
 
