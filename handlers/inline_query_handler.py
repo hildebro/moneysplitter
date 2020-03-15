@@ -1,5 +1,6 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, InputTextMessageContent, InlineQueryResultArticle
 
+from db import session_wrapper
 from queries import checklist_queries, user_queries
 
 
@@ -27,9 +28,10 @@ def send_invite_message(update, context):
     context.bot.answer_inline_query(update.inline_query.id, inline_options)
 
 
-def accept_invite_message(update, context):
+@session_wrapper
+def accept_invite_message(session, update, context):
     user_id = update.callback_query.from_user.id
-    if not user_queries.exists(user_id):
+    if not user_queries.exists(session, user_id):
         update.callback_query.answer('Please start the bot before joining a checklist!')
         return
 

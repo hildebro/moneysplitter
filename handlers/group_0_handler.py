@@ -1,14 +1,16 @@
+from db import session_wrapper
 from queries import user_queries
 
 
-def handle_start_command(update, context):
+@session_wrapper
+def handle_start_command(session, update, context):
     user = update.message.from_user
-    if user_queries.exists(user.id):
+    if user_queries.exists(session, user.id):
         update.message.reply_text('You already started the bot!')
-        refresh_username(update, context)
+        user_queries.refresh(session, user)
         return
 
-    user_queries.register(update.message.from_user)
+    user_queries.register(session, update.message.from_user)
     update.message.reply_text(
         'Thanks for using Purchase Splitter Bot! If you are here, because you were invited to someone else\'s '
         'checklist, you can now head back to their invite message and click the button. Otherwise, you can start '
@@ -18,5 +20,6 @@ def handle_start_command(update, context):
 
 
 # noinspection PyUnusedLocal
-def refresh_username(update, context):
-    user_queries.refresh(update.message.from_user)
+@session_wrapper
+def refresh_username(session, update, context):
+    user_queries.refresh(session, update.message.from_user)
