@@ -3,7 +3,7 @@ from telegram.ext import ConversationHandler, CallbackQueryHandler, Filters, Mes
 
 from db import session_wrapper
 from handlers import menu_handler
-from handlers.menu_handler import render_checklist_settings, build_checklist_overview_markup
+from handlers.menu_handler import render_checklist_settings
 from main import cancel_conversation, conv_cancel
 from queries import checklist_queries
 
@@ -46,7 +46,7 @@ def create(session, update, context):
         return BASE_STATE
 
     checklist_queries.create(session, user_id, checklist_name)
-    reply_markup = build_checklist_overview_markup(context, user_id)
+    reply_markup = menu_handler.build_checklist_overview_markup(context, user_id)
     update.message.reply_text(menu_handler.CHECKLIST_OVERVIEW_TEXT, reply_markup=reply_markup, parse_mode='Markdown')
 
     return ConversationHandler.END
@@ -91,7 +91,8 @@ def abort_removal(update, context):
     return ConversationHandler.END
 
 
-def remove(update, context):
+@session_wrapper
+def remove(session, update, context):
     user_input = update.message.text
     checklist = context.user_data['checklist']
     if user_input != checklist.name:
@@ -105,7 +106,7 @@ def remove(update, context):
         )
         return
 
-    checklist_queries.delete(checklist.id, update.message.chat_id)
+    checklist_queries.delete(session, checklist.id, update.message.chat_id)
     update.message.reply_text(
         'The checklist has been deleted.',
         reply_markup=InlineKeyboardMarkup(

@@ -59,23 +59,19 @@ def is_creator(checklist_id, user_id):
     return checklist.creator_id == user_id
 
 
-def is_participant(checklist_id, user_id):
-    session = get_session()
+def is_participant(session, checklist_id, user_id):
     checklist = session \
         .query(Checklist) \
         .filter(Checklist.id == checklist_id, Checklist.participants.any(User.id == user_id)).scalar()
-    session.close()
     return checklist is not None
 
 
-def delete(checklist_id, user_id):
+def delete(session, checklist_id, user_id):
     if not is_creator(checklist_id, user_id):
         raise Exception
 
-    session = get_session()
     session.query(Checklist).filter(Checklist.id == checklist_id).delete()
     session.commit()
-    session.close()
 
 
 def join(session, checklist_id, user_id):
@@ -85,8 +81,6 @@ def join(session, checklist_id, user_id):
     session.commit()
 
 
-def count_checklists(user_id):
-    session = get_session()
+def count_checklists(session, user_id):
     count = session.query(func.count(Checklist.id)).filter(Checklist.participants.any(User.id == user_id)).scalar()
-    session.close()
     return count

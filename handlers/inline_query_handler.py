@@ -37,7 +37,7 @@ def accept_invite_message(session, update, context):
         return
 
     checklist_id = update.callback_query.data.split('_')[-1]
-    if checklist_queries.is_participant(checklist_id, user_id):
+    if checklist_queries.is_participant(session, checklist_id, user_id):
         update.callback_query.answer('You are a participant of that checklist already!')
         return
 
