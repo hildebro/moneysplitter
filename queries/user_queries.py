@@ -14,10 +14,8 @@ def register(session, telegram_user):
     session.commit()
 
 
-def find(user_id):
-    session = get_session()
+def find(session, user_id):
     user = session.query(User).filter(User.id == user_id).one()
-    session.close()
     return user
 
 

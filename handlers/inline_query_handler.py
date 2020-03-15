@@ -28,6 +28,7 @@ def send_invite_message(update, context):
     context.bot.answer_inline_query(update.inline_query.id, inline_options)
 
 
+# noinspection PyUnusedLocal
 @session_wrapper
 def accept_invite_message(session, update, context):
     user_id = update.callback_query.from_user.id
@@ -40,5 +41,5 @@ def accept_invite_message(session, update, context):
         update.callback_query.answer('You are a participant of that checklist already!')
         return
 
-    checklist_queries.join(checklist_id, user_id)
+    checklist_queries.join(session, checklist_id, user_id)
     update.callback_query.answer('Successfully joined checklist!')

@@ -1,7 +1,9 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ConversationHandler, CallbackQueryHandler, Filters, MessageHandler, CommandHandler
 
-from handlers.menu_handler import render_checklist_overview, render_checklist_settings
+from db import session_wrapper
+from handlers import menu_handler
+from handlers.menu_handler import render_checklist_settings, build_checklist_overview_markup
 from main import cancel_conversation, conv_cancel
 from queries import checklist_queries
 
@@ -30,19 +32,22 @@ def initialize_creation(update, context):
     return BASE_STATE
 
 
-def create(update, context):
+@session_wrapper
+def create(session, update, context):
     checklist_name = update.message.text
     user_id = update.message.from_user.id
+    keyboard = [[InlineKeyboardButton('Back to checklist overview', callback_data='cancel_conversation')]]
 
-    if checklist_queries.exists(user_id, checklist_name):
-        update.message.reply_text('You already have a checklist with that name. Please provide a new name or stop the '
-                                  'process with /cancel.')
+    if checklist_queries.exists(session, user_id, checklist_name):
+        update.message.reply_text(
+            'You already have a checklist with that name. Please choose a unique name.',
+            reply_markup=InlineKeyboardMarkup(keyboard))
 
         return BASE_STATE
 
-    checklist_queries.create(user_id, checklist_name)
-    update.message.reply_text('Checklist created.')
-    render_checklist_overview(update, context)
+    checklist_queries.create(session, user_id, checklist_name)
+    reply_markup = build_checklist_overview_markup(context, user_id)
+    update.message.reply_text(menu_handler.CHECKLIST_OVERVIEW_TEXT, reply_markup=reply_markup, parse_mode='Markdown')
 
     return ConversationHandler.END
 
