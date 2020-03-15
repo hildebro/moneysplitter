@@ -3,7 +3,7 @@ from models import Purchase
 from models.item import Item
 
 
-def create(item_names, checklist_id):
+def create(session, item_names, checklist_id):
     item_name_list = item_names.split('\n')
     item_list = []
 
@@ -12,13 +12,10 @@ def create(item_names, checklist_id):
             continue
 
         item = Item(item_name.strip(), checklist_id)
-        session = get_session()
         session.add(item)
-        session.commit()
-        session.refresh(item)
-        session.close()
         item_list.append(item)
 
+    session.commit()
     return item_list
 
 

@@ -1,6 +1,7 @@
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import CallbackQueryHandler, ConversationHandler, CommandHandler
 
+from db import session_wrapper
 from handlers.menu_handler import render_checklist_menu
 from main import conv_cancel
 from queries import item_queries
@@ -11,7 +12,8 @@ ITEM_REMOVAL_MESSAGE = \
     'without removals. '
 
 
-def add_item(update, context):
+@session_wrapper
+def add_item(session, update, context):
     if 'checklist' not in context.user_data:
         update.message.reply_text(
             'Sorry, I cannot handle messages while you are browsing the checklist overview.\nIf you were trying to '
@@ -24,7 +26,7 @@ def add_item(update, context):
 
     item_names = update.message.text
     checklist = context.user_data['checklist']
-    items = item_queries.create(item_names, checklist.id)
+    items = item_queries.create(session, item_names, checklist.id)
     context.user_data['last_items'] = items
 
     keyboard = [

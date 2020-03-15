@@ -1,6 +1,7 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ConversationHandler, CallbackQueryHandler, MessageHandler, Filters
 
+from db import session_wrapper
 from handlers import menu_handler
 from queries import purchase_queries, item_queries
 
@@ -69,9 +70,10 @@ def initialize(update, context):
     return ITEM_STATE
 
 
-def add_item(update, context):
+@session_wrapper
+def add_item(session, update, context):
     item_names = update.message.text
-    items = item_queries.create(item_names, context.user_data['checklist'].id)
+    items = item_queries.create(session, item_names, context.user_data['checklist'].id)
     for item in items:
         context.user_data['purchase_dict'][item.id] = '✔️' + item.name + '✔️'
     render_purchase_menu(update, context)
