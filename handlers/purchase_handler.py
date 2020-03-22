@@ -2,14 +2,15 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ConversationHandler, CallbackQueryHandler, MessageHandler, Filters
 
 from db import session_wrapper
-from handlers import menu_handler
 from queries import purchase_queries, item_queries
+from services import response_builder
 
 
-def show_purchases(update, context):
+@session_wrapper
+def show_purchases(session, update, context):
     query = update.callback_query
     checklist = context.user_data['checklist']
-    purchases = purchase_queries.find_by_checklist(checklist.id)
+    purchases = purchase_queries.find_by_checklist(session, checklist.id)
     if len(purchases) == 0:
         text = checklist.name + ' has no unresolved purchases.'
     else:
@@ -60,8 +61,9 @@ def get_conversation_handler():
     )
 
 
-def initialize(update, context):
-    items = item_queries.find_by_checklist(context.user_data['checklist'].id)
+@session_wrapper
+def initialize(session, update, context):
+    items = item_queries.find_by_checklist(session, context.user_data['checklist'].id)
     context.user_data['purchase_dict'] = {}
     for item in items:
         context.user_data['purchase_dict'][item.id] = item.name
@@ -129,9 +131,11 @@ def build_item_reply(checklist, purchase_dict):
     return text, InlineKeyboardMarkup(keyboard)
 
 
-def abort(update, context):
+@session_wrapper
+def abort(session, update, context):
     context.user_data.pop('purchase_dict', None)
-    menu_handler.render_checklist_menu(update, context)
+    text, markup = response_builder.checklist_menu(session, update.callback_query.from_user, context)
+    update.callback_query.edit_message_text(text=text, reply_markup=markup, parse_mode='Markdown')
 
     return ConversationHandler.END
 
@@ -159,7 +163,8 @@ def ask_price(update, context):
     return PRICE_STATE
 
 
-def commit_purchase(update, context):
+@session_wrapper
+def commit_purchase(session, update, context):
     price_text = update.message.text.replace(',', '.')
     checklist_id = context.user_data['checklist'].id
     user_id = update.message.from_user.id
@@ -180,8 +185,9 @@ def commit_purchase(update, context):
     for item_id in purchase_dict:
         if '✔️' in purchase_dict[item_id]:
             item_ids_to_purchase.append(item_id)
-    purchase_queries.create_purchase(user_id, checklist_id, item_ids_to_purchase, price)
+    purchase_queries.create_purchase(session, user_id, checklist_id, item_ids_to_purchase, price)
 
-    menu_handler.render_checklist_menu_as_new(update, context)
+    text, markup = response_builder.checklist_menu(session, update.message.from_user, context)
+    update.message.reply_text(text, reply_markup=markup, parse_mode='Markdown')
 
     return ConversationHandler.END

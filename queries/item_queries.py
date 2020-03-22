@@ -1,4 +1,3 @@
-from db import get_session
 from models import Purchase
 from models.item import Item
 
@@ -24,16 +23,13 @@ def remove_all(session, ids_to_remove):
     session.commit()
 
 
-def find_by_checklist(checklist_id):
-    session = get_session()
+def find_by_checklist(session, checklist_id):
     # noinspection PyComparisonWithNone
     items = session.query(Item).filter(Item.checklist_id == checklist_id, Item.purchase == None).all()
-    session.close()
     return items
 
 
-def find_for_purchase(purchase_id):
-    session = get_session()
+def find_for_purchase(session, purchase_id):
     purchase = session.query(Purchase).filter(Purchase.id == purchase_id).one()
     # noinspection PyComparisonWithNone
     items = session \
@@ -41,5 +37,4 @@ def find_for_purchase(purchase_id):
         .filter(Item.checklist == purchase.checklist, Item.purchase == None) \
         .order_by(Item.id) \
         .all()
-    session.close()
     return items

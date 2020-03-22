@@ -1,4 +1,3 @@
-from db import get_session
 from models.user import User
 
 
@@ -25,15 +24,11 @@ def refresh(session, telegram_user):
     session.commit()
 
 
-def find_username(user_id):
-    session = get_session()
+def find_username(session, user_id):
     username = session.query(User.username).filter(User.id == user_id).one()[0]
-    session.close()
     return username
 
 
-def remove_all(ids_to_remove):
-    session = get_session()
+def remove_all(session, ids_to_remove):
     session.query(User).filter(User.id.in_(ids_to_remove)).delete(synchronize_session=False)
     session.commit()
-    session.close()

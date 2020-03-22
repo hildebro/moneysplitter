@@ -4,18 +4,25 @@ from telegram.ext import Updater, InlineQueryHandler, CommandHandler, MessageHan
     ConversationHandler, PicklePersistence
 
 import privatestorage
+from db import session_wrapper
 from handlers import *
+from services import response_builder
 
 
-def conv_cancel(update, context):
+@session_wrapper
+def conv_cancel(session, update, context):
     update.message.reply_text('The action has been canceled.')
-    menu_handler.render_checklist_overview(update, context)
+    markup = response_builder.checklist_overview_markup(session, context, update.message.from_user.id)
+    update.message.reply_text(response_builder.CHECKLIST_OVERVIEW_TEXT, reply_markup=markup, parse_mode='Markdown')
 
     return ConversationHandler.END
 
 
-def cancel_conversation(update, context):
-    menu_handler.render_checklist_overview_from_callback(update, context)
+@session_wrapper
+def cancel_conversation(session, update, context):
+    markup = response_builder.checklist_overview_markup(session, context, update.callback_query.from_user.id)
+    update.callback_query.edit_message_text(text=response_builder.CHECKLIST_OVERVIEW_TEXT, reply_markup=markup,
+                                            parse_mode='Markdown')
 
     return ConversationHandler.END
 
@@ -35,23 +42,23 @@ def main():
     dp.add_handler(MessageHandler(Filters.all, group_0_handler.refresh_username), group=0)
 
     # group 1: actual interactions with the bot
-    dp.add_handler(CommandHandler('overview', menu_handler.render_checklist_overview), group=1)
+    dp.add_handler(CommandHandler('overview', menu_handler.checklist_overview_command), group=1)
 
     dp.add_handler(checklist_handler.get_creation_handler(), group=1)
     dp.add_handler(checklist_handler.get_removal_handler(), group=1)
     dp.add_handler(
-        CallbackQueryHandler(basic_callbacks_handler.refresh_checklists, pattern='^refresh_checklists$'), group=1
+        CallbackQueryHandler(menu_handler.refresh_checklists, pattern='^refresh_checklists$'), group=1
     )
 
     dp.add_handler(
-        CallbackQueryHandler(menu_handler.render_checklist_overview_from_callback, pattern='^checklist_overview$'),
+        CallbackQueryHandler(menu_handler.checklist_overview_callback, pattern='^checklist_overview$'),
         group=1
     )
     dp.add_handler(
-        CallbackQueryHandler(menu_handler.render_checklist_menu, pattern='^checklist_menu_[0-9]+$'), group=1
+        CallbackQueryHandler(menu_handler.checklist_menu_callback, pattern='^checklist_menu_[0-9]+$'), group=1
     )
     dp.add_handler(
-        CallbackQueryHandler(menu_handler.render_checklist_settings, pattern='^checklist_settings$'), group=1
+        CallbackQueryHandler(menu_handler.advanced_settings_callback, pattern='^checklist_settings$'), group=1
     )
 
     dp.add_handler(InlineQueryHandler(inline_query_handler.send_invite_message), group=1)

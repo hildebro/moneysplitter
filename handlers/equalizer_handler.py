@@ -3,9 +3,10 @@ import operator
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ConversationHandler, CallbackQueryHandler, CommandHandler
 
-from handlers.menu_handler import render_checklist_menu
+from db import session_wrapper
 from main import conv_cancel
 from queries import user_queries, purchase_queries, checklist_queries
+from services import response_builder
 
 BASE_STATE = 0
 
@@ -53,8 +54,9 @@ def revert_purchase(update, context):
     return BASE_STATE
 
 
-def render_purchases_to_equalize(update, context):
-    purchases = purchase_queries.find_to_equalize(context.user_data['checklist'].id)
+@session_wrapper
+def render_purchases_to_equalize(session, update, context):
+    purchases = purchase_queries.find_to_equalize(session, context.user_data['checklist'].id)
     keyboard = []
     for purchase in purchases:
         if purchase.id not in context.user_data['buffered_purchases']:
@@ -74,17 +76,22 @@ def render_purchases_to_equalize(update, context):
     update.callback_query.edit_message_text(text='Choose purchases to equalize:', reply_markup=reply_markup)
 
 
-def abort(update, context):
-    render_checklist_menu(update, context)
+@session_wrapper
+def abort(session, update, context):
+    text, markup = response_builder.checklist_menu(session, update.callback_query.from_user, context)
+    update.callback_query.edit_message_text(text=text,
+                                            reply_markup=markup,
+                                            parse_mode='Markdown')
 
     return ConversationHandler.END
 
 
-def finish(update, context):
+@session_wrapper
+def finish(session, update, context):
     summed_purchases = {}
     average_price = 0
     # sum up purchase prices
-    purchases = purchase_queries.find_by_ids(context.user_data['buffered_purchases'])
+    purchases = purchase_queries.find_by_ids(session, context.user_data['buffered_purchases'])
     for purchase in purchases:
         average_price += purchase.get_price()
         if purchase.buyer.id not in summed_purchases:
@@ -93,7 +100,7 @@ def finish(update, context):
             summed_purchases[purchase.buyer.id] += purchase.get_price()
 
     # add entry with price of 0 for everyone who hasn't purchased anything
-    participants = checklist_queries.find_participants(context.user_data['checklist'].id)
+    participants = checklist_queries.find_participants(session, context.user_data['checklist'].id)
     for participant in participants:
         if participant.id not in summed_purchases:
             summed_purchases[participant.id] = 0
@@ -127,15 +134,15 @@ def finish(update, context):
             'amount': to_give
         })
 
-    purchase_queries.equalize(context.user_data['buffered_purchases'])
+    purchase_queries.equalize(session, context.user_data['buffered_purchases'])
 
     transaction_message = 'The chosen purchases have been equalized under the assumption that the following ' \
                           'transactions will be made:\n'
     for transaction in transactions:
         transaction_message += '{} has to send {} to {}\n'.format(
-            user_queries.find_username(transaction['from']),
+            user_queries.find_username(session, transaction['from']),
             transaction['amount'],
-            user_queries.find_username(transaction['to'])
+            user_queries.find_username(session, transaction['to'])
         )
     transaction_message += '\n\nPlease use the /overview command to go back to the menu.'
     update.callback_query.edit_message_text(text=transaction_message)

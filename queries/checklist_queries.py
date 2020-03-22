@@ -1,6 +1,5 @@
 from sqlalchemy import func
 
-from db import get_session
 from models import User
 from models.checklist import Checklist
 from queries import user_queries
@@ -23,13 +22,11 @@ def create(session, creator_id, checklist_name):
     session.commit()
 
 
-def find_by_participant(user_id):
-    session = get_session()
+def find_by_participant(session, user_id):
     checklists = session \
         .query(Checklist) \
         .filter(Checklist.participants.any(id=user_id)) \
         .all()
-    session.close()
     return checklists
 
 
@@ -41,10 +38,8 @@ def find_by_creator(session, user_id):
     return checklists
 
 
-def find_participants(checklist_id):
-    session = get_session()
+def find_participants(session, checklist_id):
     participants = session.query(User).filter(User.joined_checklists.any(Checklist.id == checklist_id)).all()
-    session.close()
     return participants
 
 

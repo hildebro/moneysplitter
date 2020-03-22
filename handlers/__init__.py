@@ -1,5 +1,4 @@
 from handlers import (
-    basic_callbacks_handler,
     checklist_handler,
     equalizer_handler,
     group_0_handler,

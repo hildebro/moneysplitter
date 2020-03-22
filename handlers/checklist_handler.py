@@ -2,10 +2,9 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ConversationHandler, CallbackQueryHandler, Filters, MessageHandler, CommandHandler
 
 from db import session_wrapper
-from handlers import menu_handler
-from handlers.menu_handler import render_checklist_settings
 from main import cancel_conversation, conv_cancel
 from queries import checklist_queries
+from services import response_builder
 
 BASE_STATE = 0
 
@@ -46,8 +45,9 @@ def create(session, update, context):
         return BASE_STATE
 
     checklist_queries.create(session, user_id, checklist_name)
-    reply_markup = menu_handler.build_checklist_overview_markup(context, user_id)
-    update.message.reply_text(menu_handler.CHECKLIST_OVERVIEW_TEXT, reply_markup=reply_markup, parse_mode='Markdown')
+    reply_markup = response_builder.checklist_overview_markup(session, context, user_id)
+    update.message.reply_text(response_builder.CHECKLIST_OVERVIEW_TEXT, reply_markup=reply_markup,
+                              parse_mode='Markdown')
 
     return ConversationHandler.END
 
@@ -77,7 +77,7 @@ def initialize_removal(update, context):
         text='You are about to delete the checklist *{}*. This *cannot be undone*. If you are certain about deleting '
              'this checklist, send me the checklist\'s name.'.format(context.user_data['checklist'].name),
         reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton('Back to advanced options', callback_data='abort_removal')]
+            [InlineKeyboardButton('Back to main menu', callback_data='abort_removal')]
         ]),
         parse_mode='Markdown'
     )
@@ -85,8 +85,10 @@ def initialize_removal(update, context):
     return BASE_STATE
 
 
-def abort_removal(update, context):
-    render_checklist_settings(update, context)
+@session_wrapper
+def abort_removal(session, update, context):
+    text, markup = response_builder.checklist_menu(session, update.callback_query.from_user, context)
+    update.callback_query.edit_message_text(text=text, reply_markup=markup, parse_mode='Markdown')
 
     return ConversationHandler.END
 
@@ -99,7 +101,7 @@ def remove(session, update, context):
         update.message.reply_text(
             'Your message and the checklist name do not match. Please send the *exact* name.',
             reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton('Back to advanced options',
+                [InlineKeyboardButton('Back to main menu',
                                       callback_data='abort_removal')]
             ]),
             parse_mode='Markdown'

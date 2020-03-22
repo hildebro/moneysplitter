@@ -2,9 +2,9 @@ from telegram import InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import CallbackQueryHandler, ConversationHandler, CommandHandler
 
 from db import session_wrapper
-from handlers.menu_handler import render_checklist_menu
 from main import conv_cancel
 from queries import item_queries
+from services import response_builder
 
 ITEM_REMOVAL_MESSAGE = \
     'You are now removing items from checklist *{}*.\n\nClick on items to *(de)select* them for ' \
@@ -82,9 +82,10 @@ def get_removal_handler():
     )
 
 
-def initialize(update, context):
+@session_wrapper
+def initialize(session, update, context):
     context.user_data['removal_dict'] = {}
-    items = item_queries.find_by_checklist(context.user_data['checklist'].id)
+    items = item_queries.find_by_checklist(session, context.user_data['checklist'].id)
     for item in items:
         context.user_data['removal_dict'][item.id] = item.name
 
@@ -108,9 +109,11 @@ def mark_item(update, context):
     return BASE_STATE
 
 
-def abort(update, context):
+@session_wrapper
+def abort(session, update, context):
     context.user_data['removal_dict'] = None
-    render_checklist_menu(update, context)
+    text, markup = response_builder.checklist_menu(session, update.callback_query.from_user, context)
+    update.callback_query.edit_message_text(text=text, reply_markup=markup, parse_mode='Markdown')
 
     return ConversationHandler.END
 
@@ -128,7 +131,8 @@ def commit(session, update, context):
         return BASE_STATE
 
     item_queries.remove_all(session, ids_to_remove)
-    render_checklist_menu(update, context)
+    text, markup = response_builder.checklist_menu(session, update.callback_query.from_user, context)
+    update.callback_query.edit_message_text(text=text, reply_markup=markup, parse_mode='Markdown')
 
     return ConversationHandler.END
 
