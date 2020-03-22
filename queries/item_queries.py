@@ -19,18 +19,9 @@ def create(session, item_names, checklist_id):
     return item_list
 
 
-def remove(item_id):
-    session = get_session()
-    session.query(Item).filter(Item.id == item_id).delete()
-    session.commit()
-    session.close()
-
-
-def remove_all(ids_to_remove):
-    session = get_session()
+def remove_all(session, ids_to_remove):
     session.query(Item).filter(Item.id.in_(ids_to_remove)).delete(synchronize_session=False)
     session.commit()
-    session.close()
 
 
 def find_by_checklist(checklist_id):

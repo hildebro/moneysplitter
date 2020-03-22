@@ -42,7 +42,8 @@ def add_item(session, update, context):
     )
 
 
-def undo_last_items(update, context):
+@session_wrapper
+def undo_last_items(session, update, context):
     checklist = context.user_data['checklist']
     keyboard = [
         [
@@ -57,7 +58,7 @@ def undo_last_items(update, context):
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
 
-    item_queries.remove_all(map(lambda item: item.id, last_items))
+    item_queries.remove_all(session, map(lambda item: item.id, last_items))
     update.callback_query.edit_message_text(
         text='Successfully undid last added items.',
         reply_markup=InlineKeyboardMarkup(keyboard)
@@ -114,14 +115,19 @@ def abort(update, context):
     return ConversationHandler.END
 
 
-def commit(update, context):
+@session_wrapper
+def commit(session, update, context):
     ids_to_remove = []
     removal_dict = context.user_data['removal_dict']
     for item_id in removal_dict:
         if '🚫' in removal_dict[item_id]:
             ids_to_remove.append(item_id)
 
-    item_queries.remove_all(ids_to_remove)
+    if len(ids_to_remove) == 0:
+        update.callback_query.answer('Please select something to delete!')
+        return BASE_STATE
+
+    item_queries.remove_all(session, ids_to_remove)
     render_checklist_menu(update, context)
 
     return ConversationHandler.END
