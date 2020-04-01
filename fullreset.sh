@@ -1,3 +1,5 @@
+#!/bin/sh
+
 read -p "DANGER: Do you really want to reset your database? " -n 1 -r
 if [[ ! $REPLY =~ ^[Yy]$ ]]; then
   exit 1
