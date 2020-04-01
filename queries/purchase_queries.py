@@ -44,4 +44,4 @@ def equalize(session, purchase_ids):
     purchases = session.query(Purchase).filter(Purchase.id.in_(purchase_ids)).all()
     for purchase in purchases:
         purchase.equalized = True
-    session.close()
+    session.commit()
