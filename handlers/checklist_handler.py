@@ -77,9 +77,7 @@ def initialize_removal(update, context):
     update.callback_query.edit_message_text(
         text='You are about to delete the checklist *{}*. This *cannot be undone*. If you are certain about deleting '
              'this checklist, send me the checklist\'s name.'.format(context.user_data['checklist'].name),
-        reply_markup=InlineKeyboardMarkup([
-            [button('abort_removal', 'Main menu', emojis.BACK)]
-        ]),
+        reply_markup=InlineKeyboardMarkup([[button('abort_removal', 'Main menu', emojis.BACK)]]),
         parse_mode='Markdown'
     )
 
@@ -102,11 +100,11 @@ def remove(session, update, context):
         update.message.reply_text(
             'Your message and the checklist name do not match. Please send the *exact* name.',
             reply_markup=InlineKeyboardMarkup([
-                [[button('abort_removal', 'Main menu', emojis.BACK)]]
+                [button('abort_removal', 'Main menu', emojis.BACK)]
             ]),
             parse_mode='Markdown'
         )
-        return
+        return BASE_STATE
 
     checklist_queries.delete(session, checklist.id, update.message.chat_id)
     update.message.reply_text(
