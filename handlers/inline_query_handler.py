@@ -1,7 +1,9 @@
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, InputTextMessageContent, InlineQueryResultArticle
+from telegram import InlineKeyboardMarkup, InputTextMessageContent, InlineQueryResultArticle
 
 from db import session_wrapper
 from queries import checklist_queries, user_queries
+from services import emojis
+from services.response_builder import button
 
 
 @session_wrapper
@@ -22,7 +24,7 @@ def send_invite_message(session, update, context):
                     'don\'t know what this means, check out @PurchaseSplitterBot for more info.'.format(checklist.name)
                 ),
                 reply_markup=InlineKeyboardMarkup([[
-                    InlineKeyboardButton('Join checklist', callback_data='join_checklist_{}'.format(checklist.id))
+                    button('join_checklist_{}'.format(checklist.id), 'Join checklist', emojis.RUNNER)
                 ]])
             )
         )

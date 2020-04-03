@@ -1,8 +1,9 @@
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import InlineKeyboardMarkup
 
 from db import session_wrapper
 from queries import checklist_queries
-from services import response_builder
+from services import response_builder, emojis
+from services.response_builder import button
 
 
 @session_wrapper
@@ -23,10 +24,10 @@ def checklist_overview_callback(session, update, context):
 def advanced_settings_callback(update, context):
     checklist = context.user_data['checklist']
     keyboard = [
-        [InlineKeyboardButton('🗑️ Remove items 🗑️', callback_data='remove_items')],
-        [InlineKeyboardButton('️🏃‍♂️ Remove users ️🏃‍♂️', callback_data='remove_users')],
-        [InlineKeyboardButton('☣️ Delete checklist ☣️', callback_data='delete_checklist')],
-        [InlineKeyboardButton('🔙 Main menu 🔙', callback_data='checklist_menu_{}'.format(checklist.id))]
+        [button('remove_items', 'Drop items', emojis.BIN)],
+        [button('remove_users', 'Kick users', emojis.RUNNER)],
+        [button('delete_checklist', 'Delete checklist', emojis.HAZARD)],
+        [button('checklist_menu_{}'.format(checklist.id), 'Main menu', emojis.BACK)]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     update.callback_query.edit_message_text(

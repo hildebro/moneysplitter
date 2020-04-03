@@ -1,10 +1,11 @@
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import InlineKeyboardMarkup
 from telegram.ext import ConversationHandler, CallbackQueryHandler, Filters, MessageHandler, CommandHandler
 
 from db import session_wrapper
 from main import cancel_conversation, conv_cancel
 from queries import checklist_queries
-from services import response_builder
+from services import response_builder, emojis
+from services.response_builder import button
 
 BASE_STATE = 0
 
@@ -21,7 +22,7 @@ def get_creation_handler():
 
 # noinspection PyUnusedLocal
 def initialize_creation(update, context):
-    keyboard = [[InlineKeyboardButton('Back to checklist overview', callback_data='cancel_conversation')]]
+    keyboard = [[button('cancel_conversation', 'Checklist overview', emojis.BACK)]]
 
     update.callback_query.edit_message_text(
         text='You are about to create a new checklist! Please send me a message with your desired name.',
@@ -35,7 +36,7 @@ def initialize_creation(update, context):
 def create(session, update, context):
     checklist_name = update.message.text
     user_id = update.message.from_user.id
-    keyboard = [[InlineKeyboardButton('Back to checklist overview', callback_data='cancel_conversation')]]
+    keyboard = [[button('cancel_conversation', 'Checklist overview', emojis.BACK)]]
 
     if checklist_queries.exists(session, user_id, checklist_name):
         update.message.reply_text(
@@ -77,7 +78,7 @@ def initialize_removal(update, context):
         text='You are about to delete the checklist *{}*. This *cannot be undone*. If you are certain about deleting '
              'this checklist, send me the checklist\'s name.'.format(context.user_data['checklist'].name),
         reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton('Back to main menu', callback_data='abort_removal')]
+            [button('abort_removal', 'Main menu', emojis.BACK)]
         ]),
         parse_mode='Markdown'
     )
@@ -101,8 +102,7 @@ def remove(session, update, context):
         update.message.reply_text(
             'Your message and the checklist name do not match. Please send the *exact* name.',
             reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton('Back to main menu',
-                                      callback_data='abort_removal')]
+                [[button('abort_removal', 'Main menu', emojis.BACK)]]
             ]),
             parse_mode='Markdown'
         )
@@ -112,7 +112,7 @@ def remove(session, update, context):
     update.message.reply_text(
         'The checklist has been deleted.',
         reply_markup=InlineKeyboardMarkup(
-            [[InlineKeyboardButton('Back to checklist overview', callback_data='checklist_overview')]]
+            [[button('checklist_overview', 'Checklist overview', emojis.BACK)]]
         )
     )
 
