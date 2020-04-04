@@ -1,7 +1,7 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ConversationHandler, CallbackQueryHandler, MessageHandler, Filters
 
-from ..db.db import session_wrapper
+from ..db import session_wrapper
 from ..db.queries import purchase_queries, item_queries
 from ..services import response_builder
 

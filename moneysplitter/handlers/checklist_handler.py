@@ -2,8 +2,7 @@ from telegram import InlineKeyboardMarkup
 from telegram.ext import ConversationHandler, CallbackQueryHandler, Filters, MessageHandler, CommandHandler
 
 from .menu_handler import cancel_conversation, conv_cancel
-from ..db.db import session_wrapper
-from ..db.queries import checklist_queries
+from ..db import checklist_queries, session_wrapper
 from ..services import response_builder, emojis
 from ..services.response_builder import button
 

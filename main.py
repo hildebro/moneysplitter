@@ -1,9 +1,14 @@
 import logging
 
-from telegram.ext import Updater, InlineQueryHandler, CommandHandler, MessageHandler, Filters, CallbackQueryHandler, \
-    PicklePersistence
+from telegram.ext import (
+    Updater,
+    InlineQueryHandler,
+    CommandHandler,
+    MessageHandler,
+    Filters,
+    CallbackQueryHandler,
+    PicklePersistence)
 
-print('__file__={0:<35} | __name__={1:<20} | __package__={2:<20}'.format(__file__, __name__, str(__package__)))
 import privatestorage
 from moneysplitter.handlers import (
     checklist_handler,

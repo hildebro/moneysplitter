@@ -1,7 +1,7 @@
 from telegram import InlineKeyboardMarkup
 from telegram.ext import ConversationHandler
 
-from ..db.db import session_wrapper
+from ..db import session_wrapper
 from ..db.queries import checklist_queries
 from ..services import response_builder, emojis
 from ..services.response_builder import button

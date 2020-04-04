@@ -3,8 +3,7 @@ import operator
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ConversationHandler, CallbackQueryHandler, CommandHandler
 
-from ..db.db import session_wrapper
-from ..db.queries import user_queries, purchase_queries, checklist_queries
+from ..db import session_wrapper, user_queries, purchase_queries, checklist_queries
 from ..handlers.menu_handler import conv_cancel
 from ..services import response_builder
 

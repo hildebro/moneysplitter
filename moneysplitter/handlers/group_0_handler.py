@@ -1,5 +1,4 @@
-from ..db.db import session_wrapper
-from ..db.queries import user_queries
+from ..db import session_wrapper, user_queries
 
 
 @session_wrapper
