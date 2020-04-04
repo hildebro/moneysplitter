@@ -1,30 +1,20 @@
 import logging
 
 from telegram.ext import Updater, InlineQueryHandler, CommandHandler, MessageHandler, Filters, CallbackQueryHandler, \
-    ConversationHandler, PicklePersistence
+    PicklePersistence
 
+print('__file__={0:<35} | __name__={1:<20} | __package__={2:<20}'.format(__file__, __name__, str(__package__)))
 import privatestorage
-from db import session_wrapper
-from handlers import *
-from services import response_builder
-
-
-@session_wrapper
-def conv_cancel(session, update, context):
-    update.message.reply_text('The action has been canceled.')
-    markup = response_builder.checklist_overview_markup(session, context, update.message.from_user.id)
-    update.message.reply_text(response_builder.CHECKLIST_OVERVIEW_TEXT, reply_markup=markup, parse_mode='Markdown')
-
-    return ConversationHandler.END
-
-
-@session_wrapper
-def cancel_conversation(session, update, context):
-    markup = response_builder.checklist_overview_markup(session, context, update.callback_query.from_user.id)
-    update.callback_query.edit_message_text(text=response_builder.CHECKLIST_OVERVIEW_TEXT, reply_markup=markup,
-                                            parse_mode='Markdown')
-
-    return ConversationHandler.END
+from moneysplitter.handlers import (
+    checklist_handler,
+    equalizer_handler,
+    group_0_handler,
+    inline_query_handler,
+    item_handler,
+    menu_handler,
+    purchase_handler,
+    user_handler
+)
 
 
 def main():

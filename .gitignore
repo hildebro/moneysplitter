@@ -1,5 +1,6 @@
 bot_state_persistence
 .idea
+moneysplitter.egg-info
 postgres
 privatestorage.py
 __pycache__
