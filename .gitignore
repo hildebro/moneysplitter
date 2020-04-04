@@ -1,5 +1,6 @@
-__pycache__
-privatestorage.py
 bot_state_persistence
 .idea
 postgres
+privatestorage.py
+__pycache__
+.venv
