@@ -55,13 +55,13 @@ def checklist_menu_text(session, checklist):
     return text
 
 
-def checklist_menu_markup(allow_advanced_options):
+def checklist_menu_markup(checklist_id, allow_advanced_options):
     """
     :return: Generic menu options for any checklist
     """
     keyboard = [
-        [button('new_purchase', 'New purchase', emojis.CART)],
-        [button('show_purchases', 'Outstanding purchases', emojis.BILL)],
+        [button(f'new-purchase_{checklist_id}', 'New purchase', emojis.CART)],
+        [button(f'show-purchases_{checklist_id}', 'Outstanding purchases', emojis.BILL)],
         [button('equalize', 'Get even', emojis.MONEY)],
     ]
     if allow_advanced_options:
@@ -77,19 +77,61 @@ def checklist_menu(session, from_user, context):
     checklist = context.user_data['checklist']
     allow_advanced_options = checklist.creator_id == from_user.id
 
-    return checklist_menu_text(session, checklist), checklist_menu_markup(allow_advanced_options)
+    return checklist_menu_text(session, checklist), checklist_menu_markup(checklist.id, allow_advanced_options)
+
+
+def back_to_main_menu(checklist_id):
+    return InlineKeyboardMarkup([[button(f'checklist_menu_{checklist_id}', 'Main menu', emojis.BACK)]])
 
 
 ADVANCED_CHECKLIST_MENU_TEXT = 'This is the advanced menu for the checklist called *{}*. Please choose an action below.'
 
 
-def entity_selector_markup(entities):
+def entity_selector_markup(entities, is_marked_callback, contextual_id, contextual_suffix):
     """
-    :return: Buttons for the given entities with a callback to mark them. Marked entities will be represented as such.
+    :param entities: For each of these a button will be created.
+    :param is_marked_callback: Used to check, whether an entity is already selected.
+    :param contextual_id: The ID of the defined context.
+    :param contextual_suffix: Used to define the context in which the selection of entities occurs.
+    :return: Buttons to be marked as selected, when clicked.
     """
-    return
+    keyboard = []
+    for entity in entities:
+        button_prefix = '(O)' if is_marked_callback(entity) else '(  )'
+        keyboard.append(
+            [button(f'mark-{contextual_suffix}_{contextual_id}_{entity.id}', f'{button_prefix} {entity.name}')])
+    keyboard.append([
+        button(f'abort-{contextual_suffix}_{contextual_id}', 'Main menu', emojis.BACK),
+        button(f'continue-{contextual_suffix}_{contextual_id}', 'Continue', emojis.FORWARD)
+    ])
+
+    return InlineKeyboardMarkup(keyboard)
 
 
 def button(callback_data, label, emoji=''):
     """ Simple wrapper around InlineKeyboardButton to slim down frequent usage."""
     return InlineKeyboardButton(emoji + label + emoji, callback_data=callback_data)
+
+
+CALLBACK_MAPPINGS = {
+    'show-purchases': ['checklist_id'],
+    'new-purchase': ['checklist_id'],
+    'mark-for-purchase': ['purchase_id', 'item_id'],
+    'abort-for-purchase': ['purchase_id'],
+    'continue-for-purchase': ['purchase_id']
+}
+
+
+def interpret_data(callback_query):
+    """
+    Every callback data has the format of PURPOSE_ID_ID_ID_ID_ID...
+    In order to properly interpret the data, the purpose is used as a key for CALLBACK_MAPPINGS.
+    The callback IDs are then mapped to the defined names.
+    """
+    data = callback_query.data.split('_')
+    mapping = CALLBACK_MAPPINGS[data.pop(0)]
+    result_data = {}
+    for i in range(len(mapping)):
+        result_data[mapping[i]] = int(data[i])
+
+    return result_data

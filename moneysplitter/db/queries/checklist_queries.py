@@ -1,7 +1,6 @@
 from sqlalchemy import func
 
-from ..models import Checklist
-from ..models import User
+from ..models import Checklist, Purchase, User
 from ..queries import user_queries
 
 
@@ -20,6 +19,10 @@ def create(session, creator_id, checklist_name):
     checklist.participants = [creator]
     session.add(checklist)
     session.commit()
+
+
+def find(session, checklist_id):
+    return session.query(Checklist).filter(Checklist.id == checklist_id).one()
 
 
 def find_by_participant(session, user_id):
@@ -41,6 +44,10 @@ def find_by_creator(session, user_id):
 def find_participants(session, checklist_id):
     participants = session.query(User).filter(User.joined_checklists.any(Checklist.id == checklist_id)).all()
     return participants
+
+
+def find_by_purchase(session, purchase_id):
+    return session.query(Checklist).filter(Checklist.purchases.any(Purchase.id == purchase_id)).one()
 
 
 def is_creator(session, checklist_id, user_id):

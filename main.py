@@ -62,7 +62,7 @@ def main():
     )
     dp.add_handler(user_handler.get_removal_handler(), group=1)
 
-    dp.add_handler(CallbackQueryHandler(purchase_handler.show_purchases, pattern='^show_purchases$'), group=1)
+    dp.add_handler(CallbackQueryHandler(purchase_handler.show_purchases, pattern='^show-purchases_[0-9]+$'), group=1)
     dp.add_handler(purchase_handler.get_conversation_handler(), group=1)
 
     dp.add_handler(equalizer_handler.get_conversation_handler(), group=1)

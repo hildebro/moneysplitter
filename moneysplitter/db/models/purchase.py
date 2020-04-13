@@ -14,12 +14,15 @@ class Purchase(base):
     buyer = relationship('User', back_populates='purchases')
     items = relationship('Item', back_populates='purchase')
     equalized = Column(Boolean, default=False)
-    price = Column(Integer, nullable=False)
+    in_progress = Column(Boolean, default=True)
+    price = Column(Integer, nullable=True)
 
-    def __init__(self, buyer_id, checklist_id, price):
+    def __init__(self, buyer_id, checklist_id):
         self.buyer_id = buyer_id
         self.checklist_id = checklist_id
-        self.price = price * 100.0
 
     def get_price(self):
         return self.price / 100.0
+
+    def set_price(self, price):
+        self.price = price * 100.0

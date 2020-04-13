@@ -20,6 +20,9 @@ def find(session, user_id):
 
 def refresh(session, telegram_user):
     user = session.query(User).filter(User.id == telegram_user.id).one()
+    if user.username == telegram_user.username:
+        return
+
     user.username = telegram_user.username
     session.commit()
 
