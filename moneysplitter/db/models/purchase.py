@@ -13,8 +13,8 @@ class Purchase(base):
     buyer_id = Column(Integer, ForeignKey('users.id', ondelete='set null'))
     buyer = relationship('User', back_populates='purchases')
     items = relationship('Item', back_populates='purchase')
-    equalized = Column(Boolean, default=False)
-    in_progress = Column(Boolean, default=True)
+    equalized = Column(Boolean, default=False, nullable=False)
+    in_progress = Column(Boolean, default=True, nullable=False)
     price = Column(Integer, nullable=True)
 
     def __init__(self, buyer_id, checklist_id):
