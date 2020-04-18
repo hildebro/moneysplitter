@@ -17,10 +17,8 @@ def show_purchases(session, update, context):
     else:
         text = ''
         for purchase in purchases:
-            text += '*{} paid {} for this*: '.format(
-                purchase.buyer.username,
-                purchase.get_price()
-            ) + ', '.join(map(lambda item: item.name, purchase.items)) + '\n'
+            item_names = ', '.join(map(lambda item: item.name, purchase.items))
+            text += f'*{purchase.buyer.username} paid {purchase.get_price()} for:* {item_names}\n\n'
 
     query.edit_message_text(text=text, reply_markup=response_builder.back_to_main_menu(checklist.id),
                             parse_mode='Markdown')
