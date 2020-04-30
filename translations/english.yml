@@ -1,0 +1,113 @@
+start:
+  text: |
+    Thank you for using Purchase Splitter Bot! If you came here, because you were invited to someone else's checklist, you can now head back to their invite message and click the button.
+    Otherwise, you can start using the bot by creating your own checklist.
+
+    _Note_: You should interact with this bot by sending it direct messages. The bot might not work as intended, if you invite it into a group chat with multiple users.
+  already_started: 'You already started the bot!'
+
+conversation:
+  continue: 'Continue'
+  no_selection: 'Please select something before continuing'
+  undo: 'Undo'
+  cancel: 'The current action has been canceled.'
+
+inline:
+  text: |
+    You are invited to join the checklist %{name}. Press the button under this message to confirm.
+    If you don't know what this means, check out @PurchaseSplitterBot for more information.
+  join: 'Join checklist'
+  accept:
+    not_registered: 'You cannot join checklists before starting the bot.'
+    already_joined: 'You already joined this checklist!'
+    success: 'You successfully joined this checklist!'
+
+checklist:
+  overview:
+    link: 'Checklist overview'
+    text: |
+      This is your personal _checklist overview_.
+
+      All checklists that you create or join will be listed here. Click on a checklist button to enter its main menu.
+      You may also create a _new checklist_ or _refresh_ this overview in order for checklists that you have recently joined to appear.
+    refresh: 'Refresh overview'
+  menu:
+    link: 'Main menu'
+    title: 'This is the main menu for _%{name}_.'
+    items:
+      none: 'It contains no items.'
+      some: |
+        It contains the following items:
+        %{items}
+    info: 'If you want to _add new items_, simply send me a _message_ containing the item name.'
+  create:
+    link: 'New checklist'
+    init: 'You are about to create a new checklist! Please send me a message with your desired name.'
+    not_unique: 'You already have a checklist with that name. Please choose a unique name.'
+  delete:
+    permission_denied: 'You are not allowed to do this!'
+    init: |
+      You are about to delete the checklist _%{name}_.
+      This _cannot be undone_.
+      Send me the name of this checklist, if you really want to delete it.
+    not_matching: 'Your message and the checklist name do not match. Please send the _exact_ name.'
+    done: 'The checklist has been deleted.'
+  settings:
+    link: 'Checklist settings'
+    text: 'This is the settings menu for the checklist _%{name}_. Please choose an action below.'
+    remove_users:
+      link: 'Kick users'
+      text: |
+        You are now removing users from checklist _%{name}_.
+
+        Click on a username to _(de)select_ them for removal.
+        When you are done, click _Commit_ to remove all selected users.
+        Click _Abort_ to exit without removals.
+    delete_items: 'Drop items'
+    delete_checklist: 'Delete checklist'
+
+purchase:
+  create:
+    link: 'New purchase'
+    header: 'You are now purchasing items for checklist _%{name}_.'
+    text:
+      zero: 'This checklist has no items, but you may send me item names which will be added as preselected items.'
+      one: |
+        Click on the item to _(de)select it for purchase_.
+        You may also send me new item names to add them to this list preselected.
+        Once you're done with your selection, click _Continue_ to set a price.
+      many: |
+        Click on items to _(de)select them for purchase_.
+        You may also send me new item names to add them to this list preselected.
+        Once you're done with your selection, click _Continue_ to set a price.
+    already_selected: 'Someone else is purchasing right now and marked this item already!'
+    price:
+      ask: 'How much did you spent? Please send me a message containing that amount.'
+      invalid: 'Please enter a valid amount! It may include a comma or a period, but no currency.'
+    success: 'Purchase successful!'
+
+  log:
+    link: 'Outstanding purchases'
+    header:
+      zero: '_%{name}_ has no outstanding purchases.'
+      one: '_%{name}_ has one outstanding purchase.'
+      many: '_%{name}_ has %{count} outstanding purchases.'
+    list: '_%{name} paid %{price} for:_ %{items}'
+  equalize: 'Get even'
+
+item:
+  add:
+    no_checklist: 'Sorry, I cannot handle messages while you are browsing the checklist overview. You need to enter a checklist menu in order to add items to it.'
+    success: |
+      Successfully added the following items to checklist _%{name}_:
+
+      %{items}
+  undo:
+    unavailable: 'There seem to be no items available to undo. Note that you may only undo what was added in your most recent message.'
+    success: 'Successfully undid previously added items.'
+  delete: |
+    You are now removing items from checklist _%{name}_.
+
+    Click on items to _(de)select_ them for removal.
+    When you are done, click _Commit_ to remove all selected items.
+    Click _Abort_ to exit the dialog without any removals.

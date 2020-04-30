@@ -23,20 +23,16 @@ from moneysplitter.handlers import (
 
 
 def main():
-    # noinspection SpellCheckingInspection
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-    )
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
     persistence = PicklePersistence(filename='bot_state_persistence')
     updater = Updater(privatestorage.get_token(), use_context=True, persistence=persistence)
     dp = updater.dispatcher
-    # group 0: persist new user or update existing ones
-    dp.add_handler(CommandHandler('start', group_0_handler.handle_start_command), group=0)
+    # group 0: automatically refreshes usernames on every command
     dp.add_handler(MessageHandler(Filters.all, group_0_handler.refresh_username), group=0)
 
     # group 1: actual interactions with the bot
+    dp.add_handler(CommandHandler('start', group_0_handler.handle_start_command), group=1)
     dp.add_handler(CommandHandler('overview', menu_handler.checklist_overview_command), group=1)
 
     dp.add_handler(checklist_handler.get_creation_handler(), group=1)
@@ -50,10 +46,10 @@ def main():
         group=1
     )
     dp.add_handler(
-        CallbackQueryHandler(menu_handler.checklist_menu_callback, pattern='^checklist_menu_[0-9]+$'), group=1
+        CallbackQueryHandler(menu_handler.checklist_menu_callback, pattern='^checklist-menu_[0-9]+$'), group=1
     )
     dp.add_handler(
-        CallbackQueryHandler(menu_handler.advanced_settings_callback, pattern='^checklist_settings$'), group=1
+        CallbackQueryHandler(menu_handler.settings_callback, pattern='^checklist_settings$'), group=1
     )
 
     dp.add_handler(InlineQueryHandler(inline_query_handler.send_invite_message), group=1)

@@ -3,6 +3,7 @@ from telegram.ext import ConversationHandler, CallbackQueryHandler, Filters, Mes
 
 from .menu_handler import cancel_conversation, conv_cancel
 from ..db import checklist_queries, session_wrapper
+from ..i18n import trans
 from ..services import response_builder, emojis
 from ..services.response_builder import button
 
@@ -12,21 +13,15 @@ BASE_STATE = 0
 def get_creation_handler():
     return ConversationHandler(
         entry_points=[CallbackQueryHandler(initialize_creation, pattern='^new_checklist$')],
-        states={
-            BASE_STATE: [MessageHandler(Filters.text, create)],
-        },
-        fallbacks=[CallbackQueryHandler(cancel_conversation, 'cancel_conversation')]
+        states={BASE_STATE: [MessageHandler(Filters.text, create)]},
+        fallbacks=[CallbackQueryHandler(cancel_conversation, pattern='^cancel_conversation$')]
     )
 
 
 # noinspection PyUnusedLocal
 def initialize_creation(update, context):
-    keyboard = [[button('cancel_conversation', 'Checklist overview', emojis.BACK)]]
-
-    update.callback_query.edit_message_text(
-        text='You are about to create a new checklist! Please send me a message with your desired name.',
-        reply_markup=InlineKeyboardMarkup(keyboard)
-    )
+    markup = InlineKeyboardMarkup([[button('cancel_conversation', trans.t('checklist.overview.link'), emojis.BACK)]])
+    update.callback_query.edit_message_text(text=trans.t('checklist.create.init'), reply_markup=markup)
 
     return BASE_STATE
 
@@ -35,19 +30,16 @@ def initialize_creation(update, context):
 def create(session, update, context):
     checklist_name = update.message.text
     user_id = update.message.from_user.id
-    keyboard = [[button('cancel_conversation', 'Checklist overview', emojis.BACK)]]
+    markup = InlineKeyboardMarkup([[button('cancel_conversation', trans.t('checklist.overview.link'), emojis.BACK)]])
 
     if checklist_queries.exists(session, user_id, checklist_name):
-        update.message.reply_text(
-            'You already have a checklist with that name. Please choose a unique name.',
-            reply_markup=InlineKeyboardMarkup(keyboard))
+        update.message.reply_text(trans.t('checklist.create.not_unique'), reply_markup=markup)
 
         return BASE_STATE
 
     checklist_queries.create(session, user_id, checklist_name)
     reply_markup = response_builder.checklist_overview_markup(session, context, user_id)
-    update.message.reply_text(response_builder.CHECKLIST_OVERVIEW_TEXT, reply_markup=reply_markup,
-                              parse_mode='Markdown')
+    update.message.reply_text(trans.t('checklist.overview.text'), reply_markup=reply_markup, parse_mode='Markdown')
 
     return ConversationHandler.END
 
@@ -66,19 +58,17 @@ def get_removal_handler():
     )
 
 
-# noinspection PyUnusedLocal
 def initialize_removal(update, context):
-    if context.user_data['checklist'].creator_id != update.callback_query.from_user.id:
-        update.callback_query.answer('You are not allowed to do this!')
+    query = update.callback_query
+    if context.user_data['checklist'].creator_id != query.from_user.id:
+        query.answer(trans.t('checklist.delete.permission_denied'))
 
         return ConversationHandler.END
 
-    update.callback_query.edit_message_text(
-        text='You are about to delete the checklist *{}*. This *cannot be undone*. If you are certain about deleting '
-             'this checklist, send me the checklist\'s name.'.format(context.user_data['checklist'].name),
-        reply_markup=InlineKeyboardMarkup([[button('abort_removal', 'Main menu', emojis.BACK)]]),
-        parse_mode='Markdown'
-    )
+    checklist_name = context.user_data['checklist'].name
+    markup = InlineKeyboardMarkup([[button('abort_removal', trans.t('checklist.menu.link'), emojis.BACK)]])
+    query.edit_message_text(text=trans.t('checklist.delete.init', name=checklist_name), reply_markup=markup,
+                            parse_mode='Markdown')
 
     return BASE_STATE
 
@@ -96,21 +86,13 @@ def remove(session, update, context):
     user_input = update.message.text
     checklist = context.user_data['checklist']
     if user_input != checklist.name:
-        update.message.reply_text(
-            'Your message and the checklist name do not match. Please send the *exact* name.',
-            reply_markup=InlineKeyboardMarkup([
-                [button('abort_removal', 'Main menu', emojis.BACK)]
-            ]),
-            parse_mode='Markdown'
-        )
+        markup = InlineKeyboardMarkup([[button('abort_removal', trans.t('checklist.menu.link'), emojis.BACK)]])
+        update.message.reply_text(trans.t('checklist.delete.not_matching'), reply_markup=markup, parse_mode='Markdown')
+
         return BASE_STATE
 
     checklist_queries.delete(session, checklist.id, update.message.chat_id)
-    update.message.reply_text(
-        'The checklist has been deleted.',
-        reply_markup=InlineKeyboardMarkup(
-            [[button('checklist_overview', 'Checklist overview', emojis.BACK)]]
-        )
-    )
+    markup = InlineKeyboardMarkup([[button('checklist_overview', trans.t('checklist.overview.link'), emojis.BACK)]])
+    update.message.reply_text(trans.t('checklist.delete.done'), reply_markup=markup)
 
     return ConversationHandler.END

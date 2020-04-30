@@ -3,40 +3,31 @@ from telegram.ext import ConversationHandler, CallbackQueryHandler, MessageHandl
 
 from ..db import session_wrapper, checklist_queries
 from ..db.queries import purchase_queries, item_queries
+from ..i18n import trans
 from ..services import response_builder, emojis
 from ..services.response_builder import button
 
 
+# noinspection PyUnusedLocal
 @session_wrapper
 def show_purchases(session, update, context):
     query = update.callback_query
     checklist = checklist_queries.find(session, response_builder.interpret_data(query)['checklist_id'])
     purchases = purchase_queries.find_by_checklist(session, checklist.id)
-    if len(purchases) == 0:
-        text = checklist.name + ' has no outstanding purchases.'
-    else:
-        text = ''
+    purchase_count = len(purchases)
+    text = trans.t('purchase.log.header', name=checklist.name, count=purchase_count)
+    if purchase_count != 0:
+        text += '\n\n'
         for purchase in purchases:
             item_names = ', '.join(map(lambda item: item.name, purchase.items))
-            text += f'*{purchase.buyer.username} paid {purchase.get_price()} for:* {item_names}\n\n'
+            text += trans.t('purchase.log.list', name=purchase.buyer.username, price=purchase.get_price(),
+                            items=item_names) + '\n\n'
 
     query.edit_message_text(text=text, reply_markup=response_builder.back_to_main_menu(checklist.id),
                             parse_mode='Markdown')
 
 
 ITEM_STATE, PRICE_STATE = range(2)
-ITEM_PURCHASE_MESSAGE = """
-You are currently purchasing items for checklist *{}*.
-      
-Click on items to *(de)select* them for purchase.
-You may also send me item names which will be added as preselected items.
-Once you're done with items, click *Continue* to set a price.
-"""
-ITEM_PURCHASE_MESSAGE_EMPTY = """
-You are currently purchasing items for checklist *{}*.
-
-This checklist has no items, but you may send me item names which will be added as preselected items.
-"""
 
 
 def get_conversation_handler():
@@ -72,6 +63,7 @@ def initialize(session, update, context):
     return ITEM_STATE
 
 
+# noinspection PyUnusedLocal
 @session_wrapper
 def add_item(session, update, context):
     item_names = update.message.text
@@ -91,7 +83,7 @@ def mark_item(session, update, context):
     query_data = response_builder.interpret_data(query)
     success = purchase_queries.mark_item(session, query_data['purchase_id'], query_data['item_id'])
     if not success:
-        update.callback_query.answer('Someone else is purchasing right now and marked this item already!')
+        update.callback_query.answer(trans.t('purchase.create.already_selected'))
         return ITEM_STATE
 
     purchase = purchase_queries.find(session, query_data['purchase_id'])
@@ -103,15 +95,15 @@ def mark_item(session, update, context):
 
 
 def build_item_state(session, purchase):
-    checklist = purchase.checklist
     items = item_queries.find_for_purchase(session, purchase.id)
-    text = ITEM_PURCHASE_MESSAGE if len(items) > 0 else ITEM_PURCHASE_MESSAGE_EMPTY
-    text = text.format(checklist.name)
+    text = trans.t('purchase.create.header', name=purchase.checklist.name) + '\n\n' + trans.t('purchase.create.text',
+                                                                                              count=len(items))
     markup = response_builder.entity_selector_markup(items, is_item_in_purchase, purchase.id, 'for-purchase')
 
     return text, markup
 
 
+# noinspection PyUnusedLocal
 @session_wrapper
 def abort(session, update, context):
     query = update.callback_query
@@ -120,24 +112,26 @@ def abort(session, update, context):
     purchase_queries.abort(session, purchase_id)
 
     markup = response_builder.back_to_main_menu(checklist.id)
-    query.edit_message_text(text='Purchase aborted.', reply_markup=markup, parse_mode='Markdown')
+    query.edit_message_text(text=trans.t('conversation.cancel'), reply_markup=markup, parse_mode='Markdown')
     return ConversationHandler.END
 
 
+# noinspection PyUnusedLocal
 @session_wrapper
 def ask_price(session, update, context):
     query = update.callback_query
     purchase_id = response_builder.interpret_data(query)['purchase_id']
     if not purchase_queries.has_items(session, purchase_id):
-        query.answer('You cannot continue without selecting items!')
+        query.answer(trans.t('conversation.no_selection'))
         return ITEM_STATE
 
-    query.edit_message_text(text='How much did you spent? Please send me the amount.',
-                            reply_markup=InlineKeyboardMarkup(
-                                [[button(f'abort-for-purchase_{purchase_id}', 'Main menu', emojis.BACK)]]))
+    markup = InlineKeyboardMarkup(
+        [[button(f'abort-for-purchase_{purchase_id}', trans.t('checklist.menu.link'), emojis.BACK)]])
+    query.edit_message_text(text=trans.t('purchase.create.price.ask'), reply_markup=markup)
     return PRICE_STATE
 
 
+# noinspection PyUnusedLocal
 @session_wrapper
 def commit_purchase(session, update, context):
     purchase = purchase_queries.find_in_progress(session, update.message.from_user.id)
@@ -145,14 +139,12 @@ def commit_purchase(session, update, context):
         price_text = update.message.text.replace(',', '.')
         price = float(price_text)
     except ValueError:
-        update.message.reply_text('Please enter a valid amount! It may include a comma or a period, but no currency.',
-                                  reply_markup=InlineKeyboardMarkup(
-                                      [[button(f'abort-for-purchase_{purchase.id}', 'Main menu', emojis.BACK)]]))
+        markup = InlineKeyboardMarkup(
+            [[button(f'abort-for-purchase_{purchase.id}', trans.t('checklist.menu.link'), emojis.BACK)]])
+        update.message.reply_text(trans.t('purchase.create.price.invalid'), reply_markup=markup)
         return PRICE_STATE
 
     purchase_queries.commit_purchase(session, purchase, price)
-
-    update.message.reply_text('Purchase successful!',
-                              reply_markup=response_builder.back_to_main_menu(purchase.checklist_id),
-                              parse_mode='Markdown')
+    markup = response_builder.back_to_main_menu(purchase.checklist_id)
+    update.message.reply_text(trans.t('purchase.create.success'), reply_markup=markup, parse_mode='Markdown')
     return ConversationHandler.END

@@ -2,6 +2,7 @@ from telegram import InlineKeyboardMarkup, InputTextMessageContent, InlineQueryR
 
 from ..db import session_wrapper
 from ..db.queries import checklist_queries, user_queries
+from ..i18n import trans
 from ..services import emojis
 from ..services.response_builder import button
 
@@ -16,17 +17,15 @@ def send_invite_message(session, update, context):
             continue
 
         inline_options.append(
-            InlineQueryResultArticle(
-                id=checklist.id,
-                title=checklist.name,
-                input_message_content=InputTextMessageContent(
-                    'You are invited to join the checklist {}. Press the button under this message to confirm. If you '
-                    'don\'t know what this means, check out @PurchaseSplitterBot for more info.'.format(checklist.name)
-                ),
-                reply_markup=InlineKeyboardMarkup([[
-                    button('join_checklist_{}'.format(checklist.id), 'Join checklist', emojis.RUNNER)
-                ]])
-            )
+            InlineQueryResultArticle(id=checklist.id, title=checklist.name,
+                                     input_message_content=InputTextMessageContent(
+                                         trans.t('inline.text', name=checklist.name)),
+                                     reply_markup=InlineKeyboardMarkup([
+                                         [button(f'join_checklist_{checklist.id}',
+                                                 trans.t('inline.join'),
+                                                 emojis.RUNNER)
+                                          ]
+                                     ]))
         )
     context.bot.answer_inline_query(update.inline_query.id, inline_options)
 
@@ -36,13 +35,13 @@ def send_invite_message(session, update, context):
 def accept_invite_message(session, update, context):
     user_id = update.callback_query.from_user.id
     if not user_queries.exists(session, user_id):
-        update.callback_query.answer('Please start the bot before joining a checklist!')
+        update.callback_query.answer(trans.t('inline.accept.not_registered'))
         return
 
     checklist_id = update.callback_query.data.split('_')[-1]
     if checklist_queries.is_participant(session, checklist_id, user_id):
-        update.callback_query.answer('You are a participant of that checklist already!')
+        update.callback_query.answer(trans.t('inline.accept.already_joined'))
         return
 
     checklist_queries.join(session, checklist_id, user_id)
-    update.callback_query.answer('Successfully joined checklist!')
+    update.callback_query.answer(trans.t('inline.accept.success'))

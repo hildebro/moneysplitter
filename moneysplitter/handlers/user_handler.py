@@ -4,12 +4,8 @@ from telegram.ext import CallbackQueryHandler, ConversationHandler, CommandHandl
 from ..db import session_wrapper
 from ..db.queries import checklist_queries, user_queries
 from ..handlers.menu_handler import conv_cancel
+from ..i18n import trans
 from ..services import response_builder
-
-USER_REMOVAL_MESSAGE = \
-    'You are now removing users from checklist *{}*.\n\nClick on a username to *(de)select* them for ' \
-    'removal.\nWhen you are done, click *Commit* to remove all selected users.\nClick *Abort* to exit ' \
-    'without removals. '
 
 BASE_STATE = 0
 
@@ -96,5 +92,6 @@ def render_removal_buttons(update, context):
         InlineKeyboardButton('Commit', callback_data='commit_{}'.format(checklist.id))
     ])
     reply_markup = InlineKeyboardMarkup(keyboard)
-    update.callback_query.edit_message_text(text=USER_REMOVAL_MESSAGE.format(checklist.name),
-                                            reply_markup=reply_markup, parse_mode='Markdown')
+    update.callback_query.edit_message_text(
+        text=trans.t('checklist.settings.remove_users.text', name=checklist.name),
+        reply_markup=reply_markup, parse_mode='Markdown')

@@ -4,40 +4,30 @@ from telegram.ext import CallbackQueryHandler, ConversationHandler, CommandHandl
 from ..db import session_wrapper
 from ..db.queries import item_queries
 from ..handlers.menu_handler import conv_cancel
-from ..services import response_builder
-
-ITEM_REMOVAL_MESSAGE = \
-    'You are now removing items from checklist *{}*.\n\nClick on items to *(de)select* them for ' \
-    'removal.\nWhen you are done, click *Commit* to remove all selected items.\nClick *Abort* to exit ' \
-    'without removals. '
+from ..i18n import trans
+from ..services import response_builder, emojis
+from ..services.response_builder import button
 
 
 @session_wrapper
 def add_item(session, update, context):
     if 'checklist' not in context.user_data:
-        update.message.reply_text(
-            'Sorry, I cannot handle messages while you are browsing the checklist overview.\nIf you were trying to '
-            'add items to one of your checklists, you have to enter that checklist\'s main menu first.',
-            reply_markup=InlineKeyboardMarkup(
-                [[InlineKeyboardButton('Back to checklist overview', callback_data='checklist_overview')]]
-            )
-        )
+        markup = InlineKeyboardMarkup([[button('checklist_overview', trans.t('checklist.overview.link'), emojis.BACK)]])
+        update.message.reply_text(trans.t('item.add.no_checklist'), reply_markup=markup)
         return
 
     item_names = update.message.text
     checklist = context.user_data['checklist']
     items = item_queries.create(session, item_names, checklist.id)
     context.user_data['last_items'] = items
+    markup = InlineKeyboardMarkup([[
+        button('undo_last_items', trans.t('conversation.undo')),
+        button(f'checklist-menu_{checklist.id}', trans.t('checklist.menu.link'), emojis.BACK)
+    ]])
 
-    keyboard = [
-        [
-            InlineKeyboardButton('Undo', callback_data='undo_last_items'),
-            InlineKeyboardButton('Back to main menu', callback_data='checklist_menu_{}'.format(checklist.id))
-        ]
-    ]
     update.message.reply_text(
-        'I successfully added the following items to checklist *{}*:\n\n{}'.format(checklist.name, item_names),
-        reply_markup=InlineKeyboardMarkup(keyboard),
+        trans.t('item.add.success', name=checklist.name, items=item_names),
+        reply_markup=markup,
         parse_mode='Markdown'
     )
 
@@ -45,23 +35,19 @@ def add_item(session, update, context):
 @session_wrapper
 def undo_last_items(session, update, context):
     checklist = context.user_data['checklist']
-    keyboard = [
-        [
-            InlineKeyboardButton('Back to main menu', callback_data='checklist_menu_{}'.format(checklist.id))
-        ]
-    ]
+    markup = InlineKeyboardMarkup([[
+        button(f'checklist-menu_{checklist.id}', trans.t('checklist.menu.link'), emojis.BACK)
+    ]])
 
     last_items = context.user_data.pop('last_items', None)
     if last_items is None:
-        update.callback_query.edit_message_text(
-            text='Sorry, I did not find any items to undo.',
-            reply_markup=InlineKeyboardMarkup(keyboard)
-        )
+        update.callback_query.edit_message_text(text=trans.t('item.undo.unavailable'), reply_markup=markup)
+        return
 
     item_queries.remove_all(session, map(lambda item: item.id, last_items))
     update.callback_query.edit_message_text(
-        text='Successfully undid last added items.',
-        reply_markup=InlineKeyboardMarkup(keyboard)
+        text=trans.t('item.undo.success'),
+        reply_markup=markup
     )
 
 
@@ -127,7 +113,7 @@ def commit(session, update, context):
             ids_to_remove.append(item_id)
 
     if len(ids_to_remove) == 0:
-        update.callback_query.answer('Please select something to delete!')
+        update.callback_query.answer(trans.t('conversation.no_selection'))
         return BASE_STATE
 
     item_queries.remove_all(session, ids_to_remove)
@@ -149,5 +135,5 @@ def render_removal_buttons(update, context):
         InlineKeyboardButton('Commit', callback_data='commit_{}'.format(checklist.id))
     ])
     reply_markup = InlineKeyboardMarkup(keyboard)
-    update.callback_query.edit_message_text(text=ITEM_REMOVAL_MESSAGE.format(checklist.name),
+    update.callback_query.edit_message_text(text=trans.t('item.delete', name=checklist.name),
                                             reply_markup=reply_markup, parse_mode='Markdown')

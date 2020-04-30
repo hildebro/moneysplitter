@@ -1,12 +1,8 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
 from ..db.queries import checklist_queries, item_queries
+from ..i18n import trans
 from ..services import emojis
-
-CHECKLIST_OVERVIEW_TEXT = \
-    'This is your personal *checklist overview*.\n\nAll checklists that you create or join will be listed here. ' \
-    'Click on a checklist button to enter its main menu.\nYou may also create a *new checklist* or *refresh* this ' \
-    'overview in order for checklists that you have recently joined to appear.'
 
 
 def checklist_overview_markup(session, context, user_id):
@@ -20,24 +16,11 @@ def checklist_overview_markup(session, context, user_id):
     checklists = checklist_queries.find_by_participant(session, user_id)
     for checklist in checklists:
         context.user_data['all_checklists'][checklist.id] = checklist
-        keyboard.append([button('checklist_menu_{}'.format(checklist.id), checklist.name)])
-    keyboard.append([button('refresh_checklists', 'Refresh overview', emojis.REFRESH)])
-    keyboard.append([button('new_checklist', 'New checklist', emojis.NEW)])
+        keyboard.append([button(f'checklist-menu_{checklist.id}', checklist.name)])
+    keyboard.append([button('refresh_checklists', trans.t('checklist.overview.refresh'), emojis.REFRESH)])
+    keyboard.append([button('new_checklist', trans.t('checklist.create.link'), emojis.NEW)])
 
     return InlineKeyboardMarkup(keyboard)
-
-
-MAIN_MENU_HEADER = \
-    'This is the *main menu* for the checklist called *{}*.'
-
-ITEM_LISTING = \
-    'It contains the following items:\n{}'
-
-NO_ITEMS = \
-    'It contains no items.'
-
-MAIN_MENU_INFO = \
-    'If you want to *add new items*, simply send me a *message* containing the item name.'
 
 
 def checklist_menu_text(session, checklist):
@@ -45,12 +28,13 @@ def checklist_menu_text(session, checklist):
     :return: Info text for the given checklist
     """
     checklist_items = item_queries.find_by_checklist(session, checklist.id)
-    text = MAIN_MENU_HEADER.format(checklist.name) + '\n\n'
+    text = trans.t('checklist.menu.title', name=checklist.name) + '\n\n'
     if len(checklist_items) == 0:
-        text += NO_ITEMS
+        text += trans.t('checklist.menu.items.none')
     else:
-        text += ITEM_LISTING.format('\n'.join(map(lambda checklist_item: checklist_item.name, checklist_items)))
-    text += '\n\n' + MAIN_MENU_INFO
+        items = '\n'.join(map(lambda checklist_item: checklist_item.name, checklist_items))
+        text += trans.t('checklist.menu.items.some', items=items)
+    text += '\n\n' + trans.t('checklist.menu.info')
 
     return text
 
@@ -60,13 +44,13 @@ def checklist_menu_markup(checklist_id, allow_advanced_options):
     :return: Generic menu options for any checklist
     """
     keyboard = [
-        [button(f'new-purchase_{checklist_id}', 'New purchase', emojis.CART)],
-        [button(f'show-purchases_{checklist_id}', 'Outstanding purchases', emojis.BILL)],
-        [button('equalize', 'Get even', emojis.MONEY)],
+        [button(f'new-purchase_{checklist_id}', trans.t('purchase.create.link'), emojis.CART)],
+        [button(f'show-purchases_{checklist_id}', trans.t('purchase.log.link'), emojis.BILL)],
+        [button('equalize', trans.t('purchase.equalize'), emojis.MONEY)],
     ]
     if allow_advanced_options:
-        keyboard.append([button('checklist_settings', 'Danger zone', emojis.WARNING)])
-    keyboard.append([button('checklist_overview', 'Back to all checklists', emojis.BACK)])
+        keyboard.append([button('checklist_settings', trans.t('checklist.settings.link'), emojis.GEAR)])
+    keyboard.append([button('checklist_overview', trans.t('checklist.overview.link'), emojis.BACK)])
     return InlineKeyboardMarkup(keyboard)
 
 
@@ -81,10 +65,9 @@ def checklist_menu(session, from_user, context):
 
 
 def back_to_main_menu(checklist_id):
-    return InlineKeyboardMarkup([[button(f'checklist_menu_{checklist_id}', 'Main menu', emojis.BACK)]])
-
-
-ADVANCED_CHECKLIST_MENU_TEXT = 'This is the advanced menu for the checklist called *{}*. Please choose an action below.'
+    return InlineKeyboardMarkup(
+        [[button(f'checklist-menu_{checklist_id}', trans.t('checklist.menu.link'), emojis.BACK)]]
+    )
 
 
 def entity_selector_markup(entities, is_marked_callback, contextual_id, contextual_suffix):
@@ -101,8 +84,8 @@ def entity_selector_markup(entities, is_marked_callback, contextual_id, contextu
         keyboard.append(
             [button(f'mark-{contextual_suffix}_{contextual_id}_{entity.id}', f'{button_prefix} {entity.name}')])
     keyboard.append([
-        button(f'abort-{contextual_suffix}_{contextual_id}', 'Main menu', emojis.BACK),
-        button(f'continue-{contextual_suffix}_{contextual_id}', 'Continue', emojis.FORWARD)
+        button(f'abort-{contextual_suffix}_{contextual_id}', trans.t('checklist.menu.link'), emojis.BACK),
+        button(f'continue-{contextual_suffix}_{contextual_id}', trans.t('conversation.continue'), emojis.FORWARD)
     ])
 
     return InlineKeyboardMarkup(keyboard)
@@ -118,7 +101,8 @@ CALLBACK_MAPPINGS = {
     'new-purchase': ['checklist_id'],
     'mark-for-purchase': ['purchase_id', 'item_id'],
     'abort-for-purchase': ['purchase_id'],
-    'continue-for-purchase': ['purchase_id']
+    'continue-for-purchase': ['purchase_id'],
+    'checklist-menu': ['checklist_id']
 }
 
 
