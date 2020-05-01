@@ -82,7 +82,8 @@ def entity_selector_markup(entities, is_marked_callback, contextual_id, contextu
     for entity in entities:
         button_prefix = '(O)' if is_marked_callback(entity) else '(  )'
         keyboard.append(
-            [button(f'mark-{contextual_suffix}_{contextual_id}_{entity.id}', f'{button_prefix} {entity.name}')])
+            [button(f'mark-{contextual_suffix}_{contextual_id}_{entity.id}',
+                    f'{button_prefix} {entity.display_name()}')])
     keyboard.append([
         button(f'abort-{contextual_suffix}_{contextual_id}', trans.t('checklist.menu.link'), emojis.BACK),
         button(f'continue-{contextual_suffix}_{contextual_id}', trans.t('conversation.continue'), emojis.FORWARD)
@@ -100,12 +101,16 @@ CALLBACK_MAPPINGS = {
     'show-purchases': ['checklist_id'],
     'new-purchase': ['checklist_id'],
     'remove-items': ['checklist_id'],
+    'remove-users': ['checklist_id'],
     'mark-purchase': ['purchase_id', 'item_id'],
     'mark-remove-items': ['checklist_id', 'item_id'],
+    'mark-remove-users': ['checklist_id', 'participant_id'],
     'abort-purchase': ['purchase_id'],
     'abort-remove-items': ['checklist_id'],
+    'abort-remove-users': ['checklist_id'],
     'continue-purchase': ['purchase_id'],
     'continue-remove-items': ['checklist_id'],
+    'continue-remove-users': ['checklist_id'],
     'checklist-menu': ['checklist_id']
 }
 

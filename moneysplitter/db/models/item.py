@@ -18,3 +18,6 @@ class Item(base):
     def __init__(self, name, checklist_id):
         self.name = name
         self.checklist_id = checklist_id
+
+    def display_name(self):
+        return self.name

@@ -28,7 +28,7 @@ def find(session, checklist_id):
 def find_by_participant(session, user_id):
     checklists = session \
         .query(Checklist) \
-        .filter(Checklist.participants.any(id=user_id)) \
+        .filter(Checklist.participants.any(User.id == user_id)) \
         .all()
     return checklists
 
