@@ -24,7 +24,7 @@ def checklist_overview_callback(session, update, context):
 def settings_callback(update, context):
     checklist = context.user_data['checklist']
     reply_markup = InlineKeyboardMarkup([
-        [button('remove_items', trans.t('checklist.settings.delete_items'), emojis.BIN)],
+        [button(f'remove-items_{checklist.id}', trans.t('checklist.settings.delete_items'), emojis.BIN)],
         [button('remove_users', trans.t('checklist.settings.remove_users.link'), emojis.RUNNER)],
         [button('delete_checklist', trans.t('checklist.settings.delete_checklist'), emojis.HAZARD)],
         [button(f'checklist-menu_{checklist.id}', trans.t('checklist.menu.link'), emojis.BACK)]

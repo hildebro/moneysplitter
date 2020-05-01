@@ -44,3 +44,50 @@ def find_for_purchase(session, purchase_id):
         .order_by(Item.id) \
         .all()
     return items
+
+
+def find_for_removal(session, checklist_id, user_id):
+    return session \
+        .query(Item) \
+        .filter(Item.checklist_id == checklist_id) \
+        .filter(or_(Item.deleting_user_id == None, Item.deleting_user_id == user_id)) \
+        .order_by(Item.id) \
+        .all()
+
+
+def mark_for_removal(session, user_id, item_id):
+    item = session.query(Item).filter(Item.id == item_id).one()
+    if item.deleting_user_id is None:
+        item.deleting_user_id = user_id
+    elif item.deleting_user_id == user_id:
+        item.deleting_user_id = None
+    else:
+        return False
+
+    session.commit()
+    return True
+
+
+def abort_removal(session, checklist_id, user_id):
+    session \
+        .query(Item) \
+        .filter(Item.checklist_id == checklist_id, Item.deleting_user_id == user_id) \
+        .update({'deleting_user_id': None})
+    session.commit()
+
+
+def delete_pending(session, checklist_id, user_id):
+    item_count = session \
+        .query(Item) \
+        .filter(Item.checklist_id == checklist_id, Item.deleting_user_id == user_id) \
+        .count()
+
+    if item_count == 0:
+        return False
+
+    session \
+        .query(Item) \
+        .filter(Item.checklist_id == checklist_id, Item.deleting_user_id == user_id) \
+        .delete(synchronize_session=False)
+    session.commit()
+    return True

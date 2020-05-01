@@ -22,4 +22,4 @@ pip install PyYAML
 # build schema
 ./reset_db.sh
 
-echo "Setup completed."
+echo "Setup completed. Remember to stamp the alembic revision table."

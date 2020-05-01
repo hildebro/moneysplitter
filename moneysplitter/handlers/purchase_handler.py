@@ -35,13 +35,13 @@ def get_conversation_handler():
         entry_points=[CallbackQueryHandler(initialize, pattern='^new-purchase_[0-9]+$')],
         states={
             ITEM_STATE: [
-                CallbackQueryHandler(mark_item, pattern='^mark-for-purchase_[0-9]+_[0-9]+'),
-                CallbackQueryHandler(ask_price, pattern='^continue-for-purchase_[0-9]+$'),
+                CallbackQueryHandler(mark_item, pattern='^mark-purchase_[0-9]+_[0-9]+'),
+                CallbackQueryHandler(ask_price, pattern='^continue-purchase_[0-9]+$'),
                 MessageHandler(Filters.text, add_item)
             ],
             PRICE_STATE: [MessageHandler(Filters.text, commit_purchase)]
         },
-        fallbacks=[CallbackQueryHandler(abort, pattern='^abort-for-purchase_[0-9]+$')]
+        fallbacks=[CallbackQueryHandler(abort, pattern='^abort-purchase_[0-9]+$')]
     )
 
 
@@ -98,7 +98,7 @@ def build_item_state(session, purchase):
     items = item_queries.find_for_purchase(session, purchase.id)
     text = trans.t('purchase.create.header', name=purchase.checklist.name) + '\n\n' + trans.t('purchase.create.text',
                                                                                               count=len(items))
-    markup = response_builder.entity_selector_markup(items, is_item_in_purchase, purchase.id, 'for-purchase')
+    markup = response_builder.entity_selector_markup(items, is_item_in_purchase, purchase.id, 'purchase')
 
     return text, markup
 
@@ -126,7 +126,7 @@ def ask_price(session, update, context):
         return ITEM_STATE
 
     markup = InlineKeyboardMarkup(
-        [[button(f'abort-for-purchase_{purchase_id}', trans.t('checklist.menu.link'), emojis.BACK)]])
+        [[button(f'abort-purchase_{purchase_id}', trans.t('checklist.menu.link'), emojis.BACK)]])
     query.edit_message_text(text=trans.t('purchase.create.price.ask'), reply_markup=markup)
     return PRICE_STATE
 
@@ -135,12 +135,16 @@ def ask_price(session, update, context):
 @session_wrapper
 def commit_purchase(session, update, context):
     purchase = purchase_queries.find_in_progress(session, update.message.from_user.id)
+    if len(purchase.items) == 0:
+        update.callback_query.answer(trans.t('conversation.no_selection'))
+        return ITEM_STATE
+
     try:
         price_text = update.message.text.replace(',', '.')
         price = float(price_text)
     except ValueError:
         markup = InlineKeyboardMarkup(
-            [[button(f'abort-for-purchase_{purchase.id}', trans.t('checklist.menu.link'), emojis.BACK)]])
+            [[button(f'abort-purchase_{purchase.id}', trans.t('checklist.menu.link'), emojis.BACK)]])
         update.message.reply_text(trans.t('purchase.create.price.invalid'), reply_markup=markup)
         return PRICE_STATE
 

@@ -13,6 +13,7 @@ class Item(base):
     checklist = relationship('Checklist', back_populates='items')
     purchase_id = Column(Integer, ForeignKey('purchases.id', ondelete='set null'))
     purchase = relationship('Purchase', back_populates='items')
+    deleting_user_id = Column(Integer, ForeignKey('users.id', ondelete='set null'))
 
     def __init__(self, name, checklist_id):
         self.name = name

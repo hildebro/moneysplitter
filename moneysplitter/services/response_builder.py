@@ -99,9 +99,13 @@ def button(callback_data, label, emoji=''):
 CALLBACK_MAPPINGS = {
     'show-purchases': ['checklist_id'],
     'new-purchase': ['checklist_id'],
-    'mark-for-purchase': ['purchase_id', 'item_id'],
-    'abort-for-purchase': ['purchase_id'],
-    'continue-for-purchase': ['purchase_id'],
+    'remove-items': ['checklist_id'],
+    'mark-purchase': ['purchase_id', 'item_id'],
+    'mark-remove-items': ['checklist_id', 'item_id'],
+    'abort-purchase': ['purchase_id'],
+    'abort-remove-items': ['checklist_id'],
+    'continue-purchase': ['purchase_id'],
+    'continue-remove-items': ['checklist_id'],
     'checklist-menu': ['checklist_id']
 }
 

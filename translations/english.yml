@@ -8,7 +8,7 @@ start:
 
 conversation:
   continue: 'Continue'
-  no_selection: 'Please select something before continuing'
+  no_selection: 'Please select something!'
   undo: 'Undo'
   cancel: 'The current action has been canceled.'
 
@@ -105,9 +105,10 @@ item:
   undo:
     unavailable: 'There seem to be no items available to undo. Note that you may only undo what was added in your most recent message.'
     success: 'Successfully undid previously added items.'
-  delete: |
-    You are now removing items from checklist _%{name}_.
+  delete:
+    text: |
+      You are now removing items from checklist _%{name}_.
 
-    Click on items to _(de)select_ them for removal.
-    When you are done, click _Commit_ to remove all selected items.
-    Click _Abort_ to exit the dialog without any removals.
+      Click on items to _(de)select_ them for removal. When you are done, click _Continue_ to remove all selected items.
+    already_selected: 'Someone else is deleting items right now and marked this item already!'
+    success: 'Item(s) deleted successfully!'

@@ -1,9 +1,8 @@
-from telegram import InlineKeyboardMarkup, InlineKeyboardButton
-from telegram.ext import CallbackQueryHandler, ConversationHandler, CommandHandler
+from telegram import InlineKeyboardMarkup
+from telegram.ext import CallbackQueryHandler, ConversationHandler
 
-from ..db import session_wrapper
+from ..db import session_wrapper, checklist_queries
 from ..db.queries import item_queries
-from ..handlers.menu_handler import conv_cancel
 from ..i18n import trans
 from ..services import response_builder, emojis
 from ..services.response_builder import button
@@ -56,84 +55,86 @@ BASE_STATE = 0
 
 def get_removal_handler():
     return ConversationHandler(
-        entry_points=[CallbackQueryHandler(initialize, pattern='^remove_items$')],
+        entry_points=[CallbackQueryHandler(initialize, pattern='^remove-items_[0-9]+$')],
         states={
             BASE_STATE: [
-                CallbackQueryHandler(mark_item, pattern='^mark_[0-9]+$'),
-                CallbackQueryHandler(abort, pattern='^abort_[0-9]+$'),
-                CallbackQueryHandler(commit, pattern='^commit_[0-9]+$')
-            ]
+                CallbackQueryHandler(mark_item, pattern='^mark-remove-items_[0-9]+_[0-9]+'),
+                CallbackQueryHandler(commit_removal, pattern='^continue-remove-items_[0-9]+$'),
+            ],
         },
-        fallbacks=[CommandHandler('cancel', conv_cancel)]
+        fallbacks=[CallbackQueryHandler(abort_removal, pattern='^abort-remove-items_[0-9]+$')]
     )
 
 
+def is_item_being_removed(item):
+    """To be used as a callback for entity_selector_markup"""
+    return item.deleting_user_id is not None
+
+
+# noinspection PyUnusedLocal
 @session_wrapper
 def initialize(session, update, context):
-    context.user_data['removal_dict'] = {}
-    items = item_queries.find_by_checklist(session, context.user_data['checklist'].id)
-    for item in items:
-        context.user_data['removal_dict'][item.id] = item.name
-
-    render_removal_buttons(update, context)
-
-    return BASE_STATE
-
-
-def mark_item(update, context):
     query = update.callback_query
-    item_id = int(query.data.split('_')[-1])
-    item_name = context.user_data['removal_dict'][item_id]
-    if '🚫' in item_name:
-        item_name = item_name.replace('🚫', '')
-    else:
-        item_name = '🚫' + item_name + '🚫'
+    query_data = response_builder.interpret_data(query)
+    user_id = query.from_user.id
 
-    context.user_data['removal_dict'][item_id] = item_name
-    render_removal_buttons(update, context)
+    text, markup = build_item_state(session, query_data['checklist_id'], user_id)
+    query.edit_message_text(text=text, reply_markup=markup, parse_mode='Markdown')
 
     return BASE_STATE
 
 
+# noinspection PyUnusedLocal
 @session_wrapper
-def abort(session, update, context):
-    context.user_data['removal_dict'] = None
-    text, markup = response_builder.checklist_menu(session, update.callback_query.from_user, context)
-    update.callback_query.edit_message_text(text=text, reply_markup=markup, parse_mode='Markdown')
+def mark_item(session, update, context):
+    query = update.callback_query
+    query_data = response_builder.interpret_data(query)
+    user_id = query.from_user.id
 
-    return ConversationHandler.END
-
-
-@session_wrapper
-def commit(session, update, context):
-    ids_to_remove = []
-    removal_dict = context.user_data['removal_dict']
-    for item_id in removal_dict:
-        if '🚫' in removal_dict[item_id]:
-            ids_to_remove.append(item_id)
-
-    if len(ids_to_remove) == 0:
-        update.callback_query.answer(trans.t('conversation.no_selection'))
+    success = item_queries.mark_for_removal(session, user_id, query_data['item_id'])
+    if not success:
+        update.callback_query.answer(trans.t('item.delete.already_selected'))
         return BASE_STATE
 
-    item_queries.remove_all(session, ids_to_remove)
-    text, markup = response_builder.checklist_menu(session, update.callback_query.from_user, context)
-    update.callback_query.edit_message_text(text=text, reply_markup=markup, parse_mode='Markdown')
+    text, markup = build_item_state(session, query_data['checklist_id'], user_id)
+    query.edit_message_text(text=text, reply_markup=markup, parse_mode='Markdown')
 
+    return BASE_STATE
+
+
+def build_item_state(session, checklist_id, user_id):
+    checklist = checklist_queries.find(session, checklist_id)
+    items = item_queries.find_for_removal(session, checklist.id, user_id)
+    text = trans.t('item.delete.text', name=checklist.name)
+    markup = response_builder.entity_selector_markup(items, is_item_being_removed, checklist.id, 'remove-items')
+
+    return text, markup
+
+
+# noinspection PyUnusedLocal
+@session_wrapper
+def abort_removal(session, update, context):
+    query = update.callback_query
+    query_data = response_builder.interpret_data(query)
+    checklist_id = query_data['checklist_id']
+    item_queries.abort_removal(session, checklist_id, query.from_user.id)
+
+    markup = response_builder.back_to_main_menu(checklist_id)
+    query.edit_message_text(text=trans.t('conversation.cancel'), reply_markup=markup, parse_mode='Markdown')
     return ConversationHandler.END
 
 
-def render_removal_buttons(update, context):
-    checklist = context.user_data['checklist']
-    removal_dict = context.user_data['removal_dict']
+# noinspection PyUnusedLocal
+@session_wrapper
+def commit_removal(session, update, context):
+    query = update.callback_query
+    query_data = response_builder.interpret_data(query)
+    checklist_id = query_data['checklist_id']
+    success = item_queries.delete_pending(session, checklist_id, query.from_user.id)
+    if not success:
+        query.answer(trans.t('conversation.no_selection'))
+        return BASE_STATE
 
-    keyboard = []
-    for item_id in removal_dict:
-        keyboard.append([InlineKeyboardButton(removal_dict[item_id], callback_data='mark_{}'.format(item_id))])
-    keyboard.append([
-        InlineKeyboardButton('Abort', callback_data='abort_{}'.format(checklist.id)),
-        InlineKeyboardButton('Commit', callback_data='commit_{}'.format(checklist.id))
-    ])
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    update.callback_query.edit_message_text(text=trans.t('item.delete', name=checklist.name),
-                                            reply_markup=reply_markup, parse_mode='Markdown')
+    markup = response_builder.back_to_main_menu(checklist_id)
+    query.edit_message_text(text=trans.t('item.delete.success'), reply_markup=markup, parse_mode='Markdown')
+    return ConversationHandler.END
