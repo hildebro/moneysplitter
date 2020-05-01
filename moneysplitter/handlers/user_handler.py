@@ -21,9 +21,9 @@ def get_removal_handler():
     )
 
 
-def is_user_being_removed(user):
+def is_user_being_removed(participant):
     """To be used as a callback for entity_selector_markup"""
-    return user.deleting_user_id is not None
+    return participant.deleting_user_id is not None
 
 
 # noinspection PyUnusedLocal
@@ -44,14 +44,15 @@ def initialize(session, update, context):
 def mark_user(session, update, context):
     query = update.callback_query
     query_data = response_builder.interpret_data(query)
-    user_id = query.from_user.id
+    deleting_user_id = query.from_user.id
 
-    success = user_queries.mark_for_removal(session, user_id, query_data['participant_id'])
+    success = user_queries.mark_for_removal(session, deleting_user_id, query_data['user_id'],
+                                            query_data['checklist_id'])
     if not success:
         update.callback_query.answer(trans.t('checklist.participant.delete.already_selected'))
         return BASE_STATE
 
-    text, markup = build_user_state(session, query_data['checklist_id'], user_id)
+    text, markup = build_user_state(session, query_data['checklist_id'], deleting_user_id)
     query.edit_message_text(text=text, reply_markup=markup, parse_mode='Markdown')
 
     return BASE_STATE

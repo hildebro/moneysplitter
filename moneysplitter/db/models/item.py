@@ -19,5 +19,8 @@ class Item(base):
         self.name = name
         self.checklist_id = checklist_id
 
+    def identifier(self):
+        return self.id
+
     def display_name(self):
         return self.name

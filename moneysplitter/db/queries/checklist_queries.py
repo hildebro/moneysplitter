@@ -1,6 +1,6 @@
 from sqlalchemy import func
 
-from ..models import Checklist, Purchase, User
+from ..models import Checklist, Participant, Purchase
 from ..queries import user_queries
 
 
@@ -16,8 +16,9 @@ def exists(session, creator_id, checklist_name):
 def create(session, creator_id, checklist_name):
     creator = user_queries.find(session, creator_id)
     checklist = Checklist(checklist_name, creator)
-    checklist.participants = [creator]
     session.add(checklist)
+    session.flush()
+    session.add(Participant(checklist.id, creator_id))
     session.commit()
 
 
@@ -28,7 +29,7 @@ def find(session, checklist_id):
 def find_by_participant(session, user_id):
     checklists = session \
         .query(Checklist) \
-        .filter(Checklist.participants.any(User.id == user_id)) \
+        .filter(Checklist.participants.any(Participant.user_id == user_id)) \
         .all()
     return checklists
 
@@ -42,7 +43,7 @@ def find_by_creator(session, user_id):
 
 
 def find_participants(session, checklist_id):
-    participants = session.query(User).filter(User.joined_checklists.any(Checklist.id == checklist_id)).all()
+    participants = session.query(Participant.user).filter(Participant.checklist_id == checklist_id).all()
     return participants
 
 
@@ -59,8 +60,9 @@ def is_creator(session, checklist_id, user_id):
 
 def is_participant(session, checklist_id, user_id):
     checklist = session \
-        .query(Checklist) \
-        .filter(Checklist.id == checklist_id, Checklist.participants.any(User.id == user_id)).scalar()
+        .query(Participant) \
+        .filter(Participant.checklist_id == checklist_id, Participant.user_id == user_id) \
+        .scalar()
     return checklist is not None
 
 
@@ -73,12 +75,13 @@ def delete(session, checklist_id, user_id):
 
 
 def join(session, checklist_id, user_id):
-    user = user_queries.find(session, user_id)
-    checklist = session.query(Checklist).filter(Checklist.id == checklist_id).one()
-    checklist.participants.append(user)
+    session.add(Participant(checklist_id, user_id))
     session.commit()
 
 
 def count_checklists(session, user_id):
-    count = session.query(func.count(Checklist.id)).filter(Checklist.participants.any(User.id == user_id)).scalar()
+    count = session \
+        .query(func.count(Participant.user_id)) \
+        .filter(Participant.user_id == user_id) \
+        .scalar()
     return count

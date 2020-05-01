@@ -49,7 +49,7 @@ def find_for_purchase(session, purchase_id):
 def find_for_removal(session, checklist_id, user_id):
     return session \
         .query(Item) \
-        .filter(Item.checklist_id == checklist_id) \
+        .filter(Item.checklist_id == checklist_id, Item.purchase_id == None) \
         .filter(or_(Item.deleting_user_id == None, Item.deleting_user_id == user_id)) \
         .order_by(Item.id) \
         .all()

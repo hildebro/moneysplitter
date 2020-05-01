@@ -1,12 +1,7 @@
-from sqlalchemy import Column, String, Integer, ForeignKey, UniqueConstraint, Table
+from sqlalchemy import Column, String, Integer, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship
 
 from ..db import base
-
-checklist_participants = Table('checklist_participants', base.metadata,
-                               Column('checklist_id', Integer, ForeignKey('checklists.id', ondelete='cascade')),
-                               Column('user_id', Integer, ForeignKey('users.id', ondelete='cascade'))
-                               )
 
 
 class Checklist(base):
@@ -16,7 +11,7 @@ class Checklist(base):
     name = Column(String)
     creator_id = Column(Integer, ForeignKey('users.id', ondelete='SET NULL'))
     creator = relationship('User', back_populates='created_checklists')
-    participants = relationship('User', secondary='checklist_participants', back_populates='joined_checklists')
+    participants = relationship('Participant', back_populates='checklist')
     items = relationship('Item', back_populates='checklist')
     purchases = relationship('Purchase', back_populates='checklist')
 

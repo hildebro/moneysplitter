@@ -82,7 +82,7 @@ def entity_selector_markup(entities, is_marked_callback, contextual_id, contextu
     for entity in entities:
         button_prefix = '(O)' if is_marked_callback(entity) else '(  )'
         keyboard.append(
-            [button(f'mark-{contextual_suffix}_{contextual_id}_{entity.id}',
+            [button(f'mark-{contextual_suffix}_{contextual_id}_{entity.identifier()}',
                     f'{button_prefix} {entity.display_name()}')])
     keyboard.append([
         button(f'abort-{contextual_suffix}_{contextual_id}', trans.t('checklist.menu.link'), emojis.BACK),
@@ -104,7 +104,7 @@ CALLBACK_MAPPINGS = {
     'remove-users': ['checklist_id'],
     'mark-purchase': ['purchase_id', 'item_id'],
     'mark-remove-items': ['checklist_id', 'item_id'],
-    'mark-remove-users': ['checklist_id', 'participant_id'],
+    'mark-remove-users': ['checklist_id', 'user_id'],
     'abort-purchase': ['purchase_id'],
     'abort-remove-items': ['checklist_id'],
     'abort-remove-users': ['checklist_id'],

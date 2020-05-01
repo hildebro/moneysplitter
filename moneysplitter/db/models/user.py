@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, ForeignKey
+from sqlalchemy import Column, String, Integer
 from sqlalchemy.orm import relationship
 
 from ..db import base
@@ -12,9 +12,10 @@ class User(base):
     first_name = Column(String)
     last_name = Column(String)
     created_checklists = relationship('Checklist', back_populates='creator')
-    joined_checklists = relationship('Checklist', secondary='checklist_participants', back_populates='participants')
+    participants = relationship('Participant', back_populates='user', foreign_keys='Participant.user_id')
+    deleting_participants = relationship('Participant', back_populates='deleting_user',
+                                         foreign_keys='Participant.deleting_user_id')
     purchases = relationship('Purchase', back_populates='buyer')
-    deleting_user_id = Column(Integer, ForeignKey('users.id', ondelete='set null'))
 
     def __init__(self, external_id, username, first_name, last_name):
         self.id = external_id

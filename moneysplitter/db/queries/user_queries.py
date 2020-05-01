@@ -1,6 +1,6 @@
 from sqlalchemy import or_
 
-from ..models import Checklist, User
+from ..models import Participant, User
 
 
 def exists(session, user_id):
@@ -37,18 +37,20 @@ def find_username(session, user_id):
     return username
 
 
-def find_participants_for_removal(session, checklist_id, user_id):
+def find_participants_for_removal(session, checklist_id, deleting_user_id):
     return session \
-        .query(User) \
-        .filter(User.joined_checklists.any(Checklist.id == checklist_id)) \
-        .filter(or_(User.deleting_user_id == None, User.deleting_user_id == user_id)) \
-        .filter(User.id != user_id) \
-        .order_by(User.id) \
+        .query(Participant) \
+        .filter(Participant.checklist_id == checklist_id, Participant.user_id != deleting_user_id) \
+        .filter(or_(Participant.deleting_user_id == None, Participant.deleting_user_id == deleting_user_id)) \
+        .order_by(Participant.user_id) \
         .all()
 
 
-def mark_for_removal(session, deleting_user_id, participant):
-    participant = session.query(User).filter(User.id == participant).one()
+def mark_for_removal(session, deleting_user_id, user_id, checklist_id):
+    participant = session \
+        .query(Participant) \
+        .filter(Participant.user_id == user_id, Participant.checklist_id == checklist_id) \
+        .one()
     if participant.deleting_user_id is None:
         participant.deleting_user_id = deleting_user_id
     elif participant.deleting_user_id == deleting_user_id:
@@ -60,30 +62,25 @@ def mark_for_removal(session, deleting_user_id, participant):
     return True
 
 
-def abort_removal(session, checklist_id, user_id):
+def abort_removal(session, checklist_id, deleting_user_id):
     session \
-        .query(User) \
-        .filter(User.joined_checklists.any(Checklist.id == checklist_id), User.deleting_user_id == user_id) \
-        .update({'deleting_user_id': None}, synchronize_session=False)
+        .query(Participant) \
+        .filter(Participant.checklist_id == checklist_id, Participant.deleting_user_id == deleting_user_id) \
+        .update({'deleting_user_id': None})
     session.commit()
 
 
 def delete_pending(session, checklist_id, user_id):
-    users = session \
-        .query(User) \
-        .filter(User.joined_checklists.any(Checklist.id == checklist_id), User.deleting_user_id == user_id) \
+    participants = session \
+        .query(Participant) \
+        .filter(Participant.checklist_id == checklist_id, Participant.deleting_user_id == user_id) \
         .all()
 
-    if len(users) == 0:
+    if len(participants) == 0:
         return False
 
-    checklist = session \
-        .query(Checklist) \
-        .filter(Checklist.id == checklist_id) \
-        .one()
-
-    for user in users:
-        user.joined_checklists.remove(checklist)
+    for participant in participants:
+        session.delete(participant)
 
     session.commit()
     return True
