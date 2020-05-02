@@ -46,7 +46,7 @@ def checklist_menu_markup(checklist_id, allow_advanced_options):
     keyboard = [
         [button(f'new-purchase_{checklist_id}', trans.t('purchase.create.link'), emojis.CART)],
         [button(f'show-purchases_{checklist_id}', trans.t('purchase.log.link'), emojis.BILL)],
-        [button('equalize', trans.t('purchase.equalize'), emojis.MONEY)],
+        [button(f'write-off-info_{checklist_id}', trans.t('transaction.create.link'), emojis.MONEY)],
     ]
     if allow_advanced_options:
         keyboard.append([button('checklist_settings', trans.t('checklist.settings.link'), emojis.GEAR)])
@@ -99,6 +99,8 @@ def button(callback_data, label, emoji=''):
 
 CALLBACK_MAPPINGS = {
     'show-purchases': ['checklist_id'],
+    'write-off-info': ['checklist_id'],
+    'write-off-execute': ['checklist_id'],
     'new-purchase': ['checklist_id'],
     'remove-items': ['checklist_id'],
     'remove-users': ['checklist_id'],

@@ -43,8 +43,7 @@ def find_by_creator(session, user_id):
 
 
 def find_participants(session, checklist_id):
-    participants = session.query(Participant.user).filter(Participant.checklist_id == checklist_id).all()
-    return participants
+    return session.query(Participant).filter(Participant.checklist_id == checklist_id).all()
 
 
 def find_by_purchase(session, purchase_id):

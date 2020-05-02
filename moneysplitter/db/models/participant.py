@@ -14,8 +14,6 @@ class Participant(base):
     deleting_user_id = Column(Integer, ForeignKey('users.id', ondelete='set null'))
     deleting_user = relationship('User', foreign_keys=deleting_user_id)
 
-    # todo balances map
-
     def __init__(self, checklist_id, user_id):
         self.checklist_id = checklist_id
         self.user_id = user_id

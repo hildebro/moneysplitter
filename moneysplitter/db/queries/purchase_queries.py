@@ -61,18 +61,19 @@ def find_by_checklist(session, checklist_id):
     purchases = session \
         .query(Purchase) \
         .options(joinedload(Purchase.buyer), joinedload(Purchase.items)) \
-        .filter(Purchase.checklist_id == checklist_id, Purchase.equalized.is_(False), Purchase.in_progress.is_(False)) \
+        .filter(Purchase.checklist_id == checklist_id,
+                Purchase.written_off.is_(False),
+                Purchase.in_progress.is_(False)) \
         .all()
     return purchases
 
 
-def find_to_equalize(session, checklist_id):
-    purchases = session \
-        .query(Purchase) \
-        .options(joinedload(Purchase.buyer)) \
-        .filter(Purchase.checklist_id == checklist_id, Purchase.equalized.is_(False)) \
-        .all()
-    return purchases
+def write_off(session, checklist_id):
+    purchases = find_by_checklist(session, checklist_id)
+    for purchase in purchases:
+        purchase.written_off = True
+
+    session.commit()
 
 
 def find_by_ids(session, ids):
@@ -82,13 +83,6 @@ def find_by_ids(session, ids):
         .filter(Purchase.id.in_(ids)) \
         .all()
     return purchases
-
-
-def equalize(session, purchase_ids):
-    purchases = session.query(Purchase).filter(Purchase.id.in_(purchase_ids)).all()
-    for purchase in purchases:
-        purchase.equalized = True
-    session.commit()
 
 
 def find_in_progress(session, user_id):

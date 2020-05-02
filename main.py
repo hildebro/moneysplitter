@@ -12,7 +12,7 @@ from telegram.ext import (
 import privatestorage
 from moneysplitter.handlers import (
     checklist_handler,
-    equalizer_handler,
+    write_off_handler,
     group_0_handler,
     inline_query_handler,
     item_handler,
@@ -61,7 +61,8 @@ def main():
     dp.add_handler(CallbackQueryHandler(purchase_handler.show_purchases, pattern='^show-purchases_[0-9]+$'), group=1)
     dp.add_handler(purchase_handler.get_conversation_handler(), group=1)
 
-    dp.add_handler(equalizer_handler.get_conversation_handler(), group=1)
+    dp.add_handler(CallbackQueryHandler(write_off_handler.show_info, pattern='^write-off-info_[0-9]+$'), group=1)
+    dp.add_handler(CallbackQueryHandler(write_off_handler.write_off, pattern='^write-off-execute_[0-9]+$'), group=1)
 
     dp.add_handler(CallbackQueryHandler(item_handler.undo_last_items, pattern='^undo_last_items'), group=1)
     dp.add_handler(item_handler.get_removal_handler(), group=1)
