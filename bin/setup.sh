@@ -16,7 +16,7 @@ pip install python-telegram-bot
 pip install sqlalchemy
 pip install psycopg2
 pip install alembic
-pip install i18n
+pip install python-i18n
 pip install PyYAML
 
 # build schema
