@@ -10,7 +10,8 @@ conversation:
   continue: 'Continue'
   no_selection: 'Please select something!'
   undo: 'Undo'
-  cancel: 'The current action has been canceled.'
+  cancel: 'Cancel'
+  canceled: 'The current action has been canceled.'
 
 inline:
   text: |
@@ -23,34 +24,39 @@ inline:
     success: 'You successfully joined this checklist!'
 
 checklist:
-  overview:
-    link: 'Checklist overview'
-    text: |
-      This is your personal _checklist overview_.
-
-      All checklists that you create or join will be listed here. Click on a checklist button to enter its main menu.
-      You may also create a _new checklist_ or _refresh_ this overview in order for checklists that you have recently joined to appear.
-    refresh: 'Refresh overview'
   menu:
     link: 'Main menu'
-    title: 'This is the main menu for _%{name}_.'
+    no_checklist: 'Please select a checklist before trying to access the main menu.'
+    header: 'This is the main menu for _%{name}_.'
     items:
-      none: 'It contains no items.'
-      some: |
-        It contains the following items:
-        %{items}
-    info: 'If you want to _add new items_, simply send me a _message_ containing the item name.'
+      zero: 'It contains no items.'
+      one: 'It contains the following item:'
+      many: 'It contains the following items:'
+  picker:
+    link: 'Checklist picker'
+    text: |
+      This is the checklist selection menu. All checklist that you participate in will be listed here. Please select one to interact with it.
+
+      If you don't see any checklists to choose from, you may ask other telegram users to send you an invite link. Alternatively, you may also create your own checklist right here.
+    not_participant: |
+      Looks like you aren't actually a participant of the chosen checklist. You might have been kicked out just now.
+      If this problem persists, please contact support.
   create:
     link: 'New checklist'
     init: 'You are about to create a new checklist! Please send me a message with your desired name.'
     not_unique: 'You already have a checklist with that name. Please choose a unique name.'
+    success: 'Checklist created successfully.'
   delete:
     link: 'Delete checklist'
     permission_denied: 'You are not allowed to do this!'
     init: |
-      You are about to delete the checklist _%{name}_.
-      This _cannot be undone_.
-      Send me the name of this checklist, if you really want to delete it.
+      You are about to delete this checklist:
+
+      _%{name}_.
+
+      Any items, purchases and transactions related to this checklist will be deleted. This action CANNOT BE UNDONE.
+
+      Send me the name of this checklist, if you're absolutely sure that you want to delete it.
     not_matching: 'Your message and the checklist name do not match. Please send the _exact_ name.'
     done: 'The checklist has been deleted.'
   participant:
@@ -61,6 +67,7 @@ checklist:
 
         Click on a username to _(de)select_ them for removal. Once you are done, click _Continue_ to remove all selected users.
       already_selected: 'Someone else is removing users right now and marked this user already!'
+      permission_denied: 'You are not allowed to do this!'
       success: 'Successfully removed selected user(s).'
   settings:
     link: 'Checklist settings'
@@ -90,8 +97,8 @@ purchase:
     link: 'Outstanding purchases'
     header:
       zero: '_%{name}_ has no outstanding purchases.'
-      one: '_%{name}_ has one outstanding purchase.'
-      many: '_%{name}_ has %{count} outstanding purchases.'
+      one: '_%{name}_ has one outstanding purchase:'
+      many: '_%{name}_ has %{count} outstanding purchases:'
     list: '_%{name} paid %{price} for:_ %{items}'
 
 transaction:

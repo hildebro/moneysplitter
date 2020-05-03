@@ -4,6 +4,14 @@ from ..models import Item
 from ..models import Purchase
 
 
+# todo clear ongoing item deletion
+# def clear_ongoing_purchase(session, checklist_id, user_id):
+#     session \
+#         .query(Purchase) \
+#         .filter(Purchase.checklist_id == checklist_id, Purchase.buyer_id == user_id, Purchase.in_progress == True) \
+#         .delete(synchronize_session=False)
+#     session.commit()
+
 def create(session, item_names, checklist_id, purchase_id=None):
     """
     Creates items for the given names (separated by newline). If a purchase is given, the items will be added to it.
@@ -20,12 +28,6 @@ def create(session, item_names, checklist_id, purchase_id=None):
         session.add(item)
         item_list.append(item)
 
-    session.commit()
-    return item_list
-
-
-def remove_all(session, ids_to_remove):
-    session.query(Item).filter(Item.id.in_(ids_to_remove)).delete(synchronize_session=False)
     session.commit()
 
 

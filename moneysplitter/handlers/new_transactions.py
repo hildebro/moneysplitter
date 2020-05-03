@@ -2,36 +2,32 @@ import operator
 
 from telegram import InlineKeyboardMarkup
 
-from ..db import session_wrapper, purchase_queries, checklist_queries
+from ..db import session_wrapper, purchase_queries, checklist_queries, user_queries
 from ..db.models import Transaction
 from ..i18n import trans
-from ..services import response_builder, emojis
+from ..services import emojis
 from ..services.response_builder import button
 
 
-# noinspection PyUnusedLocal
 @session_wrapper
-def show_info(session, update, context):
+def info_handler(session, update, context):
     query = update.callback_query
-    query_data = response_builder.interpret_data(query)
-    checklist_id = query_data['checklist_id']
-    purchases = purchase_queries.find_by_checklist(session, checklist_id)
+    checklist = user_queries.get_selected_checklist(session, query.from_user.id)
+    purchases = purchase_queries.find_by_checklist(session, checklist.id)
 
+    text = trans.t('transaction.create.text', count=len(purchases))
     markup = InlineKeyboardMarkup([[
-        button(f'checklist-menu_{checklist_id}', trans.t('checklist.menu.link'), emojis.BACK),
-        button(f'write-off-execute_{checklist_id}', trans.t('transaction.create.link'), emojis.MONEY)
+        button('checklist-menu', trans.t('checklist.menu.link'), emojis.BACK),
+        button('new-transactions-exe', trans.t('transaction.create.link'), emojis.MONEY)
     ]])
-    query.edit_message_text(text=trans.t('transaction.create.text', count=len(purchases)), reply_markup=markup,
-                            parse_mode='Markdown')
+    query.edit_message_text(text=text, reply_markup=markup, parse_mode='Markdown')
 
 
-# noinspection PyUnusedLocal
 @session_wrapper
-def write_off(session, update, context):
+def execute_handler(session, update, context):
     query = update.callback_query
-    query_data = response_builder.interpret_data(query)
-    checklist_id = query_data['checklist_id']
-    purchases = purchase_queries.find_by_checklist(session, checklist_id)
+    checklist = user_queries.get_selected_checklist(session, query.from_user.id)
+    purchases = purchase_queries.find_by_checklist(session, checklist.id)
 
     user_price_mapping = {}
     full_price = 0
@@ -44,7 +40,7 @@ def write_off(session, update, context):
             user_price_mapping[purchase.buyer.id] += purchase.price
 
     # add entry with price of 0 for everyone who hasn't purchased anything
-    participants = checklist_queries.find_participants(session, checklist_id)
+    participants = checklist_queries.find_participants(session, checklist.id)
     for participant in participants:
         if participant.user_id not in user_price_mapping:
             user_price_mapping[participant.user_id] = 0
@@ -94,15 +90,14 @@ def write_off(session, update, context):
         user_price_mapping[high_end_index] = (high_end_id, new_high_end_amount)
 
         # create new transaction for what happened in this iteration step
-        transactions.append(Transaction(checklist_id, low_end_id, high_end_id, amount_to_transfer))
+        transactions.append(Transaction(checklist.id, low_end_id, high_end_id, amount_to_transfer))
 
     session.add_all(transactions)
-    purchase_queries.write_off(session, checklist_id)
+    purchase_queries.write_off(session, checklist.id)
 
     transaction_info = '\n'.join(map(lambda transaction: transaction.display_name(), transactions))
     update.callback_query.edit_message_text(
         text=trans.t('transaction.create.success', transactions=transaction_info),
-        reply_markup=InlineKeyboardMarkup([[
-            button(f'checklist-menu_{checklist_id}', trans.t('checklist.menu.link'), emojis.BACK)
-        ]])
+        reply_markup=InlineKeyboardMarkup([[button('checklist-menu', trans.t('checklist.menu.link'), emojis.BACK)]]),
+        parse_mode='Markdown'
     )

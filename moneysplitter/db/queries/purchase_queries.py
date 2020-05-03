@@ -76,15 +76,6 @@ def write_off(session, checklist_id):
     session.commit()
 
 
-def find_by_ids(session, ids):
-    purchases = session \
-        .query(Purchase) \
-        .options(joinedload(Purchase.buyer)) \
-        .filter(Purchase.id.in_(ids)) \
-        .all()
-    return purchases
-
-
 def find_in_progress(session, user_id):
     return session \
         .query(Purchase) \

@@ -1,6 +1,4 @@
-from sqlalchemy import func
-
-from ..models import Checklist, Participant, Purchase
+from ..models import Checklist, Participant
 from ..queries import user_queries
 
 
@@ -21,9 +19,7 @@ def create(session, creator_id, checklist_name):
     session.add(Participant(checklist.id, creator_id))
     session.commit()
 
-
-def find(session, checklist_id):
-    return session.query(Checklist).filter(Checklist.id == checklist_id).one()
+    return checklist
 
 
 def find_by_participant(session, user_id):
@@ -46,17 +42,6 @@ def find_participants(session, checklist_id):
     return session.query(Participant).filter(Participant.checklist_id == checklist_id).all()
 
 
-def find_by_purchase(session, purchase_id):
-    return session.query(Checklist).filter(Checklist.purchases.any(Purchase.id == purchase_id)).one()
-
-
-def is_creator(session, checklist_id, user_id):
-    checklist = session \
-        .query(Checklist) \
-        .filter(Checklist.id == checklist_id).one()
-    return checklist.creator_id == user_id
-
-
 def is_participant(session, checklist_id, user_id):
     checklist = session \
         .query(Participant) \
@@ -65,10 +50,7 @@ def is_participant(session, checklist_id, user_id):
     return checklist is not None
 
 
-def delete(session, checklist_id, user_id):
-    if not is_creator(session, checklist_id, user_id):
-        raise Exception
-
+def delete(session, checklist_id):
     session.query(Checklist).filter(Checklist.id == checklist_id).delete()
     session.commit()
 
@@ -76,11 +58,3 @@ def delete(session, checklist_id, user_id):
 def join(session, checklist_id, user_id):
     session.add(Participant(checklist_id, user_id))
     session.commit()
-
-
-def count_checklists(session, user_id):
-    count = session \
-        .query(func.count(Participant.user_id)) \
-        .filter(Participant.user_id == user_id) \
-        .scalar()
-    return count

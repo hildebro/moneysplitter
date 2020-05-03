@@ -8,11 +8,11 @@ from ..services.response_builder import button
 
 
 @session_wrapper
-def send_invite_message(session, update, context):
+def get_send_handler(session, update, context):
     query = update.inline_query.query
 
     inline_options = []
-    for checklist in checklist_queries.find_by_creator(session, update.inline_query.from_user['id']):
+    for checklist in checklist_queries.find_by_creator(session, update.inline_query.from_user.id):
         if query and not checklist.name.lower().startswith(query.lower()):
             continue
 
@@ -32,7 +32,7 @@ def send_invite_message(session, update, context):
 
 # noinspection PyUnusedLocal
 @session_wrapper
-def accept_invite_message(session, update, context):
+def get_join_handler(session, update, context):
     user_id = update.callback_query.from_user.id
     if not user_queries.exists(session, user_id):
         update.callback_query.answer(trans.t('inline.accept.not_registered'))
