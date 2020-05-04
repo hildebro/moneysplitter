@@ -10,7 +10,7 @@ from ..services.response_builder import button
 BASE_STATE = 0
 
 
-def get_handler():
+def conversation_handler():
     return ConversationHandler(
         entry_points=[CallbackQueryHandler(initialize, pattern='^items-delete+$')],
         states={

@@ -7,7 +7,7 @@ from ..services.response_builder import button
 
 
 @session_wrapper
-def get_handler(session, update, context):
+def callback(session, update, context):
     query = update.callback_query
     text, markup = menu_data(session, query.from_user.id)
     query.edit_message_text(text=text, reply_markup=markup, parse_mode='Markdown')

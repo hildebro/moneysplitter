@@ -10,7 +10,7 @@ from ..services.response_builder import button
 ITEM_STATE, PRICE_STATE = range(2)
 
 
-def get_handler():
+def conversation_handler():
     return ConversationHandler(
         entry_points=[CallbackQueryHandler(initialize, pattern='^new-purchase$')],
         states={

@@ -8,7 +8,7 @@ from ..services.response_builder import button
 
 
 @session_wrapper
-def get_handler(session, update, context):
+def callback(session, update, context):
     user_id = update.message.from_user.id
     checklist = user_queries.get_selected_checklist(session, user_id)
     if checklist is None:

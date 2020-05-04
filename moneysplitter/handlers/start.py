@@ -7,7 +7,7 @@ from ..services.response_builder import button
 
 
 @session_wrapper
-def get_handler(session, update, context):
+def callback(session, update, context):
     user = update.message.from_user
     if user_queries.exists(session, user.id):
         text = trans.t('start.already_started')

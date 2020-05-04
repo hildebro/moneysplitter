@@ -8,7 +8,7 @@ from ..services.response_builder import button
 
 
 @session_wrapper
-def get_handler(session, update, context):
+def callback(session, update, context):
     query = update.callback_query
     checklist = user_queries.get_selected_checklist(session, query.from_user.id)
     purchases = purchase_queries.find_by_checklist(session, checklist.id)

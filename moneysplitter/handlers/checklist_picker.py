@@ -8,7 +8,7 @@ from ..services.response_builder import button, interpret_data
 
 
 @session_wrapper
-def get_menu_handler(session, update, context):
+def menu_callback(session, update, context):
     query = update.callback_query
     user_id = query.from_user.id
 
@@ -33,7 +33,7 @@ def get_menu_data(session, user_id):
 
 
 @session_wrapper
-def get_selection_handler(session, update, context):
+def select_callback(session, update, context):
     query = update.callback_query
     query_data = interpret_data(query)
     user_id = query.from_user.id

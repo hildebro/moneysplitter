@@ -8,13 +8,13 @@ from ..services.response_builder import button
 
 
 @session_wrapper
-def get_message_handler(session, update, context):
+def message_callback(session, update, context):
     text, markup = checklist_menu_data(session, update.message.from_user.id)
     update.message.reply_text(text, reply_markup=markup, parse_mode='Markdown')
 
 
 @session_wrapper
-def get_callback_handler(session, update, context):
+def callback_callback(session, update, context):
     query = update.callback_query
     text, markup = checklist_menu_data(session, query.from_user.id)
     query.edit_message_text(text=text, reply_markup=markup, parse_mode='Markdown')

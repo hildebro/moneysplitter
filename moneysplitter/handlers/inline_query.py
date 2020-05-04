@@ -8,7 +8,7 @@ from ..services.response_builder import button
 
 
 @session_wrapper
-def get_send_handler(session, update, context):
+def query_callback(session, update, context):
     query = update.inline_query.query
 
     inline_options = []
@@ -32,7 +32,7 @@ def get_send_handler(session, update, context):
 
 # noinspection PyUnusedLocal
 @session_wrapper
-def get_join_handler(session, update, context):
+def answer_callback(session, update, context):
     user_id = update.callback_query.from_user.id
     if not user_queries.exists(session, user_id):
         update.callback_query.answer(trans.t('inline.accept.not_registered'))
