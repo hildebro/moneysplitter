@@ -27,7 +27,7 @@ def get_send_handler(session, update, context):
                                           ]
                                      ]))
         )
-    context.bot.answer_inline_query(update.inline_query.id, inline_options)
+    update.inline_query.answer(inline_options)
 
 
 # noinspection PyUnusedLocal
