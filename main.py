@@ -11,7 +11,7 @@ from telegram.ext import (
 import privatestorage
 from moneysplitter.handlers import (
     inline_query,
-    main_menu, settings, checklist_picker, start, checklist_create, new_purchase, purchase_list,
+    main_menu, settings, checklist_picker, start, checklist_create, purchase_create, purchase_list,
     new_transactions, checklist_delete, user_kick, item_delete, item_creation, user_refresh,
 )
 
@@ -37,7 +37,7 @@ def main():
     dp.add_handler(CommandHandler('menu', main_menu.message_callback), group=1)
     dp.add_handler(CallbackQueryHandler(main_menu.callback_callback, pattern='^checklist-menu$'), group=1)
     # new purchase
-    dp.add_handler(new_purchase.conversation_handler(), group=1)
+    dp.add_handler(purchase_create.conversation_handler(), group=1)
     # purchase list
     dp.add_handler(CallbackQueryHandler(purchase_list.callback, pattern='^purchase-list$'), group=1)
     # new transactions

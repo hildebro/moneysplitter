@@ -2,9 +2,9 @@ from telegram import InlineKeyboardMarkup
 
 from ..db import session_wrapper
 from ..db.queries import user_queries, item_queries
+from ..helper import emojis
+from ..helper.function_wrappers import button
 from ..i18n import trans
-from ..services import emojis
-from ..services.response_builder import button
 
 
 @session_wrapper
@@ -38,10 +38,14 @@ def checklist_menu_data(session, user_id):
         text += '\n' + '\n'.join(map(lambda checklist_item: checklist_item.name, items))
 
     markup = InlineKeyboardMarkup([
-        [button('new-purchase', trans.t('purchase.create.link'), emojis.CART)],
+        [button('purchase.create', trans.t('purchase.create.link'), emojis.CART)],
         [button('purchase-list', trans.t('purchase.log.link'), emojis.BILL)],
         [button('new-transactions-info', trans.t('transaction.create.link'), emojis.MONEY)],
         [button('checklist-settings', trans.t('checklist.settings.link'), emojis.GEAR)],
     ])
 
     return text, markup
+
+
+def link_button():
+    return button('checklist-menu', trans.t('checklist.menu.link'), emojis.BACK)

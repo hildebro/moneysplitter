@@ -1,7 +1,7 @@
 from sqlalchemy import or_
 
+from . import purchase_queries, user_queries
 from ..models import Item
-from ..models import Purchase
 
 
 # todo clear ongoing item deletion
@@ -13,11 +13,7 @@ from ..models import Purchase
 #     session.commit()
 
 def create(session, item_names, checklist_id, purchase_id=None):
-    """
-    Creates items for the given names (separated by newline). If a purchase is given, the items will be added to it.
-    """
     item_name_list = item_names.split('\n')
-    item_list = []
 
     for item_name in item_name_list:
         if item_name.strip() == '':
@@ -26,9 +22,14 @@ def create(session, item_names, checklist_id, purchase_id=None):
         item = Item(item_name.strip(), checklist_id)
         item.purchase_id = purchase_id
         session.add(item)
-        item_list.append(item)
 
     session.commit()
+
+
+def create_for_purchase(session, user_id, item_names):
+    checklist = user_queries.get_selected_checklist(session, user_id)
+    purchase = purchase_queries.find_in_progress(session, user_id)
+    create(session, item_names, checklist.id, purchase.id)
 
 
 def find_by_checklist(session, checklist_id):
@@ -36,9 +37,8 @@ def find_by_checklist(session, checklist_id):
     return items
 
 
-def find_for_purchase(session, purchase_id):
-    purchase = session.query(Purchase).filter(Purchase.id == purchase_id).one()
-    # noinspection PyComparisonWithNone
+def find_for_purchase(session, user_id):
+    purchase = purchase_queries.find_in_progress(session, user_id)
     items = session \
         .query(Item) \
         .filter(Item.checklist == purchase.checklist) \

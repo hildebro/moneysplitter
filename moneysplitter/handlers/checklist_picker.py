@@ -2,9 +2,10 @@ from telegram import InlineKeyboardMarkup
 
 from . import main_menu
 from ..db import session_wrapper, checklist_queries, user_queries
+from ..helper import emojis
+from ..helper.function_wrappers import button
+from ..helper.response_builder import interpret_data
 from ..i18n import trans
-from ..services import emojis
-from ..services.response_builder import button, interpret_data
 
 
 @session_wrapper
@@ -27,7 +28,10 @@ def get_menu_data(session, user_id):
     keyboard.append([button('new-checklist', trans.t('checklist.create.link'), emojis.NEW)])
     if selected_checklist is not None:
         # can't go back, if there is no checklist to go back to
-        keyboard.append([button('checklist-menu', trans.t('checklist.menu.link'), emojis.BACK)])
+        keyboard.append([
+            button('checklist-menu', trans.t('checklist.menu.link'), emojis.BACK),
+            button('checklist-settings', trans.t('checklist.settings.link'), emojis.BACK)
+        ])
 
     return trans.t('checklist.picker.text'), InlineKeyboardMarkup(keyboard)
 

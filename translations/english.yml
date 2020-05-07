@@ -81,11 +81,11 @@ purchase:
       zero: 'This checklist has no items, but you may send me item names which will be added as preselected items.'
       one: |
         Click on the item to _(de)select it for purchase_.
-        You may also send me new item names to add them to this list preselected.
+        You may also send me new item names in order to add them to this purchase.
         Once you're done with your selection, click _Continue_ to set a price.
       many: |
-        Click on items to _(de)select them for purchase_.
-        You may also send me new item names to add them to this list preselected.
+        Click on an item to _(de)select it for purchase_.
+        You may also send me new item names in order to add them to this purchase.
         Once you're done with your selection, click _Continue_ to set a price.
     already_selected: 'Someone else is purchasing right now and marked this item already!'
     price:

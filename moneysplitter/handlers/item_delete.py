@@ -3,9 +3,9 @@ from telegram.ext import CallbackQueryHandler, ConversationHandler
 
 from ..db import session_wrapper
 from ..db.queries import item_queries, user_queries
+from ..helper import response_builder, emojis
+from ..helper.function_wrappers import button
 from ..i18n import trans
-from ..services import response_builder, emojis
-from ..services.response_builder import button
 
 BASE_STATE = 0
 
@@ -63,7 +63,7 @@ def mark_item(session, update, context):
 def selection_data(session, checklist, user_id):
     items = item_queries.find_for_removal(session, checklist.id, user_id)
     text = trans.t('item.delete.text', name=checklist.name)
-    markup = response_builder.entity_selector_markup(items, is_item_being_removed, checklist.id, 'remove-items')
+    markup = response_builder.entity_select_markup(items, is_item_being_removed, checklist.id, 'remove-items')
 
     return text, markup
 
