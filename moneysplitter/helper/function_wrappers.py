@@ -11,3 +11,8 @@ def reply(message, text, markup=None):
 
 def edit(query, text, markup=None):
     query.edit_message_text(text, reply_markup=markup, parse_mode='Markdown')
+
+
+def get_entity_id(callback_query):
+    data = callback_query.data.split('_')
+    return data[-1]

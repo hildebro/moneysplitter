@@ -19,7 +19,7 @@ def menu_data(session, user_id):
     text = trans.t('checklist.settings.text', name=checklist.name)
     markup = InlineKeyboardMarkup([
         [button('checklist-picker', trans.t('checklist.picker.link'), emojis.PICK)],
-        [button('items.delete', trans.t('item.delete.link'), emojis.BIN)],
+        [button('item.delete', trans.t('item.delete.link'), emojis.BIN)],
         [button('participant.delete', trans.t('participant.delete.link'), emojis.RUNNER)],
         [button('delete-checklist', trans.t('checklist.delete.link'), emojis.HAZARD)],
         [button('checklist-menu', trans.t('checklist.menu.link'), emojis.BACK)]
