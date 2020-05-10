@@ -1,5 +1,6 @@
 from telegram import InlineKeyboardMarkup
 
+from . import main_menu
 from ..db import session_wrapper
 from ..db.queries import item_queries, user_queries
 from ..helper import emojis
@@ -22,5 +23,5 @@ def callback(session, update, context):
     item_queries.create(session, item_names, checklist.id)
 
     text = trans.t('item.add.success', name=checklist.name, items=item_names)
-    markup = InlineKeyboardMarkup([[button('checklist-menu', trans.t('checklist.menu.link'), emojis.BACK)]])
+    markup = InlineKeyboardMarkup([[main_menu.link_button()]])
     update.message.reply_text(text, reply_markup=markup, parse_mode='Markdown')

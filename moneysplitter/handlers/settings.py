@@ -1,5 +1,6 @@
 from telegram import InlineKeyboardMarkup
 
+from . import main_menu
 from ..db import session_wrapper, user_queries
 from ..helper import emojis
 from ..helper.function_wrappers import button
@@ -22,7 +23,7 @@ def menu_data(session, user_id):
         [button('item.delete', trans.t('item.delete.link'), emojis.BIN)],
         [button('participant.delete', trans.t('participant.delete.link'), emojis.RUNNER)],
         [button('delete-checklist', trans.t('checklist.delete.link'), emojis.HAZARD)],
-        [button('checklist-menu', trans.t('checklist.menu.link'), emojis.BACK)]
+        [main_menu.link_button()]
     ])
 
     return text, markup

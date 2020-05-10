@@ -1,7 +1,7 @@
 from telegram import InlineKeyboardMarkup
 from telegram.ext import ConversationHandler, CallbackQueryHandler, Filters, MessageHandler
 
-from . import checklist_picker
+from . import checklist_picker, main_menu
 from ..db import checklist_queries, session_wrapper, user_queries
 from ..helper import emojis
 from ..helper.function_wrappers import button
@@ -42,7 +42,7 @@ def create(session, update, context):
         user_queries.select_checklist(session, new_checklist.id, user_id)
 
     text = trans.t('checklist.create.success')
-    markup = InlineKeyboardMarkup([[button('checklist-menu', trans.t('checklist.menu.link'), emojis.BACK)]])
+    markup = InlineKeyboardMarkup([[main_menu.link_button()]])
 
     update.message.reply_text(text, reply_markup=markup, parse_mode='Markdown')
     return ConversationHandler.END

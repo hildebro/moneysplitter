@@ -1,5 +1,6 @@
 from telegram import InlineKeyboardMarkup
 
+from . import main_menu
 from ..db import session_wrapper, user_queries
 from ..helper import emojis
 from ..helper.function_wrappers import button
@@ -11,7 +12,7 @@ def callback(session, update, context):
     user = update.message.from_user
     if user_queries.exists(session, user.id):
         text = trans.t('start.already_started')
-        markup_button = button('checklist-menu', trans.t('checklist.menu.link'), emojis.BACK)
+        markup_button = main_menu.link_button()
     else:
         user_queries.register(session, update.message.from_user)
         text = trans.t('start.text')

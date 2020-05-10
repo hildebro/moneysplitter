@@ -2,6 +2,7 @@ import operator
 
 from telegram import InlineKeyboardMarkup
 
+from . import main_menu
 from ..db import session_wrapper, purchase_queries, checklist_queries, user_queries
 from ..db.models import Transaction
 from ..helper import emojis
@@ -19,7 +20,7 @@ def info_callback(session, update, context):
 
     text = trans.t(f'{ACTION_IDENTIFIER}.text', count=len(purchases))
     markup = InlineKeyboardMarkup([[
-        button('checklist-menu', trans.t('checklist.menu.link'), emojis.BACK),
+        main_menu.link_button(),
         button(f'{ACTION_IDENTIFIER}.execute', trans.t(f'{ACTION_IDENTIFIER}.link'), emojis.MONEY)
     ]])
     query.edit_message_text(text=text, reply_markup=markup, parse_mode='Markdown')
@@ -104,6 +105,6 @@ def execute_callback(session, update, context):
     transaction_info = '\n'.join(map(lambda transaction: transaction.display_name(), transactions))
     update.callback_query.edit_message_text(
         text=trans.t(f'{ACTION_IDENTIFIER}.success', transactions=transaction_info),
-        reply_markup=InlineKeyboardMarkup([[button('checklist-menu', trans.t('checklist.menu.link'), emojis.BACK)]]),
+        reply_markup=InlineKeyboardMarkup([[main_menu.link_button()]]),
         parse_mode='Markdown'
     )
