@@ -137,3 +137,7 @@ item:
     already_selected: 'Someone else is deleting items right now and marked this item already!'
     success: 'Item(s) deleted successfully!'
     no_entities: 'There are no items in this checklist.'
+  refresh:
+    link: 'Refresh item list'
+    success: 'Items refreshed!'
+    fail: 'Nothing new!'

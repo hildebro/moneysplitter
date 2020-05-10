@@ -12,7 +12,7 @@ import privatestorage
 from moneysplitter.handlers import (
     inline_query,
     main_menu, settings, checklist_picker, start, checklist_create, purchase_create, purchase_list,
-    transaction_create, checklist_delete, participant_delete, item_delete, item_creation, user_refresh,
+    transaction_create, checklist_delete, participant_delete, item_delete, item_creation, user_refresh, item_refresh,
 )
 
 
@@ -45,7 +45,7 @@ def main():
     dp.add_handler(CallbackQueryHandler(transaction_create.execute_callback, pattern='^transaction.create.execute$'),
                    group=1)
     # refresh item list
-    # TODO dp.add_handler(CallbackQueryHandler(item_refresh.callback, pattern='^items-refresh$'), group=1)
+    dp.add_handler(CallbackQueryHandler(item_refresh.callback, pattern='^item-refresh$'), group=1)
 
     # ### checklist settings ###
     # link to menu
