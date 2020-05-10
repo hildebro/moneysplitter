@@ -2,9 +2,8 @@ from telegram import InlineKeyboardMarkup
 
 from . import main_menu
 from ..db import session_wrapper, checklist_queries, user_queries
-from ..helper import emojis
+from ..helper import emojis, response_builder
 from ..helper.function_wrappers import button
-from ..helper.response_builder import interpret_data
 from ..i18n import trans
 
 
@@ -39,9 +38,8 @@ def get_menu_data(session, user_id):
 @session_wrapper
 def select_callback(session, update, context):
     query = update.callback_query
-    query_data = interpret_data(query)
     user_id = query.from_user.id
-    checklist_id = query_data['checklist_id']
+    checklist_id = response_builder.get_entity_id(query)
 
     if not checklist_queries.is_participant(session, checklist_id, user_id):
         text = trans.t('checklist.picker.not_participant')

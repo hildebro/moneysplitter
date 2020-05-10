@@ -12,7 +12,7 @@ import privatestorage
 from moneysplitter.handlers import (
     inline_query,
     main_menu, settings, checklist_picker, start, checklist_create, purchase_create, purchase_list,
-    new_transactions, checklist_delete, user_kick, item_delete, item_creation, user_refresh,
+    new_transactions, checklist_delete, participant_delete, item_delete, item_creation, user_refresh,
 )
 
 
@@ -57,7 +57,7 @@ def main():
     # delete items
     dp.add_handler(item_delete.conversation_handler(), group=1)
     # kick participants
-    dp.add_handler(user_kick.conversation_handler(), group=1)
+    dp.add_handler(participant_delete.conversation_handler(), group=1)
     # delete checklist
     dp.add_handler(checklist_delete.conversation_handler(), group=1)
 

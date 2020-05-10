@@ -97,29 +97,3 @@ def abort_button(action_identifier):
 def get_entity_id(callback_query):
     data = callback_query.data.split('_')
     return data[-1]
-
-
-CALLBACK_MAPPINGS = {
-    # i don't want these remove-mark-abort-continue chains, but that's a whole can of worms...
-    'remove-users': ['checklist_id'],
-    'mark-remove-users': ['checklist_id', 'user_id'],
-    'abort-remove-users': ['checklist_id'],
-    'continue-remove-users': ['checklist_id'],
-    # these are actually required after overhaul
-    'select-checklist': ['checklist_id'],
-}
-
-
-def interpret_data(callback_query):
-    """
-    Every callback data has the format of PURPOSE_ID_ID_ID_ID_ID...
-    In order to properly interpret the data, the purpose is used as a key for CALLBACK_MAPPINGS.
-    The callback IDs are then mapped to the defined names.
-    """
-    data = callback_query.data.split('_')
-    mapping = CALLBACK_MAPPINGS[data.pop(0)]
-    result_data = {}
-    for i in range(len(mapping)):
-        result_data[mapping[i]] = int(data[i])
-
-    return result_data

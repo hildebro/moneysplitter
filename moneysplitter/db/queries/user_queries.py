@@ -34,19 +34,21 @@ def refresh(session, telegram_user):
     session.commit()
 
 
-def find_participants_for_removal(session, checklist_id, deleting_user_id):
+def find_participants_for_removal(session, deleting_user_id):
+    checklist = get_selected_checklist(session, deleting_user_id)
     return session \
         .query(Participant) \
-        .filter(Participant.checklist_id == checklist_id, Participant.user_id != deleting_user_id) \
+        .filter(Participant.checklist_id == checklist.id, Participant.user_id != deleting_user_id) \
         .filter(or_(Participant.deleting_user_id == None, Participant.deleting_user_id == deleting_user_id)) \
         .order_by(Participant.user_id) \
         .all()
 
 
-def mark_for_removal(session, deleting_user_id, user_id, checklist_id):
+def mark_for_removal(session, deleting_user_id, user_id):
+    checklist = get_selected_checklist(session, deleting_user_id)
     participant = session \
         .query(Participant) \
-        .filter(Participant.user_id == user_id, Participant.checklist_id == checklist_id) \
+        .filter(Participant.user_id == user_id, Participant.checklist_id == checklist.id) \
         .one()
     if participant.deleting_user_id is None:
         participant.deleting_user_id = deleting_user_id
@@ -59,10 +61,11 @@ def mark_for_removal(session, deleting_user_id, user_id, checklist_id):
     return True
 
 
-def abort_removal(session, checklist_id, deleting_user_id):
+def abort_removal(session, deleting_user_id):
+    checklist = get_selected_checklist(session, deleting_user_id)
     session \
         .query(Participant) \
-        .filter(Participant.checklist_id == checklist_id, Participant.deleting_user_id == deleting_user_id) \
+        .filter(Participant.checklist_id == checklist.id, Participant.deleting_user_id == deleting_user_id) \
         .update({'deleting_user_id': None})
     session.commit()
 
