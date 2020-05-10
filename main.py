@@ -13,6 +13,7 @@ from moneysplitter.handlers import (
     inline_query,
     main_menu, settings, checklist_picker, start, checklist_create, purchase_create, purchase_list,
     transaction_create, checklist_delete, participant_delete, item_delete, item_creation, user_refresh, item_refresh,
+    fallback,
 )
 
 
@@ -63,8 +64,8 @@ def main():
     dp.add_handler(checklist_delete.conversation_handler(), group=1)
 
     # catch any unsupported commands and deprecated buttons
-    # TODO dp.add_handler(CallbackQueryHandler(generic.get_query_handler, pattern='*'), group=1)
-    # TODO dp.add_handler(MessageHandler(Filters.command, generic.get_command_handler), group=1)
+    dp.add_handler(CallbackQueryHandler(fallback.button_callback, pattern='.*'), group=1)
+    dp.add_handler(MessageHandler(Filters.command, fallback.command_callback), group=1)
 
     # item creation
     dp.add_handler(MessageHandler(Filters.text, item_creation.callback), group=1)

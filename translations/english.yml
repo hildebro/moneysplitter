@@ -13,6 +13,13 @@ conversation:
   cancel: 'Cancel'
   canceled: 'The current action has been canceled.'
 
+fallback:
+  callback_query: |
+    The button you tried to press is no longer valid. This might happen from time to time when I update the bot. If all is well, you should be able to go back to the main menu and retry the action you just attempted to execute.
+
+    If you see this message on a consistent basis, it's probably a bug. If you can't contact me to let me know about it, you will just have to wait for me to notice the bug on my own.
+  command: 'I cannot process the command you gave me. Typing the _slash_ character will show you every valid command.'
+
 inline:
   text: |
     You are invited to join the checklist %{name}. Press the button under this message to confirm.
