@@ -1,95 +1,78 @@
 from telegram import InlineKeyboardMarkup
 from telegram.ext import CallbackQueryHandler, ConversationHandler
 
+from . import settings, main_menu
 from ..db import session_wrapper
 from ..db.queries import item_queries, user_queries
-from ..helper import response_builder, emojis
-from ..helper.function_wrappers import button
+from ..helper import response_builder
+from ..helper.function_wrappers import edit
 from ..i18n import trans
 
 BASE_STATE = 0
 
+ACTION_IDENTIFIER = 'items.delete'
+
 
 def conversation_handler():
     return ConversationHandler(
-        entry_points=[CallbackQueryHandler(initialize, pattern='^items-delete+$')],
+        entry_points=[entry_handler()],
         states={
             BASE_STATE: [
-                CallbackQueryHandler(mark_item, pattern='^mark-remove-items_[0-9]+_[0-9]+'),
-                CallbackQueryHandler(commit_removal, pattern='^continue-remove-items_[0-9]+$'),
-            ],
+                select_handler(),
+                CallbackQueryHandler(commit_removal, pattern=response_builder.continue_pattern(ACTION_IDENTIFIER)),
+            ]
         },
-        fallbacks=[CallbackQueryHandler(abort_removal, pattern='^abort-remove-items_[0-9]+$')]
+        fallbacks=[abort_handler()]
     )
 
 
-def is_item_being_removed(item):
+def is_item_selected(item):
     """To be used as a callback for entity_selector_markup"""
     return item.deleting_user_id is not None
 
 
-# noinspection PyUnusedLocal
-@session_wrapper
-def initialize(session, update, context):
-    query = update.callback_query
-    user_id = query.from_user.id
+def get_select_text(session, user_id):
     checklist = user_queries.get_selected_checklist(session, user_id)
-
-    text, markup = selection_data(session, checklist, user_id)
-    query.edit_message_text(text=text, reply_markup=markup, parse_mode='Markdown')
-
-    return BASE_STATE
+    return trans.t(f'{ACTION_IDENTIFIER}.text', name=checklist.name)
 
 
-# noinspection PyUnusedLocal
-@session_wrapper
-def mark_item(session, update, context):
-    query = update.callback_query
-    query_data = response_builder.interpret_data(query)
-    user_id = query.from_user.id
-    checklist = user_queries.get_selected_checklist(session, user_id)
-
-    success = item_queries.mark_for_removal(session, user_id, query_data['item_id'])
-    if not success:
-        update.callback_query.answer(trans.t('item.delete.already_selected'))
-        return BASE_STATE
-
-    text, markup = selection_data(session, checklist, user_id)
-    query.edit_message_text(text=text, reply_markup=markup, parse_mode='Markdown')
-
-    return BASE_STATE
+def entry_handler():
+    return response_builder.entry_handler(
+        ACTION_IDENTIFIER,
+        get_select_text,
+        item_queries.find_for_removal,
+        is_item_selected,
+    )
 
 
-def selection_data(session, checklist, user_id):
-    items = item_queries.find_for_removal(session, checklist.id, user_id)
-    text = trans.t('item.delete.text', name=checklist.name)
-    markup = response_builder.entity_select_markup(items, is_item_being_removed, checklist.id, 'remove-items')
+def select_handler():
+    return response_builder.select_handler(
+        ACTION_IDENTIFIER,
+        get_select_text,
+        item_queries.find_for_removal,
+        is_item_selected,
+        item_queries.select_for_removal
+    )
 
-    return text, markup
 
-
-@session_wrapper
-def abort_removal(session, update, context):
-    query = update.callback_query
-    user_id = query.from_user.id
-    checklist = user_queries.get_selected_checklist(session, user_id)
-    item_queries.abort_removal(session, checklist.id, user_id)
-
-    markup = InlineKeyboardMarkup([[button('checklist-settings', trans.t('checklist.settings.link'), emojis.BACK)]])
-    query.edit_message_text(text=trans.t('conversation.canceled'), reply_markup=markup, parse_mode='Markdown')
-    return ConversationHandler.END
+def abort_handler():
+    return response_builder.abort_handler(
+        ACTION_IDENTIFIER,
+        item_queries.abort_removal,
+    )
 
 
 @session_wrapper
 def commit_removal(session, update, context):
     query = update.callback_query
-    query_data = response_builder.interpret_data(query)
-    checklist_id = query_data['checklist_id']
-    success = item_queries.delete_pending(session, checklist_id, query.from_user.id)
+    user_id = query.from_user.id
+    checklist = user_queries.get_selected_checklist(session, user_id)
+    success = item_queries.delete_pending(session, checklist.id, query.from_user.id)
     if not success:
         query.answer(trans.t('conversation.no_selection'))
         return BASE_STATE
 
-    markup = InlineKeyboardMarkup([[button('checklist-settings', trans.t('checklist.settings.link'), emojis.BACK)]])
-    query.edit_message_text(text=trans.t('item.delete.success'), reply_markup=markup, parse_mode='Markdown')
+    text = trans.t(f'{ACTION_IDENTIFIER}.success')
+    markup = InlineKeyboardMarkup([[main_menu.link_button(), settings.link_button()]])
+    edit(query, text, markup)
     return ConversationHandler.END

@@ -47,7 +47,8 @@ def select_handler(action_identifier, get_text_func, get_entities_func, is_selec
         query = update.callback_query
         user_id = query.from_user.id
 
-        select_entity_func(session, user_id, get_item_id(query))
+        # todo check for success
+        select_entity_func(session, user_id, get_entity_id(query))
 
         text = get_text_func(session, user_id)
         markup = entity_select_markup(action_identifier, get_entities_func(session, user_id), is_selected_func)
@@ -93,20 +94,16 @@ def abort_button(action_identifier):
     return button(f'{action_identifier}-abort', trans.t('conversation.cancel'), emojis.BACK)
 
 
-def get_item_id(callback_query):
+def get_entity_id(callback_query):
     data = callback_query.data.split('_')
     return data[-1]
 
 
 CALLBACK_MAPPINGS = {
     # i don't want these remove-mark-abort-continue chains, but that's a whole can of worms...
-    'remove-items': ['checklist_id'],
     'remove-users': ['checklist_id'],
-    'mark-remove-items': ['checklist_id', 'item_id'],
     'mark-remove-users': ['checklist_id', 'user_id'],
-    'abort-remove-items': ['checklist_id'],
     'abort-remove-users': ['checklist_id'],
-    'continue-remove-items': ['checklist_id'],
     'continue-remove-users': ['checklist_id'],
     # these are actually required after overhaul
     'select-checklist': ['checklist_id'],
