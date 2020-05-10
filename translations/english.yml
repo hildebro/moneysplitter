@@ -74,6 +74,7 @@ participant:
     already_selected: 'Someone else is removing users right now and marked this user already!'
     permission_denied: 'You are not allowed to do this!'
     success: 'Successfully removed selected user(s).'
+    no_entities: 'There are no participants that you can kick.'
 
 purchase:
   create:
@@ -93,16 +94,16 @@ purchase:
   log:
     link: 'Outstanding purchases'
     header:
-      zero: '_%{name}_ has no outstanding purchases.'
       one: '_%{name}_ has one outstanding purchase:'
       many: '_%{name}_ has %{count} outstanding purchases:'
     list: '_%{name} paid %{price} for:_ %{items}'
+    no_purchases: 'No outstanding purchases!'
 
 transaction:
   create:
     link: 'Write off purchases'
     text: |
-      This checklist has %{count} outstanding purchases. When you write them off, I will:
+      This checklist has %{count} outstanding purchase(s). When writing off purchases, I will:
 
       - Clear list of outstanding purchases
       - Compare how much money has been paid by participants
@@ -111,6 +112,7 @@ transaction:
       - (Not yet implemented) Add entries to _outstanding transactions_
 
       You cannot undo this action. Are you sure you want to write off all purchases?
+    no_purchases: No outstanding purchases!
     success: |
       The outstanding purchases have been written off. The following transactions have been calculated:
 
@@ -134,3 +136,4 @@ item:
       Click on items to _(de)select_ them for removal. When you are done, click _Continue_ to remove all selected items.
     already_selected: 'Someone else is deleting items right now and marked this item already!'
     success: 'Item(s) deleted successfully!'
+    no_entities: 'There are no items in this checklist.'

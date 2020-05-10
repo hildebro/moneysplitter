@@ -8,6 +8,8 @@ from ..helper import emojis
 from ..helper.function_wrappers import button
 from ..i18n import trans
 
+ACTION_IDENTIFIER = 'transaction.create'
+
 
 @session_wrapper
 def info_callback(session, update, context):
@@ -15,10 +17,10 @@ def info_callback(session, update, context):
     checklist = user_queries.get_selected_checklist(session, query.from_user.id)
     purchases = purchase_queries.find_by_checklist(session, checklist.id)
 
-    text = trans.t('transaction.create.text', count=len(purchases))
+    text = trans.t(f'{ACTION_IDENTIFIER}.text', count=len(purchases))
     markup = InlineKeyboardMarkup([[
         button('checklist-menu', trans.t('checklist.menu.link'), emojis.BACK),
-        button('new-transactions-exe', trans.t('transaction.create.link'), emojis.MONEY)
+        button(f'{ACTION_IDENTIFIER}.execute', trans.t(f'{ACTION_IDENTIFIER}.link'), emojis.MONEY)
     ]])
     query.edit_message_text(text=text, reply_markup=markup, parse_mode='Markdown')
 
@@ -28,6 +30,10 @@ def execute_callback(session, update, context):
     query = update.callback_query
     checklist = user_queries.get_selected_checklist(session, query.from_user.id)
     purchases = purchase_queries.find_by_checklist(session, checklist.id)
+
+    if len(purchases) == 0:
+        query.answer(trans.t(f'{ACTION_IDENTIFIER}.no_purchases'))
+        return
 
     user_price_mapping = {}
     full_price = 0
@@ -97,7 +103,7 @@ def execute_callback(session, update, context):
 
     transaction_info = '\n'.join(map(lambda transaction: transaction.display_name(), transactions))
     update.callback_query.edit_message_text(
-        text=trans.t('transaction.create.success', transactions=transaction_info),
+        text=trans.t(f'{ACTION_IDENTIFIER}.success', transactions=transaction_info),
         reply_markup=InlineKeyboardMarkup([[button('checklist-menu', trans.t('checklist.menu.link'), emojis.BACK)]]),
         parse_mode='Markdown'
     )

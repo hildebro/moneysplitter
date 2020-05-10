@@ -37,7 +37,8 @@ class EntitySelectConversationBuilder:
                  button_config: ButtonConfig,
                  entry_func: Callable[[Session, int], None] = None,
                  post_continue_state: List[Handler] = None,
-                 message_callback: Callable[[Session, int, str], None] = None):
+                 message_callback: Callable[[Session, int, str], None] = None,
+                 allow_zero_entities: bool = False):
         self.action_identifier = action_identifier
         self.get_entities_func = get_entities_func
         self.is_selected_func = is_selected_func
@@ -48,6 +49,7 @@ class EntitySelectConversationBuilder:
         self.entry_func = entry_func
         self.post_continue_state = post_continue_state
         self.message_callback = message_callback
+        self.allow_zero_entities = allow_zero_entities
 
     def conversation_handler(self):
         states = {
@@ -69,6 +71,11 @@ class EntitySelectConversationBuilder:
 
             if self.entry_func is not None:
                 self.entry_func(session, user_id)
+
+            if len(self.get_entities_func(session, user_id)) == 0 and not self.allow_zero_entities:
+                self.abort_func(session, user_id)
+                query.answer(trans.t(f'{self.action_identifier}.no_entities'))
+                return ConversationHandler.END
 
             text = self._message_text(session, user_id)
             markup = self._entity_select_markup(session, user_id)

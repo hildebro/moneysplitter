@@ -25,7 +25,8 @@ def conversation_handler():
         ButtonConfig.MAIN_MENU,
         purchase_queries.create,
         [MessageHandler(Filters.text, check_price)],
-        item_queries.create_for_purchase
+        item_queries.create_for_purchase,
+        True
     )
     return builder.conversation_handler()
 
