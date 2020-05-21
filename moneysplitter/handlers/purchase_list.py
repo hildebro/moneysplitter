@@ -3,6 +3,8 @@ from telegram import InlineKeyboardMarkup
 from . import main_menu
 from ..db import session_wrapper
 from ..db.queries import purchase_queries, user_queries
+from ..helper import emojis
+from ..helper.function_wrappers import button
 from ..i18n import trans
 
 
@@ -20,5 +22,8 @@ def callback(session, update, context):
     text = trans.t('purchase.log.header', name=checklist.name, count=purchase_count)
     text += '\n\n' + '\n\n'.join(map(lambda purchase: purchase.display_name(), purchases))
 
-    markup = InlineKeyboardMarkup([[main_menu.link_button()]])
+    markup = InlineKeyboardMarkup([[
+        main_menu.link_button(),
+        button('transaction.create.info', trans.t('transaction.create.link'), emojis.MONEY)
+    ]])
     query.edit_message_text(text=text, reply_markup=markup, parse_mode='Markdown')

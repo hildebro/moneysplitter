@@ -40,7 +40,7 @@ def checklist_menu_data(session, user_id):
     markup = InlineKeyboardMarkup([
         [button('purchase.create', trans.t('purchase.create.link'), emojis.CART)],
         [button('purchase-list', trans.t('purchase.log.link'), emojis.BILL)],
-        [button('transaction.create.info', trans.t('transaction.create.link'), emojis.MONEY)],
+        [button('transaction.list', trans.t('transaction.list.link'), emojis.CREDIT)],
         [button('item-refresh', trans.t('item.refresh.link'), emojis.REFRESH)],
         [button('checklist-settings', trans.t('checklist.settings.link'), emojis.GEAR)],
     ])

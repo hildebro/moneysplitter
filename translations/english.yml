@@ -113,17 +113,24 @@ transaction:
       This checklist has %{count} outstanding purchase(s). When writing off purchases, I will:
 
       - Clear list of outstanding purchases
-      - Compare how much money has been paid by participants
-      - Show you every transaction that needs to be made to get even across all participants
-      - (Not yet implemented) Notify every participant, whether they owe someone else money (or the other way around)
-      - (Not yet implemented) Add entries to _outstanding transactions_
+      - Check how much money was paid for these cleared purchases by each participant
+      - Compare the amounts and calculate who owes money to who
 
-      You cannot undo this action. Are you sure you want to write off all purchases?
+      Every participant can check their balances via the corresponding button in the main menu.
+
+      You cannot undo the write-off! If you really want to commit this action, click _Write off purchases_ again.
     no_purchases: No outstanding purchases!
     success: |
       The outstanding purchases have been written off. The following transactions have been calculated:
 
       %{transactions}
+  list:
+    link: 'Balances'
+    no_transactions: 'Your balance is clean.'
+  display:
+    default: '%{giver} owes %{receiver} %{amount}'
+    giver: 'You owe %{receiver} %{amount}'
+    receiver: '%{giver} owes you %{amount}'
 
 item:
   add:
