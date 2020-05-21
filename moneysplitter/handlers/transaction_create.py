@@ -5,8 +5,9 @@ from telegram import InlineKeyboardMarkup
 from . import main_menu
 from ..db import session_wrapper, purchase_queries, checklist_queries, user_queries
 from ..db.models import Transaction
+from ..db.queries import transaction_queries
 from ..helper import emojis
-from ..helper.function_wrappers import button
+from ..helper.function_wrappers import button, edit
 from ..i18n import trans
 
 ACTION_IDENTIFIER = 'transaction.create'
@@ -36,9 +37,9 @@ def execute_callback(session, update, context):
         query.answer(trans.t(f'{ACTION_IDENTIFIER}.no_purchases'))
         return
 
+    # sum up purchase prices -  both per user and as a whole
     user_price_mapping = {}
     full_price = 0
-    # sum up purchase prices
     for purchase in purchases:
         full_price += purchase.price
         if purchase.buyer.id not in user_price_mapping:
@@ -52,10 +53,11 @@ def execute_callback(session, update, context):
         if participant.user_id not in user_price_mapping:
             user_price_mapping[participant.user_id] = 0
 
-    # dictionaries inherently have no order, but we need the price mapping to be sorted ascending by price.
-    # this line converts {user => price} into {index => (user, price)} with the index representing the order.
-    user_price_mapping = sorted(user_price_mapping.items(), key=operator.itemgetter(1))
     average_price = full_price / len(participants)
+
+    # dictionaries inherently have no order, but we need the price mapping to be sorted ascending by price.
+    # the following line converts {user => price} into {index => (user, price)} with the index representing the order.
+    user_price_mapping = sorted(user_price_mapping.items(), key=operator.itemgetter(1))
 
     # our goal is for everybody to spend the average price of the outstanding purchases. that's why we create
     # transactions in which the people who spent less than the average give money to the ones that spent above average.
@@ -99,12 +101,7 @@ def execute_callback(session, update, context):
         # create new transaction for what happened in this iteration step
         transactions.append(Transaction(checklist.id, low_end_id, high_end_id, amount_to_transfer))
 
-    session.add_all(transactions)
+    transaction_queries.add_all(session, checklist, transactions)
     purchase_queries.write_off(session, checklist.id)
 
-    transaction_info = '\n'.join(map(lambda transaction: transaction.display_name(), transactions))
-    update.callback_query.edit_message_text(
-        text=trans.t(f'{ACTION_IDENTIFIER}.success', transactions=transaction_info),
-        reply_markup=InlineKeyboardMarkup([[main_menu.link_button()]]),
-        parse_mode='Markdown'
-    )
+    edit(query, trans.t(f'{ACTION_IDENTIFIER}.success'), InlineKeyboardMarkup([[main_menu.link_button()]]))
