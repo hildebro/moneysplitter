@@ -12,15 +12,15 @@ from ..helper import emojis
 from ..i18n import trans
 
 
-class ButtonConfig(Enum):
+class BackButtonConfig(Enum):
     MAIN_MENU = 0
     SETTINGS = 1
     BOTH = 2
 
     def get_buttons(self):
-        if self == ButtonConfig.MAIN_MENU:
+        if self == BackButtonConfig.MAIN_MENU:
             return [[main_menu.link_button()]]
-        elif self == ButtonConfig.SETTINGS:
+        elif self == BackButtonConfig.SETTINGS:
             return [[settings.link_button()]]
         else:
             return [[main_menu.link_button(), settings.link_button()]]
@@ -34,7 +34,7 @@ class EntitySelectConversationBuilder:
                  select_entity_func: Callable[[Session, int, int], bool],
                  abort_func: Callable[[Session, int], None],
                  continue_handler_callback: Callable[[Session, int], None],
-                 button_config: ButtonConfig,
+                 button_config: BackButtonConfig,
                  entry_func: Callable[[Session, int], None] = None,
                  post_continue_state: List[Handler] = None,
                  message_callback: Callable[[Session, int, str], None] = None,

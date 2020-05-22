@@ -5,7 +5,7 @@ from . import main_menu
 from ..db import session_wrapper
 from ..db.queries import purchase_queries, item_queries
 from ..helper import entity_select_conversation_builder
-from ..helper.entity_select_conversation_builder import EntitySelectConversationBuilder, ButtonConfig
+from ..helper.entity_select_conversation_builder import EntitySelectConversationBuilder, BackButtonConfig
 from ..helper.function_wrappers import reply, edit
 from ..i18n import trans
 
@@ -22,7 +22,7 @@ def conversation_handler():
         purchase_queries.mark_item,
         purchase_queries.delete_in_progress,
         ask_price,
-        ButtonConfig.MAIN_MENU,
+        BackButtonConfig.MAIN_MENU,
         purchase_queries.create,
         [MessageHandler(Filters.text, check_price)],
         item_queries.create_for_purchase,

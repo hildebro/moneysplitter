@@ -124,11 +124,17 @@ transaction:
       The outstanding purchases have been written off. The _Balances_ of all affected users have been updated.
   list:
     link: 'Balances'
-    no_transactions: 'Your balance is clean.'
+    no_transactions: 'Your balances are clean!'
   display:
     default: '%{giver} owes %{receiver} %{amount}'
     giver: 'You owe %{receiver} %{amount}'
     receiver: '%{giver} owes you %{amount}'
+  payoff:
+    link: 'Resolve debts'
+    text: 'Please select which debts have been resolved. Click _Continue_ to commit your selection.'
+    already_selected: 'Someone else is resolving debts right now and marked that button already!'
+    success: 'Debts have been resolved successfully!'
+    no_entities: 'There are no unresolved debts.'
 
 item:
   add:

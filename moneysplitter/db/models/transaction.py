@@ -16,12 +16,16 @@ class Transaction(base):
     receiver_id = Column(Integer, ForeignKey('users.id', ondelete='set null'))
     receiver = relationship('User', foreign_keys=receiver_id)
     amount = Column(Integer)
+    payoff_user_id = Column(Integer, ForeignKey('users.id', ondelete='set null'))
 
     def __init__(self, checklist_id, giver_id, receiver_id, amount):
         self.checklist_id = checklist_id
         self.giver_id = giver_id
         self.receiver_id = receiver_id
         self.amount = amount
+
+    def identifier(self):
+        return self.id
 
     def display_name(self, user_id=None):
         if user_id is None:
