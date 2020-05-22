@@ -3,9 +3,9 @@ import operator
 from telegram import InlineKeyboardMarkup
 
 from . import main_menu
-from ..db import session_wrapper, purchase_queries, checklist_queries, user_queries
+from ..db import session_wrapper, purchase_queries, user_queries
 from ..db.models import Transaction
-from ..db.queries import transaction_queries
+from ..db.queries import transaction_queries, participant_queries
 from ..helper import emojis
 from ..helper.function_wrappers import button, edit
 from ..i18n import trans
@@ -48,7 +48,7 @@ def execute_callback(session, update, context):
             user_price_mapping[purchase.buyer.id] += purchase.price
 
     # add entry with price of 0 for everyone who hasn't purchased anything
-    participants = checklist_queries.find_participants(session, checklist.id)
+    participants = participant_queries.find(session, checklist.id)
     for participant in participants:
         if participant.user_id not in user_price_mapping:
             user_price_mapping[participant.user_id] = 0

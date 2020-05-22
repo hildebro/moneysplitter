@@ -1,7 +1,7 @@
 from telegram import InlineKeyboardMarkup, InputTextMessageContent, InlineQueryResultArticle
 
 from ..db import session_wrapper
-from ..db.queries import checklist_queries, user_queries
+from ..db.queries import checklist_queries, user_queries, participant_queries
 from ..helper import emojis
 from ..helper.function_wrappers import button
 from ..i18n import trans
@@ -39,9 +39,9 @@ def answer_callback(session, update, context):
         return
 
     checklist_id = update.callback_query.data.split('_')[-1]
-    if checklist_queries.is_participant(session, checklist_id, user_id):
+    if participant_queries.exists(session, checklist_id, user_id):
         update.callback_query.answer(trans.t('inline.accept.already_joined'))
         return
 
-    checklist_queries.join(session, checklist_id, user_id)
+    participant_queries.create(session, checklist_id, user_id)
     update.callback_query.answer(trans.t('inline.accept.success'))

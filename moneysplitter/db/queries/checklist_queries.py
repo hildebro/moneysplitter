@@ -38,23 +38,6 @@ def find_by_creator(session, user_id):
     return checklists
 
 
-def find_participants(session, checklist_id):
-    return session.query(Participant).filter(Participant.checklist_id == checklist_id).all()
-
-
-def is_participant(session, checklist_id, user_id):
-    checklist = session \
-        .query(Participant) \
-        .filter(Participant.checklist_id == checklist_id, Participant.user_id == user_id) \
-        .scalar()
-    return checklist is not None
-
-
 def delete(session, checklist_id):
     session.query(Checklist).filter(Checklist.id == checklist_id).delete()
-    session.commit()
-
-
-def join(session, checklist_id, user_id):
-    session.add(Participant(checklist_id, user_id))
     session.commit()

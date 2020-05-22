@@ -2,6 +2,7 @@ from telegram import InlineKeyboardMarkup
 
 from . import main_menu, settings
 from ..db import session_wrapper, checklist_queries, user_queries
+from ..db.queries import participant_queries
 from ..helper import emojis
 from ..helper.function_wrappers import button, get_entity_id
 from ..i18n import trans
@@ -38,7 +39,7 @@ def select_callback(session, update, context):
     user_id = query.from_user.id
     checklist_id = get_entity_id(query)
 
-    if not checklist_queries.is_participant(session, checklist_id, user_id):
+    if not participant_queries.exists(session, checklist_id, user_id):
         text = trans.t('checklist.picker.not_participant')
         markup = InlineKeyboardMarkup([[button('checklist-picker', trans.t('checklist.picker.link'), emojis.BACK)]])
     else:

@@ -2,8 +2,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import joinedload
 
 from . import user_queries
-from ..models import Item
-from ..models import Purchase
+from ..models import Item, Purchase
 
 
 def delete_in_progress(session, user_id):

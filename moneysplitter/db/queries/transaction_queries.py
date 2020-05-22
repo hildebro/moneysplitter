@@ -104,6 +104,7 @@ def commit_payoff(session, user_id):
 
     for transaction in transactions:
         transaction.amount = 0
+        transaction.payoff_user_id = None
 
     session.commit()
     return True

@@ -59,7 +59,7 @@ checklist:
     init: |
       You are about to delete this checklist:
 
-      _%{name}_.
+      _%{name}_
 
       Any items, purchases and transactions related to this checklist will be deleted. This action CANNOT BE UNDONE.
 
