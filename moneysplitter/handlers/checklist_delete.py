@@ -28,6 +28,7 @@ def initialize(session, update, context):
         query.answer(trans.t('checklist.delete.permission_denied'))
         return ConversationHandler.END
 
+    user_queries.set_deleting_checklist(session, user_id, selected_checklist.id)
     text = trans.t('checklist.delete.init', name=selected_checklist.name)
     markup = InlineKeyboardMarkup([[button('cancel', trans.t('checklist.settings.link'), emojis.BACK)]])
     query.edit_message_text(text=text, reply_markup=markup, parse_mode='Markdown')
@@ -40,15 +41,15 @@ def execute(session, update, context):
     message = update.message
     user_input = message.text
     user_id = message.from_user.id
-    selected_checklist = user_queries.get_selected_checklist(session, user_id)
+    deleting_checklist = user_queries.get_deleting_checklist(session, user_id)
 
-    if user_input != selected_checklist.name:
+    if user_input != deleting_checklist.name:
         text = trans.t('checklist.delete.not_matching')
         markup = InlineKeyboardMarkup([[button('cancel', trans.t('checklist.settings.link'), emojis.BACK)]])
         message.reply_text(text, reply_markup=markup, parse_mode='Markdown')
         return BASE_STATE
 
-    checklist_queries.delete(session, selected_checklist.id)
+    checklist_queries.delete(session, deleting_checklist.id)
 
     text = trans.t('checklist.delete.done')
     markup = InlineKeyboardMarkup([[button('checklist-picker', trans.t('checklist.picker.link'), emojis.BACK)]])

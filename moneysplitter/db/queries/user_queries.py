@@ -43,3 +43,16 @@ def select_checklist(session, checklist_id, user_id):
         .filter(UserSettings.user_id == user_id) \
         .update({'checklist_id': checklist_id})
     session.commit()
+
+
+def set_deleting_checklist(session, user_id, checklist_id):
+    session \
+        .query(UserSettings) \
+        .filter(UserSettings.user_id == user_id) \
+        .update({'deleting_checklist_id': checklist_id})
+    session.commit()
+
+
+def get_deleting_checklist(session, user_id):
+    user_settings = session.query(UserSettings).filter(UserSettings.user_id == user_id).one()
+    return user_settings.deleting_checklist
