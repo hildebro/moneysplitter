@@ -1,10 +1,15 @@
-from telegram import InlineKeyboardMarkup, InputTextMessageContent, InlineQueryResultArticle
+from telegram import InlineKeyboardMarkup, InputTextMessageContent, InlineQueryResultArticle, InlineKeyboardButton
 
 from ..db import session_wrapper
 from ..db.queries import checklist_queries, user_queries, participant_queries
 from ..helper import emojis
 from ..helper.function_wrappers import button
 from ..i18n import trans
+
+
+def invite_button(checklist_name):
+    return InlineKeyboardButton(emojis.PINCH + trans.t('inline.invite') + emojis.PINCH,
+                                switch_inline_query=checklist_name)
 
 
 @session_wrapper
@@ -20,12 +25,9 @@ def query_callback(session, update, context):
             InlineQueryResultArticle(id=checklist.id, title=checklist.name,
                                      input_message_content=InputTextMessageContent(
                                          trans.t('inline.text', name=checklist.name)),
-                                     reply_markup=InlineKeyboardMarkup([
-                                         [button(f'join_checklist_{checklist.id}',
-                                                 trans.t('inline.join'),
-                                                 emojis.RUNNER)
-                                          ]
-                                     ]))
+                                     reply_markup=InlineKeyboardMarkup(
+                                         [[button(f'join_checklist_{checklist.id}', trans.t('inline.join'))]])
+                                     )
         )
     update.inline_query.answer(inline_options)
 

@@ -23,6 +23,7 @@ inline:
     You are invited to join the checklist %{name}. Press the button under this message to confirm.
     If you don't know what this means, check out @PurchaseSplitterBot for more information.
   join: 'Join checklist'
+  invite: 'Invite users'
   accept:
     not_registered: 'You cannot join checklists before starting the bot.'
     already_joined: 'You already joined this checklist!'
