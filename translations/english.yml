@@ -158,6 +158,21 @@ instructions:
   overview: 'This is the help section. Please choose a topic:'
   back: 'Previous topic'
   forward: 'Next topic'
+  basics:
+    link: Overview
+    text: |
+      *Overview*:
+
+      Purchase Splitter Bot can help you manage group purchases. The intended workflow is as follows:
+
+      - Create a checklist and invite people
+      - Add items which you want to buy and use as group
+      - Have someone in the group buy (some of) the desired items
+      - If the checklist is meant to be temporary (i.e. buying items like food and gas for a road trip), write off the purchases after the time is up
+      - If the checklist is meant to be permanent (i.e. buying items for a common household), write off the purchases in regular intervals
+      - Track/pay off debt between users
+
+      For detailed information about the individual steps, refer to the corresponding topic.
   checklist:
     link: Checklists
     text: |

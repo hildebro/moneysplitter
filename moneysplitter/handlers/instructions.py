@@ -9,6 +9,7 @@ from ..i18n import trans
 def callback(update, context):
     text = trans.t('instructions.overview')
     markup = InlineKeyboardMarkup([
+        [button('instructions.basics', trans.t('instructions.basics.link'))],
         [button('instructions.checklist', trans.t('instructions.checklist.link'))],
         [button('instructions.item', trans.t('instructions.item.link'))],
         [button('instructions.purchase', trans.t('instructions.purchase.link'))],
@@ -24,7 +25,7 @@ def render_instructions(query, text, previous_instructions, next_instructions):
         [
             [main_menu.link_button(), button('instructions', trans.t('instructions.link'), emojis.BACK)],
             [
-                button(previous_instructions, trans.t('instructions.back'), emojis.BACK),
+                button(previous_instructions, trans.t('instructions.back'), emojis.PREVIOUS),
                 button(next_instructions, trans.t('instructions.forward'), emojis.FORWARD)
             ]
         ]
@@ -32,8 +33,13 @@ def render_instructions(query, text, previous_instructions, next_instructions):
     edit(query, trans.t(text), markup)
 
 
+def basics(update, context):
+    render_instructions(update.callback_query, 'instructions.basics.text', 'instructions', 'instructions.checklist')
+
+
 def checklist(update, context):
-    render_instructions(update.callback_query, 'instructions.checklist.text', 'instructions', 'instructions.item')
+    render_instructions(update.callback_query, 'instructions.checklist.text', 'instructions.basics',
+                        'instructions.item')
 
 
 def item(update, context):

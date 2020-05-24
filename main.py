@@ -56,6 +56,7 @@ def main():
     # link to instructions
     dp.add_handler(CallbackQueryHandler(instructions.callback, pattern='^instructions$'), group=1)
     # instruction topics
+    dp.add_handler(CallbackQueryHandler(instructions.basics, pattern='^instructions.basics$'), group=1)
     dp.add_handler(CallbackQueryHandler(instructions.checklist, pattern='^instructions.checklist$'), group=1)
     dp.add_handler(CallbackQueryHandler(instructions.item, pattern='^instructions.item$'), group=1)
     dp.add_handler(CallbackQueryHandler(instructions.purchase, pattern='^instructions.purchase$'), group=1)
