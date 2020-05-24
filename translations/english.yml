@@ -163,9 +163,11 @@ instructions:
   basics:
     link: Overview
     text: |
-      *Overview*:
+      Purchase Splitter Bot can help you manage group purchases.
 
-      Purchase Splitter Bot can help you manage group purchases. The intended workflow is as follows:
+      *ATTENTION*: At the moment, there is neither logging nor notifications for what the participants of a checklist are doing. This means the bot can be easily exploited. You should NOT use this bot for serious matters. It is meant as a convenience tool for people that trust each other.
+
+      The intended workflow is as follows:
 
       - Create a checklist and invite people
       - Add items which you want to buy and use as group
