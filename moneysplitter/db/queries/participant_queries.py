@@ -9,6 +9,18 @@ def create(session, checklist_id, user_id):
     session.commit()
 
 
+def leave(session, user_id):
+    checklist = user_queries.get_selected_checklist(session, user_id)
+    if checklist.creator_id == user_id:
+        return False
+
+    session.query(Participant).filter(Participant.user_id == user_id, Participant.checklist == checklist).delete()
+    user_queries.select_checklist(session, None, user_id)
+    session.commit()
+
+    return True
+
+
 def find(session, checklist_id):
     return session.query(Participant).filter(Participant.checklist_id == checklist_id).all()
 

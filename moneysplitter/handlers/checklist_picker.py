@@ -24,7 +24,7 @@ def get_menu_data(session, user_id):
     keyboard = []
     for checklist in checklists:
         label = f'{checklist.name} ({checklist.creator.username})'
-        if selected_checklist.id == checklist.id:
+        if selected_checklist is not None and selected_checklist.id == checklist.id:
             label += '*'
         keyboard.append([button(f'select-checklist_{checklist.id}', label)])
 

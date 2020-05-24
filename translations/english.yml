@@ -13,7 +13,7 @@ conversation:
 
 fallback:
   callback_query: |
-    The button you tried to press is no longer valid. This might happen from time to time when I update the bot. If all is well, you should be able to go back to the main menu and retry the action you just attempted to execute.
+    The button you tried to press is not valid. This might happen from time to time when I update the bot. If all is well, you should be able to go back to the main menu and retry the action you just attempted to execute.
 
     If you see this message on a consistent basis, it's probably a bug. If you can't contact me to let me know about it, you will just have to wait for me to notice the bug on my own.
   command: 'I cannot process the command you gave me. Typing the _slash_ character will show you every valid command.'
@@ -83,6 +83,14 @@ participant:
     permission_denied: 'You are not allowed to do this!'
     success: 'Successfully removed selected user(s).'
     no_entities: 'There are no participants that you can kick.'
+  leave:
+    link: 'Leave checklist'
+    text: |
+      You are about to leave this checklist. Though it is possible to rejoin checklists, you may lose data that cannot be restored.
+
+      Are you sure you want to leave?
+    not_allowed: 'You cannot leave your own checklist!'
+    success: 'You left the checklist.'
 
 purchase:
   create:

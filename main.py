@@ -13,7 +13,7 @@ from moneysplitter.handlers import (
     inline_query,
     main_menu, settings, checklist_picker, start, checklist_create, purchase_create, purchase_list,
     transaction_create, checklist_delete, participant_delete, item_delete, item_creation, user_refresh, item_refresh,
-    fallback, transaction_list, transaction_payoff, instructions
+    fallback, transaction_list, transaction_payoff, instructions, participant_leave
 )
 
 
@@ -75,6 +75,10 @@ def main():
     dp.add_handler(item_delete.conversation_handler(), group=1)
     # kick participants
     dp.add_handler(participant_delete.conversation_handler(), group=1)
+    # leave checklist
+    dp.add_handler(CallbackQueryHandler(participant_leave.info_callback, pattern='^participant.leave.info$'), group=1)
+    dp.add_handler(CallbackQueryHandler(participant_leave.execute_callback, pattern='^participant.leave.execute$'),
+                   group=1)
     # delete checklist
     dp.add_handler(checklist_delete.conversation_handler(), group=1)
 
