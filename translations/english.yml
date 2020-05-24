@@ -41,9 +41,11 @@ checklist:
   picker:
     link: 'Checklist picker'
     text: |
-      This is the checklist selection menu. All checklist that you participate in will be listed here. Please select one to interact with it.
+      This is the checklist selection menu. All checklist that you're part of are listed here. Please select one to interact with it.
 
-      If you don't see any checklists to choose from, you may ask other telegram users to send you an invite link. Alternatively, you may also create your own checklist right here.
+      The checklist creators are denoted in brackets behind the checklist names. The currently selected checklist is marked with an asterisk.
+
+      If someone asked you to be part of their checklist, they need to send you an invite link.
     not_participant: |
       Looks like you aren't actually a participant of the chosen checklist. You might have been kicked out just now.
       If this problem persists, please contact support.
