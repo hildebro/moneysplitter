@@ -1,9 +1,7 @@
 start:
   text: |
     Thank you for using Purchase Splitter Bot! If you came here, because you were invited to someone else's checklist, you can now head back to their invite message and click the button.
-    Otherwise, you can start using the bot by creating your own checklist.
-
-    _Note_: You should interact with this bot by sending it direct messages. The bot might not work as intended, if you invite it into a group chat with multiple users.
+    Otherwise, you can start using the bot by creating your own checklist. Type /help for more information.
   already_started: 'You already started the bot!'
 
 conversation:
@@ -156,6 +154,76 @@ item:
     success: 'Item(s) deleted successfully!'
     no_entities: 'There are no items in this checklist.'
   refresh:
-    link: 'Refresh item list'
+    link: 'Refresh items'
     success: 'Items refreshed!'
     fail: 'Nothing new!'
+
+instructions:
+  link: Help
+  overview: 'This is the help section. Please choose a topic:'
+  back: 'Previous topic'
+  forward: 'Next topic'
+  checklist:
+    link: Checklists
+    text: |
+      *Checklists*:
+
+      Checklists are the core of Purchase Splitter Bot. Anything you do is in relation to a checklist.
+
+      In order to switch the active checklist or create a new one, go to _Checklist settings > Checklist picker_
+      You may create as many checklist as you want as long as they have unique names.
+
+      In order to add other telegram users to your checklist, go to _Checklist settings > Invite users_
+  item:
+    link: Items
+    text: |
+      *Items*:
+
+      Every checklist holds a list of items.
+
+      New items can be added by sending a message to the bot. In order to add multiple items in a single message, use newlines to separate them.
+
+      Items can be deleted by going to _Checklist settings > Drop items_
+
+      The items of a checklist are displayed in the main menu. The item list is refreshed whenever you enter the main menu, but you may also press _Refresh items_ to do it explicitly.
+
+      The sole purpose of an item in a checklist is to be purchased.
+  purchase:
+    link: Purchases
+    text: |
+      *Purchases*:
+
+      A purchase consists of two steps:
+      1) _Select items to purchase_
+      You may add new items to the checklist during the selection process. If the purchase is aborted, any items you added will still be present in the list.
+      Multiple users may create a purchase at the same time. The bot ensures that items aren't purchased redudantly.
+
+      2) _Set price of purchased items_
+      In order to set the price, you simply send a message containing the appropriate number. You may define cents by using either a comma or a dot to seprate them.
+      Currencies are not implemented in any way.
+
+      After setting a price, the purchase is finalized. The button _Unresolved purchases_ let's you inspect details of any purchase that hasn't been written off yet.
+  write_off:
+    link: Write-Off
+    text: |
+      *Write-Off*:
+
+      Purchases that are listed under _Unresolved purchases_ can be written off. The process of _writing off_ involves the following steps:
+
+      - Clear the list of unresolved purchases
+      - Calculate how much money the users of the checklist owe each other
+      - Populate the _Balances_ menu to reflect the debt between users
+
+      The debt between users doesn't need to be cleared before writing off again. The existing amounts will be updated accordingly.
+
+      Write-offs are permanent. ALL unresolved purchases will be removed, so handle this action with care.
+  balance:
+    link: Balances
+    text: |
+      *Balances*:
+
+      _Balances_ show you any debt that you are involved with; both the money you owe and being owed.
+
+      Note that you cannot send money via the bot. You need to be in contact with the other users to figure out how to resolve your debt.
+
+      After money has been transferred, you should document it by using _Resolve debts_ in the balances menu.

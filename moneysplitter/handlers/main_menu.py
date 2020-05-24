@@ -42,7 +42,10 @@ def checklist_menu_data(session, user_id):
         [button('purchase-list', trans.t('purchase.log.link'), emojis.BILL)],
         [button('transaction.list', trans.t('transaction.list.link'), emojis.CREDIT)],
         [button('item-refresh', trans.t('item.refresh.link'), emojis.REFRESH)],
-        [button('checklist-settings', trans.t('checklist.settings.link'), emojis.GEAR)],
+        [
+            button('instructions', trans.t('instructions.link'), emojis.HELP),
+            button('checklist-settings', trans.t('checklist.settings.link'), emojis.GEAR)
+        ],
     ])
 
     return text, markup
