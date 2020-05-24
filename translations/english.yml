@@ -108,15 +108,9 @@ transaction:
   create:
     link: 'Write off purchases'
     text: |
-      This checklist has %{count} outstanding purchase(s). When writing off purchases, I will:
+      You are about to write off %{count} outstanding purchase(s). This cannot be undone!
 
-      - Clear list of outstanding purchases
-      - Check how much money was paid for these cleared purchases by each participant
-      - Compare the amounts and calculate who owes money to who
-
-      Every participant can check their balances via the corresponding button in the main menu.
-
-      You cannot undo the write-off! If you really want to commit this action, click _Write off purchases_ again.
+      If you're sure about this, click _Write off purchases_ again.
     no_purchases: No outstanding purchases!
     success: |
       The outstanding purchases have been written off. The _Balances_ of all affected users have been updated.
