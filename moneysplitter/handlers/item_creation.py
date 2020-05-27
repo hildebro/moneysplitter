@@ -22,6 +22,5 @@ def callback(session, update, context):
     item_names = update.message.text
     item_queries.create(session, item_names, checklist.id)
 
-    text = trans.t('item.add.success', name=checklist.name, items=item_names)
-    markup = InlineKeyboardMarkup([[main_menu.link_button()]])
+    text, markup = main_menu.checklist_menu_data(session, user_id)
     update.message.reply_text(text, reply_markup=markup, parse_mode='Markdown')

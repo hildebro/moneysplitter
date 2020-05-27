@@ -137,15 +137,6 @@ transaction:
     no_entities: 'There are no unresolved debts.'
 
 item:
-  add:
-    no_checklist: 'Sorry, I cannot handle messages while you are browsing the checklist overview. You need to enter a checklist menu in order to add items to it.'
-    success: |
-      Successfully added the following items to checklist _%{name}_:
-
-      %{items}
-  undo:
-    unavailable: 'There seem to be no items available to undo. Note that you may only undo what was added in your most recent message.'
-    success: 'Successfully undid previously added items.'
   delete:
     link: 'Drop items'
     text: |
