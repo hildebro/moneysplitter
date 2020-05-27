@@ -4,7 +4,7 @@ from telegram.ext import ConversationHandler
 from . import main_menu
 from ..db import session_wrapper
 from ..db.queries import transaction_queries
-from ..helper.entity_select_conversation_builder import BackButtonConfig, EntitySelectConversationBuilder
+from ..helper.entity_select_conversation_builder import EntitySelectConversationBuilder, AbortTarget
 from ..helper.function_wrappers import edit
 from ..i18n import trans
 
@@ -20,8 +20,8 @@ def conversation_handler():
         is_transaction_selected,
         transaction_queries.select_for_payoff,
         transaction_queries.abort_payoff,
-        commit_payoff,
-        BackButtonConfig.MAIN_MENU
+        AbortTarget.MAIN_MENU,
+        commit_payoff
     )
     return builder.conversation_handler()
 

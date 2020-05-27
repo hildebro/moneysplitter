@@ -4,7 +4,7 @@ from telegram.ext import ConversationHandler
 from . import main_menu, settings
 from ..db import session_wrapper
 from ..db.queries import user_queries, participant_queries
-from ..helper.entity_select_conversation_builder import EntitySelectConversationBuilder, BackButtonConfig
+from ..helper.entity_select_conversation_builder import EntitySelectConversationBuilder, AbortTarget
 from ..helper.function_wrappers import edit
 from ..i18n import trans
 
@@ -20,8 +20,8 @@ def conversation_handler():
         is_participant_selected,
         participant_queries.mark_for_removal,
         participant_queries.abort_removal,
-        commit_removal,
-        BackButtonConfig.BOTH
+        AbortTarget.SETTINGS,
+        commit_removal
     )
     return builder.conversation_handler()
 

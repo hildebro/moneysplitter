@@ -7,9 +7,8 @@ start:
 conversation:
   continue: 'Continue'
   no_selection: 'Please select something!'
-  undo: 'Undo'
-  cancel: 'Cancel'
-  canceled: 'The current action has been canceled.'
+  message_not_allowed: 'The current action doesn''t allow you to send messages. Please follow the instructions.'
+  already_selected: 'Someone else already selected that!'
 
 fallback:
   callback_query: |
@@ -79,7 +78,6 @@ participant:
       You are now removing users from  "_%{name}_".
 
       Click on a username to _(de)select_ them for removal. Once you are done, click _Continue_ to remove all selected users.
-    already_selected: 'Someone else is removing users right now and marked this user already!'
     permission_denied: 'You are not allowed to do this!'
     success: 'Successfully removed selected user(s).'
     no_entities: 'There are no participants that you can kick.'
@@ -101,7 +99,6 @@ purchase:
 
       Click on an item to _(de)select it for purchase_. You may still add new items to the checklist while making a purchase.
       Once you're done with your selection, click _Continue_ to set a price.
-    already_selected: 'Someone else is purchasing right now and marked this item already!'
     price:
       ask: 'How much did you spent? Please send me a message containing that amount.'
       invalid: 'Please enter a valid amount! It may include a comma or a period, but no currency.'
@@ -135,7 +132,6 @@ transaction:
   payoff:
     link: 'Resolve debts'
     text: 'Please select which debts have been resolved. Click _Continue_ to commit your selection.'
-    already_selected: 'Someone else is resolving debts right now and marked that button already!'
     success: 'Debts have been resolved successfully!'
     no_entities: 'There are no unresolved debts.'
 
@@ -155,7 +151,6 @@ item:
       You are now removing items from checklist _%{name}_.
 
       Click on items to _(de)select_ them for removal. When you are done, click _Continue_ to remove all selected items.
-    already_selected: 'Someone else is deleting items right now and marked this item already!'
     success: 'Item(s) deleted successfully!'
     no_entities: 'There are no items in this checklist.'
   refresh:

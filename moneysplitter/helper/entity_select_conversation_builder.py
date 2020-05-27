@@ -12,18 +12,9 @@ from ..helper import emojis
 from ..i18n import trans
 
 
-class BackButtonConfig(Enum):
+class AbortTarget(Enum):
     MAIN_MENU = 0
     SETTINGS = 1
-    BOTH = 2
-
-    def get_buttons(self):
-        if self == BackButtonConfig.MAIN_MENU:
-            return [[main_menu.link_button()]]
-        elif self == BackButtonConfig.SETTINGS:
-            return [[settings.link_button()]]
-        else:
-            return [[main_menu.link_button(), settings.link_button()]]
 
 
 class EntitySelectConversationBuilder:
@@ -33,8 +24,8 @@ class EntitySelectConversationBuilder:
                  is_selected_func: Callable[[Any], bool],
                  select_entity_func: Callable[[Session, int, int], bool],
                  abort_func: Callable[[Session, int], None],
+                 abort_target: AbortTarget,
                  continue_handler_callback: Callable[[Session, int], None],
-                 button_config: BackButtonConfig,
                  entry_func: Callable[[Session, int], None] = None,
                  post_continue_state: List[Handler] = None,
                  message_callback: Callable[[Session, int, str], None] = None,
@@ -44,8 +35,8 @@ class EntitySelectConversationBuilder:
         self.is_selected_func = is_selected_func
         self.select_entity_func = select_entity_func
         self.abort_func = abort_func
+        self.abort_target = abort_target
         self.continue_handler_callback = continue_handler_callback
-        self.button_config = button_config
         self.entry_func = entry_func
         self.post_continue_state = post_continue_state
         self.message_callback = message_callback
@@ -92,7 +83,7 @@ class EntitySelectConversationBuilder:
             if self.message_callback is not None:
                 self.message_callback(session, user_id, message.text)
             else:
-                reply(message, 'I DONT UNDERSTAND')
+                reply(message, trans.t('conversation.message_not_allowed'))
 
             text = self._message_text(session, user_id)
             markup = self._entity_select_markup(session, user_id)
@@ -106,8 +97,10 @@ class EntitySelectConversationBuilder:
             query = update.callback_query
             user_id = query.from_user.id
 
-            # todo check for success
-            self.select_entity_func(session, user_id, get_entity_id(query))
+            success = self.select_entity_func(session, user_id, get_entity_id(query))
+            if not success:
+                query.answer(trans.t('conversation.already_selected'))
+                return 0
 
             text = self._message_text(session, user_id)
             markup = self._entity_select_markup(session, user_id)
@@ -123,11 +116,17 @@ class EntitySelectConversationBuilder:
         @session_wrapper
         def abort_callback(session, update, context):
             query = update.callback_query
+            user_id = query.from_user.id
 
-            self.abort_func(session, query.from_user.id)
+            self.abort_func(session, user_id)
 
-            text = trans.t('conversation.canceled')
-            markup = InlineKeyboardMarkup(self.button_config.get_buttons())
+            if self.abort_target == AbortTarget.MAIN_MENU:
+                text, markup = main_menu.checklist_menu_data(session, user_id)
+            elif self.abort_target == AbortTarget.SETTINGS:
+                text, markup = settings.menu_data(session, user_id)
+            else:
+                raise Exception(f'Unhandled abort target: {self.abort_target}')
+
             edit(query, text, markup)
             return ConversationHandler.END
 
@@ -143,7 +142,7 @@ class EntitySelectConversationBuilder:
             )])
 
         keyboard.append([
-            abort_button(self.action_identifier),
+            abort_button(self.action_identifier, self.abort_target),
             button(f'{self.action_identifier}-continue', trans.t('conversation.continue'), emojis.FORWARD)
         ])
 
@@ -166,5 +165,12 @@ class EntitySelectConversationBuilder:
         return f'^{self.action_identifier}-abort$'
 
 
-def abort_button(action_identifier):
-    return button(f'{action_identifier}-abort', trans.t('conversation.cancel'), emojis.BACK)
+def abort_button(action_identifier, abort_target):
+    if abort_target == AbortTarget.MAIN_MENU:
+        label = 'checklist.menu.link'
+    elif abort_target == AbortTarget.SETTINGS:
+        label = 'checklist.settings.link'
+    else:
+        raise Exception(f'Unhandled abort target: {abort_target}')
+
+    return button(f'{action_identifier}-abort', trans.t(label), emojis.BACK)

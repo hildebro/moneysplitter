@@ -4,8 +4,7 @@ from telegram.ext import ConversationHandler, MessageHandler, Filters
 from . import main_menu
 from ..db import session_wrapper
 from ..db.queries import purchase_queries, item_queries
-from ..helper import entity_select_conversation_builder
-from ..helper.entity_select_conversation_builder import EntitySelectConversationBuilder, BackButtonConfig
+from ..helper.entity_select_conversation_builder import EntitySelectConversationBuilder, AbortTarget, abort_button
 from ..helper.function_wrappers import reply, edit
 from ..i18n import trans
 
@@ -21,8 +20,8 @@ def conversation_handler():
         is_item_selected,
         purchase_queries.mark_item,
         purchase_queries.delete_in_progress,
+        AbortTarget.MAIN_MENU,
         ask_price,
-        BackButtonConfig.MAIN_MENU,
         purchase_queries.create,
         [MessageHandler(Filters.text, check_price)],
         item_queries.create_for_purchase,
@@ -43,7 +42,7 @@ def ask_price(session, update, context):
         query.answer(trans.t('conversation.no_selection'))
         return ITEM_SELECT_STATE
 
-    markup = InlineKeyboardMarkup([[entity_select_conversation_builder.abort_button(ACTION_IDENTIFIER)]])
+    markup = InlineKeyboardMarkup([[abort_button(ACTION_IDENTIFIER, AbortTarget.MAIN_MENU)]])
     edit(query, trans.t(f'{ACTION_IDENTIFIER}.price.ask'), markup)
     return PRICE_SET_STATE
 
@@ -56,7 +55,7 @@ def check_price(session, update, context):
         price_text = message.text.replace(',', '.')
         price = float(price_text)
     except ValueError:
-        markup = InlineKeyboardMarkup([[entity_select_conversation_builder.abort_button(ACTION_IDENTIFIER)]])
+        markup = InlineKeyboardMarkup([[abort_button(ACTION_IDENTIFIER, AbortTarget.MAIN_MENU)]])
         reply(message, trans.t(f'{ACTION_IDENTIFIER}.price.invalid'), markup)
         return PRICE_SET_STATE
 
