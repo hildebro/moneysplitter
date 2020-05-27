@@ -1,5 +1,6 @@
 from telegram import InlineKeyboardMarkup, InputTextMessageContent, InlineQueryResultArticle, InlineKeyboardButton
 
+from . import main_menu
 from ..db import session_wrapper
 from ..db.queries import checklist_queries, user_queries, participant_queries
 from ..helper import emojis
@@ -35,15 +36,27 @@ def query_callback(session, update, context):
 # noinspection PyUnusedLocal
 @session_wrapper
 def answer_callback(session, update, context):
-    user_id = update.callback_query.from_user.id
+    query = update.callback_query
+    user_id = query.from_user.id
     if not user_queries.exists(session, user_id):
-        update.callback_query.answer(trans.t('inline.accept.not_registered'))
+        query.answer(trans.t('inline.accept.not_registered'))
         return
 
-    checklist_id = update.callback_query.data.split('_')[-1]
+    checklist_id = query.data.split('_')[-1]
     if participant_queries.exists(session, checklist_id, user_id):
-        update.callback_query.answer(trans.t('inline.accept.already_joined'))
+        query.answer(trans.t('inline.accept.already_joined'))
         return
 
     participant_queries.create(session, checklist_id, user_id)
-    update.callback_query.answer(trans.t('inline.accept.success'))
+    if participant_queries.count(session, user_id) == 1:
+        user_queries.select_checklist(session, checklist_id, user_id)
+        text = trans.t('inline.accept.new_user')
+        markup = InlineKeyboardMarkup([[button('checklist-menu', trans.t('checklist.menu.link'), emojis.FORWARD)]])
+    else:
+        text = trans.t('inline.accept.old_user')
+        markup = InlineKeyboardMarkup([[
+            main_menu.link_button(),
+            button('checklist-picker', trans.t('checklist.picker.link'), emojis.FORWARD)
+        ]])
+
+    query.bot.send_message(user_id, text, reply_markup=markup, parse_mode='Markdown')

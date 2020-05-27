@@ -25,6 +25,13 @@ def find(session, checklist_id):
     return session.query(Participant).filter(Participant.checklist_id == checklist_id).all()
 
 
+def count(session, user_id):
+    return session \
+        .query(Participant) \
+        .filter(Participant.user_id == user_id) \
+        .count()
+
+
 def exists(session, checklist_id, user_id):
     checklist = session \
         .query(Participant) \

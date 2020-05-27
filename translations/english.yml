@@ -19,14 +19,15 @@ fallback:
 
 inline:
   text: |
-    You are invited to join the checklist %{name}. Press the button under this message to confirm.
+    You are invited to join the checklist *%{name}*. Press the button under this message to confirm.
     If you don't know what this means, check out @PurchaseSplitterBot for more information.
   join: 'Join checklist'
   invite: 'Invite users'
   accept:
     not_registered: 'You cannot join checklists before starting the bot.'
     already_joined: 'You already joined this checklist!'
-    success: 'You successfully joined this checklist!'
+    new_user: 'You just joined your first checklist! You may now continue to the main menu.'
+    old_user: 'You successfully joined the checklist. Go to *Checklist picker*, if you would like to switch to your new checklist.'
 
 checklist:
   menu:
