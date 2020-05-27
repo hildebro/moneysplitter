@@ -41,4 +41,4 @@ class Transaction(base):
                        amount=self.get_amount())
 
     def get_amount(self):
-        return self.amount / 100.0
+        return "{:.2f}".format(self.amount / 100.0)

@@ -23,7 +23,7 @@ class Purchase(base):
         self.checklist_id = checklist_id
 
     def get_price(self):
-        return self.price / 100.0
+        return "{:.2f}".format(self.price / 100.0)
 
     def set_price(self, price):
         self.price = price * 100.0
