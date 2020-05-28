@@ -4,6 +4,7 @@ from telegram.ext import ConversationHandler, MessageHandler, Filters
 from . import main_menu
 from ..db import session_wrapper
 from ..db.queries import purchase_queries, item_queries
+from ..helper.calculator import Calculator
 from ..helper.entity_select_conversation_builder import EntitySelectConversationBuilder, AbortTarget, abort_button
 from ..helper.function_wrappers import reply, edit
 from ..i18n import trans
@@ -52,9 +53,10 @@ def check_price(session, update, context):
     message = update.message
     user_id = message.from_user.id
     try:
+        # replacing commas with dots to turn all numbers into valid floats
         price_text = message.text.replace(',', '.')
-        price = float(price_text)
-    except ValueError:
+        price = Calculator.evaluate(price_text)
+    except SyntaxError:
         markup = InlineKeyboardMarkup([[abort_button(ACTION_IDENTIFIER, AbortTarget.MAIN_MENU)]])
         reply(message, trans.t(f'{ACTION_IDENTIFIER}.price.invalid'), markup)
         return PRICE_SET_STATE

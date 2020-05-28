@@ -101,8 +101,8 @@ purchase:
       Click on an item to _(de)select it for purchase_. You may still add new items to the checklist while making a purchase.
       Once you're done with your selection, click _Continue_ to set a price.
     price:
-      ask: 'How much did you spent? Please send me a message containing that amount.'
-      invalid: 'Please enter a valid amount! It may include a comma or a period, but no currency.'
+      ask: 'Please define the price of your purchase. You may use addition and subtraction.'
+      invalid: 'You didn''t specify a valid amount. Please try again.'
     success: 'Purchase successful!'
 
   log:
