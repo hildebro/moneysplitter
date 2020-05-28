@@ -19,7 +19,7 @@ fallback:
 
 inline:
   text: |
-    You are invited to join the checklist *%{name}*. Press the button under this message to confirm.
+    You are invited to join the checklist called %{name}. Press the button under this message to confirm.
     If you don't know what this means, check out @PurchaseSplitterBot for more information.
   join: 'Join checklist'
   invite: 'Invite users'
@@ -149,6 +149,17 @@ item:
     link: 'Refresh items'
     success: 'Items refreshed!'
     fail: 'Nothing new!'
+
+activity:
+  log:
+    link: 'Recent activities'
+    empty: 'No activities yet!'
+  new_participant: '*%{name}* joined the checklist.'
+  leave_participant: '*%{name}* left the checklist.'
+  kick_participant: '*%{name}* was removed from the checklist.'
+  new_purchase: '*%{name}* bought items for %{price}'
+  write_off: 'Outstanding purchases were written off.'
+  paid_debt: 'The debt between *%{giver}* and *%{receiver}* was cleared.'
 
 instructions:
   link: Help

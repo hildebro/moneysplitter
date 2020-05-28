@@ -13,7 +13,7 @@ from moneysplitter.handlers import (
     inline_query,
     main_menu, settings, checklist_picker, start, checklist_create, purchase_create, purchase_list,
     transaction_create, checklist_delete, participant_delete, item_delete, item_creation, user_refresh, item_refresh,
-    fallback, transaction_list, transaction_payoff, instructions, participant_leave
+    fallback, transaction_list, transaction_payoff, instructions, participant_leave, activity_list
 )
 
 
@@ -52,16 +52,8 @@ def main():
     # refresh item list
     dp.add_handler(CallbackQueryHandler(item_refresh.callback, pattern='^item-refresh$'), group=1)
 
-    # ### instructions ###
-    # link to instructions
-    dp.add_handler(CallbackQueryHandler(instructions.callback, pattern='^instructions$'), group=1)
-    # instruction topics
-    dp.add_handler(CallbackQueryHandler(instructions.basics, pattern='^instructions.basics$'), group=1)
-    dp.add_handler(CallbackQueryHandler(instructions.checklist, pattern='^instructions.checklist$'), group=1)
-    dp.add_handler(CallbackQueryHandler(instructions.item, pattern='^instructions.item$'), group=1)
-    dp.add_handler(CallbackQueryHandler(instructions.purchase, pattern='^instructions.purchase$'), group=1)
-    dp.add_handler(CallbackQueryHandler(instructions.write_off, pattern='^instructions.write_off$'), group=1)
-    dp.add_handler(CallbackQueryHandler(instructions.balance, pattern='^instructions.balance$'), group=1)
+    # activity log
+    dp.add_handler(CallbackQueryHandler(activity_list.callback, pattern='^activity.log$'), group=1)
 
     # ### checklist settings ###
     # link to menu
@@ -81,6 +73,17 @@ def main():
                    group=1)
     # delete checklist
     dp.add_handler(checklist_delete.conversation_handler(), group=1)
+
+    # ### instructions ###
+    # link to instructions
+    dp.add_handler(CallbackQueryHandler(instructions.callback, pattern='^instructions$'), group=1)
+    # instruction topics
+    dp.add_handler(CallbackQueryHandler(instructions.basics, pattern='^instructions.basics$'), group=1)
+    dp.add_handler(CallbackQueryHandler(instructions.checklist, pattern='^instructions.checklist$'), group=1)
+    dp.add_handler(CallbackQueryHandler(instructions.item, pattern='^instructions.item$'), group=1)
+    dp.add_handler(CallbackQueryHandler(instructions.purchase, pattern='^instructions.purchase$'), group=1)
+    dp.add_handler(CallbackQueryHandler(instructions.write_off, pattern='^instructions.write_off$'), group=1)
+    dp.add_handler(CallbackQueryHandler(instructions.balance, pattern='^instructions.balance$'), group=1)
 
     # catch any unsupported commands and deprecated buttons
     dp.add_handler(CallbackQueryHandler(fallback.button_callback, pattern='.*'), group=1)

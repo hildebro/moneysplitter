@@ -2,7 +2,9 @@ from sqlalchemy import func
 from sqlalchemy.orm import joinedload
 
 from . import user_queries
+from .. import Activity
 from ..models import Item, Purchase
+from ...i18n import trans
 
 
 def delete_in_progress(session, user_id):
@@ -54,6 +56,9 @@ def finalize_purchase(session, user_id, price):
     purchase = find_in_progress(session, user_id)
     purchase.in_progress = False
     purchase.set_price(price)
+    session.add(
+        Activity(trans.t('activity.new_purchase', name=purchase.buyer.display_name(), price=purchase.get_price()),
+                 purchase.checklist_id))
     session.commit()
 
 
@@ -68,11 +73,13 @@ def find_by_checklist(session, checklist_id):
     return purchases
 
 
-def write_off(session, checklist_id):
+def write_off(session, checklist_id, user_id):
     purchases = find_by_checklist(session, checklist_id)
     for purchase in purchases:
         purchase.written_off = True
 
+    user = user_queries.find(session, user_id)
+    session.add(Activity(trans.t('activity.write_off', name=user.display_name()), checklist_id))
     session.commit()
 
 

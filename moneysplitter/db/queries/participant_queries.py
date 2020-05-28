@@ -1,11 +1,14 @@
 from sqlalchemy import or_
 
-from ..models import Participant
+from ..models import Activity, Participant
 from ..queries import user_queries
+from ...i18n import trans
 
 
 def create(session, checklist_id, user_id):
     session.add(Participant(checklist_id, user_id))
+    user = user_queries.find(session, user_id)
+    session.add(Activity(trans.t('activity.new_participant', name=user.display_name()), checklist_id))
     session.commit()
 
 
@@ -16,6 +19,8 @@ def leave(session, user_id):
 
     session.query(Participant).filter(Participant.user_id == user_id, Participant.checklist == checklist).delete()
     user_queries.select_checklist(session, None, user_id)
+    user = user_queries.find(session, user_id)
+    session.add(Activity(trans.t('activity.leave_participant', name=user.display_name()), checklist.id))
     session.commit()
 
     return True
@@ -87,6 +92,7 @@ def commit_removal(session, checklist_id, user_id):
 
     for participant in participants:
         session.delete(participant)
+        session.add(Activity(trans.t('activity.kick_participant', name=participant.user.display_name()), checklist_id))
 
     session.commit()
     return True

@@ -30,7 +30,8 @@ def info_callback(session, update, context):
 @session_wrapper
 def execute_callback(session, update, context):
     query = update.callback_query
-    checklist = user_queries.get_selected_checklist(session, query.from_user.id)
+    user_id = query.from_user.id
+    checklist = user_queries.get_selected_checklist(session, user_id)
     purchases = purchase_queries.find_by_checklist(session, checklist.id)
 
     if len(purchases) == 0:
@@ -102,6 +103,6 @@ def execute_callback(session, update, context):
         transactions.append(Transaction(checklist.id, low_end_id, high_end_id, amount_to_transfer))
 
     transaction_queries.add_all(session, checklist, transactions)
-    purchase_queries.write_off(session, checklist.id)
+    purchase_queries.write_off(session, checklist.id, user_id)
 
     edit(query, trans.t(f'{ACTION_IDENTIFIER}.success'), InlineKeyboardMarkup([[main_menu.link_button()]]))

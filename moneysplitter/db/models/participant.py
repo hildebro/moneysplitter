@@ -15,7 +15,7 @@ class Participant(base):
     user = relationship('User', foreign_keys=user_id)
     deleting_user_id = Column(Integer, ForeignKey('users.id', ondelete='set null'))
     deleting_user = relationship('User', foreign_keys=deleting_user_id)
-    created_at = Column(DateTime)
+    created_at = Column(DateTime, nullable=False)
 
     def __init__(self, checklist_id, user_id):
         self.checklist_id = checklist_id

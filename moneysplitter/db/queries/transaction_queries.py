@@ -1,7 +1,8 @@
 from sqlalchemy import or_, tuple_
 
 from ..models import Transaction
-from ..queries import user_queries
+from ..queries import user_queries, Activity
+from ...i18n import trans
 
 
 def find(session, user_id):
@@ -105,6 +106,8 @@ def commit_payoff(session, user_id):
     for transaction in transactions:
         transaction.amount = 0
         transaction.payoff_user_id = None
+        session.add(Activity(trans.t('activity.paid_debt', giver=transaction.giver.display_name(),
+                                     receiver=transaction.receiver.display_name()), checklist.id))
 
     session.commit()
     return True

@@ -1,3 +1,4 @@
+from .activity import Activity
 from .checklist import Checklist
 from .item import Item
 from .participant import Participant
