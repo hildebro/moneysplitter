@@ -1,4 +1,6 @@
-from sqlalchemy import Column, Integer, ForeignKey
+import datetime
+
+from sqlalchemy import Column, Integer, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
 
 from ..db import base
@@ -17,12 +19,14 @@ class Transaction(base):
     receiver = relationship('User', foreign_keys=receiver_id)
     amount = Column(Integer)
     payoff_user_id = Column(Integer, ForeignKey('users.id', ondelete='set null'))
+    created_at = Column(DateTime, nullable=False)
 
     def __init__(self, checklist_id, giver_id, receiver_id, amount):
         self.checklist_id = checklist_id
         self.giver_id = giver_id
         self.receiver_id = receiver_id
         self.amount = amount
+        self.created_at = datetime.datetime.now()
 
     def identifier(self):
         return self.id

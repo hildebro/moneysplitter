@@ -1,4 +1,6 @@
-from sqlalchemy import Column, Integer, Boolean, ForeignKey
+import datetime
+
+from sqlalchemy import Column, Integer, Boolean, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
 
 from ..db import base
@@ -17,10 +19,12 @@ class Purchase(base):
     written_off = Column(Boolean, default=False, nullable=False)
     in_progress = Column(Boolean, default=True, nullable=False)
     price = Column(Integer, nullable=True)
+    created_at = Column(DateTime, nullable=False)
 
     def __init__(self, buyer_id, checklist_id):
         self.buyer_id = buyer_id
         self.checklist_id = checklist_id
+        self.created_at = datetime.datetime.now()
 
     def get_price(self):
         return "{:.2f}".format(self.price / 100.0)
