@@ -42,7 +42,9 @@ def create(session, update, context):
         user_queries.select_checklist(session, new_checklist.id, user_id)
 
     text = trans.t('checklist.create.success')
-    markup = InlineKeyboardMarkup([[main_menu.link_button()]])
+    markup = InlineKeyboardMarkup(
+        [[main_menu.link_button(), button('checklist-picker', trans.t('checklist.picker.link'), emojis.BACK)]]
+    )
 
     update.message.reply_text(text, reply_markup=markup, parse_mode='Markdown')
     return ConversationHandler.END

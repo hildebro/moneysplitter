@@ -80,7 +80,7 @@ participant:
 
       Click on a username to _(de)select_ them for removal. Once you are done, click _Continue_ to remove all selected users.
     permission_denied: 'You are not allowed to do this!'
-    success: 'Successfully removed selected user(s).'
+    success: 'User removal successful.'
     no_entities: 'There are no participants that you can kick.'
   leave:
     link: 'Leave checklist'
@@ -143,7 +143,7 @@ item:
       You are now removing items from checklist _%{name}_.
 
       Click on items to _(de)select_ them for removal. When you are done, click _Continue_ to remove all selected items.
-    success: 'Item(s) deleted successfully!'
+    success: 'Item deletion successful.'
     no_entities: 'There are no items in this checklist.'
   refresh:
     link: 'Refresh items'
