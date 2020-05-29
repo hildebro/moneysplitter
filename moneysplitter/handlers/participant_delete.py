@@ -21,7 +21,8 @@ def conversation_handler():
         participant_queries.mark_for_removal,
         participant_queries.abort_removal,
         AbortTarget.SETTINGS,
-        commit_removal
+        commit_removal,
+        user_queries.set_participant_delete
     )
     return builder.conversation_handler()
 
@@ -30,9 +31,8 @@ def conversation_handler():
 def commit_removal(session, update, context):
     query = update.callback_query
     deleting_user_id = query.from_user.id
-    checklist = user_queries.get_selected_checklist(session, deleting_user_id)
 
-    success = participant_queries.commit_removal(session, checklist.id, deleting_user_id)
+    success = participant_queries.commit_removal(session, deleting_user_id)
     if not success:
         query.answer(trans.t('conversation.no_selection'))
         return BASE_STATE

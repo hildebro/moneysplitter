@@ -46,20 +46,20 @@ def exists(session, checklist_id, user_id):
 
 
 def find_for_removal(session, deleting_user_id):
-    checklist = user_queries.get_selected_checklist(session, deleting_user_id)
+    checklist_id = user_queries.get_participant_delete_id(session, deleting_user_id)
     return session \
         .query(Participant) \
-        .filter(Participant.checklist_id == checklist.id, Participant.user_id != deleting_user_id) \
+        .filter(Participant.checklist_id == checklist_id, Participant.user_id != deleting_user_id) \
         .filter(or_(Participant.deleting_user_id == None, Participant.deleting_user_id == deleting_user_id)) \
         .order_by(Participant.user_id) \
         .all()
 
 
 def mark_for_removal(session, deleting_user_id, user_id):
-    checklist = user_queries.get_selected_checklist(session, deleting_user_id)
+    checklist_id = user_queries.get_participant_delete_id(session, deleting_user_id)
     participant = session \
         .query(Participant) \
-        .filter(Participant.user_id == user_id, Participant.checklist_id == checklist.id) \
+        .filter(Participant.user_id == user_id, Participant.checklist_id == checklist_id) \
         .one()
     if participant.deleting_user_id is None:
         participant.deleting_user_id = deleting_user_id
@@ -73,15 +73,17 @@ def mark_for_removal(session, deleting_user_id, user_id):
 
 
 def abort_removal(session, deleting_user_id):
-    checklist = user_queries.get_selected_checklist(session, deleting_user_id)
+    checklist_id = user_queries.get_participant_delete_id(session, deleting_user_id)
     session \
         .query(Participant) \
-        .filter(Participant.checklist_id == checklist.id, Participant.deleting_user_id == deleting_user_id) \
+        .filter(Participant.checklist_id == checklist_id, Participant.deleting_user_id == deleting_user_id) \
         .update({'deleting_user_id': None})
+    user_queries.set_participant_delete(session, deleting_user_id, True)
     session.commit()
 
 
-def commit_removal(session, checklist_id, user_id):
+def commit_removal(session, user_id):
+    checklist_id = user_queries.get_participant_delete_id(session, user_id)
     participants = session \
         .query(Participant) \
         .filter(Participant.checklist_id == checklist_id, Participant.deleting_user_id == user_id) \
