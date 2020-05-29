@@ -48,10 +48,10 @@ def find_for_purchase(session, user_id):
 
 
 def find_for_removal(session, user_id):
-    checklist = user_queries.get_selected_checklist(session, user_id)
+    checklist_id = user_queries.get_item_delete_id(session, user_id)
     return session \
         .query(Item) \
-        .filter(Item.checklist_id == checklist.id, Item.purchase_id == None) \
+        .filter(Item.checklist_id == checklist_id, Item.purchase_id == None) \
         .filter(or_(Item.deleting_user_id == None, Item.deleting_user_id == user_id)) \
         .order_by(Item.id) \
         .all()
@@ -71,11 +71,12 @@ def select_for_removal(session, user_id, item_id):
 
 
 def abort_removal(session, user_id):
-    checklist = user_queries.get_selected_checklist(session, user_id)
+    checklist_id = user_queries.get_item_delete_id(session, user_id)
     session \
         .query(Item) \
-        .filter(Item.checklist_id == checklist.id, Item.deleting_user_id == user_id) \
+        .filter(Item.checklist_id == checklist_id, Item.deleting_user_id == user_id) \
         .update({'deleting_user_id': None})
+    user_queries.set_item_delete(session, user_id, True)
     session.commit()
 
 

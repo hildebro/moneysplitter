@@ -92,3 +92,21 @@ def set_transaction_payoff(session, user_id, reset=False):
 def get_transaction_payoff_id(session, user_id):
     user_settings = session.query(UserSettings).filter(UserSettings.user_id == user_id).one()
     return user_settings.transaction_payoff_id
+
+
+def set_item_delete(session, user_id, reset=False):
+    if reset:
+        checklist_id = None
+    else:
+        checklist_id = get_selected_checklist(session, user_id).id
+
+    session \
+        .query(UserSettings) \
+        .filter(UserSettings.user_id == user_id) \
+        .update({'item_delete_id': checklist_id})
+    session.commit()
+
+
+def get_item_delete_id(session, user_id):
+    user_settings = session.query(UserSettings).filter(UserSettings.user_id == user_id).one()
+    return user_settings.item_delete_id

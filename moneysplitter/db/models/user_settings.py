@@ -14,6 +14,7 @@ class UserSettings(base):
     deleting_checklist = relationship('Checklist', foreign_keys=deleting_checklist_id)
     participant_delete_id = Column(Integer, ForeignKey('checklists.id', ondelete='set null'), nullable=True)
     transaction_payoff_id = Column(Integer, ForeignKey('checklists.id', ondelete='set null'), nullable=True)
+    item_delete_id = Column(Integer, ForeignKey('checklists.id', ondelete='set null'), nullable=True)
 
     def __init__(self, user_id):
         self.user_id = user_id

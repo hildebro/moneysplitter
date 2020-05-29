@@ -88,6 +88,7 @@ def abort_payoff(session, user_id):
         .query(Transaction) \
         .filter(Transaction.payoff_user_id == user_id) \
         .update({'payoff_user_id': None})
+    user_queries.set_transaction_payoff(session, user_id, True)
     session.commit()
 
 
