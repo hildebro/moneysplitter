@@ -20,7 +20,7 @@ def conversation_handler():
         item_queries.find_for_purchase,
         is_item_selected,
         purchase_queries.mark_item,
-        purchase_queries.delete_in_progress,
+        purchase_queries.clear_purchase_data,
         AbortTarget.MAIN_MENU,
         ask_price,
         purchase_queries.create,

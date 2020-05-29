@@ -27,9 +27,8 @@ def create(session, item_names, checklist_id, purchase_id=None):
 
 
 def create_for_purchase(session, user_id, item_names):
-    checklist = user_queries.get_selected_checklist(session, user_id)
     purchase = purchase_queries.find_in_progress(session, user_id)
-    create(session, item_names, checklist.id, purchase.id)
+    create(session, item_names, purchase.checklist.id, purchase.id)
 
 
 def find_by_checklist(session, checklist_id):

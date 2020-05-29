@@ -7,7 +7,7 @@ from ..models import Item, Purchase
 from ...i18n import trans
 
 
-def delete_in_progress(session, user_id):
+def clear_purchase_data(session, user_id):
     session \
         .query(Purchase) \
         .filter(Purchase.buyer_id == user_id, Purchase.in_progress == True) \
@@ -16,7 +16,7 @@ def delete_in_progress(session, user_id):
 
 
 def create(session, user_id):
-    delete_in_progress(session, user_id)
+    clear_purchase_data(session, user_id)
 
     checklist = user_queries.get_selected_checklist(session, user_id)
     purchase = Purchase(user_id, checklist.id)
@@ -33,7 +33,6 @@ def mark_item(session, user_id, item_id):
     elif item.purchase_id == purchase.id:
         item.purchase_id = None
     else:
-        # another purchase is working on this item
         return False
 
     session.commit()
