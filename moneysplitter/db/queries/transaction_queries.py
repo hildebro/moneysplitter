@@ -60,10 +60,10 @@ def _merge_data(session, new_transaction, old_transactions):
 
 
 def find_for_payoff(session, user_id):
-    checklist = user_queries.get_selected_checklist(session, user_id)
+    checklist_id = user_queries.get_transaction_payoff_id(session, user_id)
     return session \
         .query(Transaction) \
-        .filter(Transaction.checklist_id == checklist.id, Transaction.amount != 0) \
+        .filter(Transaction.checklist_id == checklist_id, Transaction.amount != 0) \
         .filter(or_(Transaction.giver_id == user_id, Transaction.receiver_id == user_id)) \
         .filter(or_(Transaction.payoff_user_id == None, Transaction.payoff_user_id == user_id)) \
         .order_by(Transaction.id) \
@@ -92,10 +92,10 @@ def abort_payoff(session, user_id):
 
 
 def commit_payoff(session, user_id):
-    checklist = user_queries.get_selected_checklist(session, user_id)
+    checklist_id = user_queries.get_transaction_payoff_id(session, user_id)
     transactions = session \
         .query(Transaction) \
-        .filter(Transaction.checklist_id == checklist.id,
+        .filter(Transaction.checklist_id == checklist_id,
                 Transaction.payoff_user_id == user_id,
                 Transaction.amount > 0) \
         .all()
@@ -107,7 +107,7 @@ def commit_payoff(session, user_id):
         transaction.amount = 0
         transaction.payoff_user_id = None
         session.add(Activity(trans.t('activity.paid_debt', giver=transaction.giver.display_name(),
-                                     receiver=transaction.receiver.display_name()), checklist.id))
+                                     receiver=transaction.receiver.display_name()), checklist_id))
 
     session.commit()
     return True

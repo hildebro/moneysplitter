@@ -12,9 +12,11 @@ conversation:
 
 fallback:
   callback_query: |
-    The button you tried to press is not valid. This might happen from time to time when I update the bot. If all is well, you should be able to go back to the main menu and retry the action you just attempted to execute.
+    The button you tried to press is not valid. There could be a couple of reasons:
 
-    If you see this message on a consistent basis, it's probably a bug. If you can't contact me to let me know about it, you will just have to wait for me to notice the bug on my own.
+    1) The bot server just rebooted. Ongoing actions are canceled on reboot, so just try again whatever you just did.
+    2) You tried to start an action which is already in progress. This is not possible, so you will have to look through your chat history, find the ongoing action and click the *Back to Main Menu* button.
+    3) The bot server is bugged.
   command: 'I cannot process the command you gave me. Typing the _slash_ character will show you every valid command.'
 
 inline:

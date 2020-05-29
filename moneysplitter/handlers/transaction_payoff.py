@@ -2,7 +2,7 @@ from telegram import InlineKeyboardMarkup
 from telegram.ext import ConversationHandler
 
 from . import main_menu
-from ..db import session_wrapper
+from ..db import session_wrapper, user_queries
 from ..db.queries import transaction_queries
 from ..helper.entity_select_conversation_builder import EntitySelectConversationBuilder, AbortTarget
 from ..helper.function_wrappers import edit
@@ -21,7 +21,8 @@ def conversation_handler():
         transaction_queries.select_for_payoff,
         transaction_queries.abort_payoff,
         AbortTarget.MAIN_MENU,
-        commit_payoff
+        commit_payoff,
+        user_queries.set_transaction_payoff
     )
     return builder.conversation_handler()
 
