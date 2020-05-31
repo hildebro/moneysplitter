@@ -71,7 +71,7 @@ checklist:
     done: 'The checklist has been deleted.'
 
   settings:
-    link: 'Checklist settings'
+    link: 'Settings'
     text: 'This is the settings menu for the checklist _%{name}_. Please choose an action below.'
 
 participant:
@@ -105,10 +105,16 @@ purchase:
     price:
       ask: 'Please define the price of your purchase. You may use addition and subtraction.'
       invalid: 'You didn''t specify a valid amount. Please try again.'
-    success: 'Purchase successful!'
+    ask_write_off: |
+      The purchase has been logged successfully.
+
+      Would you like to write the purchase off right now? You may wish to postpone the write-off, if users who are involved in the purchase haven't joined the checklist yet.
+    write_off_now: 'Now'
+    write_off_later: 'Later'
+    write_off_success: 'Purchase has been written off.'
 
   log:
-    link: 'Outstanding purchases'
+    link: 'Backlog'
     header:
       one: '_%{name}_ has one outstanding purchase:'
       many: '_%{name}_ has %{count} outstanding purchases:'
@@ -148,7 +154,7 @@ item:
     success: 'Item deletion successful.'
     no_entities: 'There are no items in this checklist.'
   refresh:
-    link: 'Refresh items'
+    link: 'Refresh'
     success: 'Items refreshed!'
     fail: 'Nothing new!'
 
@@ -160,7 +166,7 @@ activity:
   leave_participant: '*%{name}* left the checklist.'
   kick_participant: '*%{name}* was removed from the checklist.'
   new_purchase: '*%{name}* bought items for %{price}'
-  write_off: 'Outstanding purchases were written off.'
+  write_off: '*{name}* has written off outstanding purchases.'
   paid_debt: 'The debt between *%{giver}* and *%{receiver}* was cleared.'
 
 instructions:

@@ -38,15 +38,23 @@ def checklist_menu_data(session, user_id):
         text += '\n' + '\n'.join(map(lambda checklist_item: checklist_item.name, items))
 
     markup = InlineKeyboardMarkup([
-        [button('purchase.create', trans.t('purchase.create.link'), emojis.CART)],
-        [button('purchase-list', trans.t('purchase.log.link'), emojis.BILL)],
-        [button('transaction.list', trans.t('transaction.list.link'), emojis.CREDIT)],
-        [button('item-refresh', trans.t('item.refresh.link'), emojis.REFRESH)],
+        [
+            button('purchase.create', trans.t('purchase.create.link'), emojis.CART),
+            button('purchase-list', trans.t('purchase.log.link'), emojis.BILL),
+        ],
+        [
+            button('transaction.list', trans.t('transaction.list.link'), emojis.CREDIT),
+        ],
         [
             button('activity.log', trans.t('activity.log.link'), emojis.CLOCK),
-            button('checklist-settings', trans.t('checklist.settings.link'), emojis.GEAR)
         ],
-        [button('instructions', trans.t('instructions.link'), emojis.HELP)]
+        [
+            button('item-refresh', trans.t('item.refresh.link'), emojis.REFRESH),
+        ],
+        [
+            button('checklist-settings', trans.t('checklist.settings.link'), emojis.GEAR),
+            button('instructions', trans.t('instructions.link'), emojis.HELP),
+        ]
     ])
 
     return text, markup

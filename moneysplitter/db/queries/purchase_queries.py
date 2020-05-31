@@ -51,13 +51,18 @@ def has_selected_items(session, user_id):
     return count > 0
 
 
-def finalize_purchase(session, user_id, price):
+def set_price(session, user_id, price):
     purchase = find_in_progress(session, user_id)
-    purchase.in_progress = False
     purchase.set_price(price)
     session.add(
         Activity(trans.t('activity.new_purchase', name=purchase.buyer.display_name(), price=purchase.get_price()),
                  purchase.checklist_id))
+    session.commit()
+
+
+def set_not_in_progress(session, user_id):
+    purchase = find_in_progress(session, user_id)
+    purchase.in_progress = False
     session.commit()
 
 
@@ -79,6 +84,11 @@ def write_off(session, checklist_id, user_id):
 
     user = user_queries.find(session, user_id)
     session.add(Activity(trans.t('activity.write_off', name=user.display_name()), checklist_id))
+    session.commit()
+
+
+def write_off_single(session, purchase):
+    purchase.written_off = True
     session.commit()
 
 

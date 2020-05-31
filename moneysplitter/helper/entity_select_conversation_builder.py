@@ -27,7 +27,7 @@ class EntitySelectConversationBuilder:
                  abort_target: AbortTarget,
                  continue_handler_callback: Callable[[Session, int], None],
                  entry_func: Callable[[Session, int], None] = None,
-                 post_continue_state: List[Handler] = None,
+                 post_continue_states: List[List[Handler]] = None,
                  message_callback: Callable[[Session, int, str], None] = None,
                  allow_zero_entities: bool = False):
         self.action_identifier = action_identifier
@@ -38,7 +38,7 @@ class EntitySelectConversationBuilder:
         self.abort_target = abort_target
         self.continue_handler_callback = continue_handler_callback
         self.entry_func = entry_func
-        self.post_continue_state = post_continue_state
+        self.post_continue_states = post_continue_states
         self.message_callback = message_callback
         self.allow_zero_entities = allow_zero_entities
 
@@ -46,8 +46,10 @@ class EntitySelectConversationBuilder:
         states = {
             0: [self._select_handler(), self._continue_handler(), self._message_handler()],
         }
-        if self.post_continue_state is not None:
-            states[1] = self.post_continue_state
+
+        if self.post_continue_states is not None:
+            for i in range(len(self.post_continue_states)):
+                states[i + 1] = self.post_continue_states[i]
 
         return ConversationHandler(
             entry_points=[self._entry_handler()],
