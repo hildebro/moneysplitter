@@ -49,8 +49,8 @@ def _merge_data(session, new_transaction, old_transactions):
             old_transaction.amount -= new_transaction.amount
             if old_transaction.amount < 0:
                 # we don't want negative transaction amounts, so we switch giver/receiver and inverse the amount
-                old_transaction.giver = new_transaction.receiver
-                old_transaction.receiver = new_transaction.giver
+                old_transaction.giver_id = new_transaction.giver_id
+                old_transaction.receiver_id = new_transaction.receiver_id
                 old_transaction.amount *= -1
 
             return

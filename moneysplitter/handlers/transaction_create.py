@@ -1,8 +1,7 @@
 from telegram import InlineKeyboardMarkup
 
 from . import main_menu
-from ..db import session_wrapper, purchase_queries, user_queries
-from ..db.queries import transaction_queries
+from ..db import session_wrapper, purchase_queries, user_queries, Activity
 from ..helper import emojis, write_off_calculator
 from ..helper.function_wrappers import button, edit
 from ..i18n import trans
@@ -15,6 +14,9 @@ def info_callback(session, update, context):
     query = update.callback_query
     checklist = user_queries.get_selected_checklist(session, query.from_user.id)
     purchases = purchase_queries.find_by_checklist(session, checklist.id)
+    if len(purchases) == 0:
+        query.answer(trans.t(f'{ACTION_IDENTIFIER}.no_purchases'))
+        return
 
     text = trans.t(f'{ACTION_IDENTIFIER}.text', count=len(purchases))
     markup = InlineKeyboardMarkup([[
@@ -28,15 +30,13 @@ def info_callback(session, update, context):
 def execute_callback(session, update, context):
     query = update.callback_query
     user_id = query.from_user.id
+    user = user_queries.find(session, user_id)
     checklist = user_queries.get_selected_checklist(session, user_id)
     purchases = purchase_queries.find_by_checklist(session, checklist.id)
 
-    transactions = write_off_calculator.write_off(session, checklist, purchases)
-    if len(transactions) == 0:
-        query.answer(trans.t(f'{ACTION_IDENTIFIER}.no_purchases'))
-        return
+    write_off_calculator.write_off(session, checklist, purchases)
 
-    transaction_queries.add_all(session, checklist, transactions)
-    purchase_queries.write_off(session, checklist.id, user_id)
+    session.add(Activity(trans.t('activity.write_off', name=user.display_name()), checklist.id))
+    session.commit()
 
     edit(query, trans.t(f'{ACTION_IDENTIFIER}.success'), InlineKeyboardMarkup([[main_menu.link_button()]]))

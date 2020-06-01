@@ -105,29 +105,50 @@ purchase:
     price:
       ask: 'Please define the price of your purchase. You may use addition and subtraction.'
       invalid: 'You didn''t specify a valid amount. Please try again.'
-    ask_write_off: |
-      The purchase has been logged successfully.
+    success: |
+      Price submitted; the purchase is now finished. You may return to the main menu.
 
-      Would you like to write the purchase off right now? You may wish to postpone the write-off, if users who are involved in the purchase haven't joined the checklist yet.
-    write_off_now: 'Now'
-    write_off_later: 'Later'
+      Alternatively, you may also head to further purchase settings by clicking the corresponding button. Those settings can also be found in the *Backlog*.
+  edit:
+    link: 'Purchase settings'
+    text: |
+      Checklist: %{name}
+
+      Action: Purchase settings
+    access_denied: 'Cannot modify someone else''s purchase'
+    distribution:
+      link: 'Price distributions'
+      done: 'Finish distributions'
+      no_participants: 'Requires at least two participants.'
+      text: |
+        Checklist: %{name}
+
+        Action: Price distribution
+
+        Total price: %{price}
+        Leftover price: %{leftover_price}
+      ask: 'Please define how much of the total price is to be paid by %{name}.'
+      invalid: 'You didn''t specify a valid amount. Please try again.'
+      insufficient: 'The maximum distribution amount is %{max_amount} (leftover of total price + current distribution amount of the user). Please try again.'
+    write_off: 'Write off'
     write_off_success: 'Purchase has been written off.'
-
   log:
     link: 'Backlog'
-    header:
-      one: '_%{name}_ has one outstanding purchase:'
-      many: '_%{name}_ has %{count} outstanding purchases:'
-    list: '_%{name} paid %{price} for:_ %{items}'
+    text: |
+      This is the purchase backlog. Anything that hasn't been written off yet will be listed here.
+
+      Click on a purchase button to edit its price distribution or write off that individual purchase.
     no_purchases: 'No outstanding purchases!'
+
+  display: '_%{name} paid %{price} for:_ %{items}'
 
 transaction:
   create:
-    link: 'Write off purchases'
+    link: 'Write off all purchases'
     text: |
-      You are about to write off %{count} outstanding purchase(s). This cannot be undone!
+      You are about to write off all %{count} outstanding purchase(s). This cannot be undone!
 
-      If you're sure about this, click _Write off purchases_ again.
+      If you're sure about this, click the button again.
     no_purchases: No outstanding purchases!
     success: |
       The outstanding purchases have been written off. The _Balances_ of all affected users have been updated.
@@ -166,7 +187,7 @@ activity:
   leave_participant: '*%{name}* left the checklist.'
   kick_participant: '*%{name}* was removed from the checklist.'
   new_purchase: '*%{name}* bought items for %{price}'
-  write_off: '*{name}* has written off outstanding purchases.'
+  write_off: '*%{name}* has written off outstanding purchases.'
   paid_debt: 'The debt between *%{giver}* and *%{receiver}* was cleared.'
 
 instructions:

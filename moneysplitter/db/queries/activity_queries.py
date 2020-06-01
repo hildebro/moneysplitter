@@ -7,5 +7,5 @@ def find_by_checklist(session, user_id):
     return session.query(Activity) \
         .filter(Activity.checklist_id == checklist.id) \
         .order_by(Activity.created_at.desc()) \
-        .limit(20) \
+        .limit(10) \
         .all()

@@ -4,7 +4,6 @@ from sqlalchemy import Column, Integer, Boolean, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
 
 from ..db import base
-from ...i18n import trans
 
 
 class Purchase(base):
@@ -19,6 +18,8 @@ class Purchase(base):
     written_off = Column(Boolean, default=False, nullable=False)
     in_progress = Column(Boolean, default=True, nullable=False)
     price = Column(Integer, nullable=True)
+    leftover_price = Column(Integer, nullable=True)
+    distributions = relationship('PurchaseDistribution', back_populates='purchase')
     created_at = Column(DateTime, nullable=False)
 
     def __init__(self, buyer_id, checklist_id):
@@ -31,7 +32,14 @@ class Purchase(base):
 
     def set_price(self, price):
         self.price = price * 100.0
+        self.leftover_price = price * 100.0
+
+    def get_leftover_price(self):
+        return "{:.2f}".format(self.leftover_price / 100.0)
+
+    def set_leftover_price(self, leftover_price):
+        self.leftover_price = leftover_price * 100.0
 
     def display_name(self):
-        item_names = ', '.join(map(lambda item: item.name, self.items))
-        return trans.t('purchase.log.list', name=self.buyer.username, price=self.get_price(), items=item_names)
+        formatted_time = self.created_at.isoformat(' ', timespec='minutes')
+        return f'[{formatted_time}] {self.buyer.username} - {self.get_price()}'

@@ -13,7 +13,7 @@ from moneysplitter.handlers import (
     inline_query,
     main_menu, settings, checklist_picker, start, checklist_create, purchase_create, purchase_list,
     transaction_create, checklist_delete, participant_delete, item_delete, item_creation, user_refresh, item_refresh,
-    fallback, transaction_list, transaction_payoff, instructions, participant_leave, activity_list
+    fallback, transaction_list, transaction_payoff, instructions, participant_leave, activity_list, purchase_edit
 )
 
 
@@ -41,17 +41,18 @@ def main():
     dp.add_handler(purchase_create.conversation_handler(), group=1)
     # purchase list
     dp.add_handler(CallbackQueryHandler(purchase_list.callback, pattern='^purchase-list$'), group=1)
-    # new transactions
+    # purchase edit
+    dp.add_handler(purchase_edit.conversation_handler(), group=1)
+    # complete write off
     dp.add_handler(CallbackQueryHandler(transaction_create.info_callback, pattern='^transaction.create.info$'), group=1)
     dp.add_handler(CallbackQueryHandler(transaction_create.execute_callback, pattern='^transaction.create.execute$'),
                    group=1)
-    # transaction list
+    # balances
     dp.add_handler(CallbackQueryHandler(transaction_list.callback, pattern='^transaction.list$'), group=1)
-    # transaction pay-off
+    # balance pay-off
     dp.add_handler(transaction_payoff.conversation_handler(), group=1)
     # refresh item list
     dp.add_handler(CallbackQueryHandler(item_refresh.callback, pattern='^item-refresh$'), group=1)
-
     # activity log
     dp.add_handler(CallbackQueryHandler(activity_list.callback, pattern='^activity.log$'), group=1)
 

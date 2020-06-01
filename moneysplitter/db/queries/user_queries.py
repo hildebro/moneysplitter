@@ -110,3 +110,29 @@ def set_item_delete(session, user_id, reset=False):
 def get_item_delete_id(session, user_id):
     user_settings = session.query(UserSettings).filter(UserSettings.user_id == user_id).one()
     return user_settings.item_delete_id
+
+
+def set_purchase_edit(session, operator_id, purchase_id=None):
+    session \
+        .query(UserSettings) \
+        .filter(UserSettings.user_id == operator_id) \
+        .update({'purchase_edit_id': purchase_id})
+    session.commit()
+
+
+def get_purchase_edit_id(session, user_id):
+    user_settings = session.query(UserSettings).filter(UserSettings.user_id == user_id).one()
+    return user_settings.purchase_edit_id
+
+
+def set_purchase_distribution(session, operator_id, distribution_id=None):
+    session \
+        .query(UserSettings) \
+        .filter(UserSettings.user_id == operator_id) \
+        .update({'purchase_distribution_id': distribution_id})
+    session.commit()
+
+
+def get_purchase_distribution_id(session, user_id):
+    user_settings = session.query(UserSettings).filter(UserSettings.user_id == user_id).one()
+    return user_settings.purchase_distribution_id

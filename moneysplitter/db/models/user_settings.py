@@ -15,6 +15,9 @@ class UserSettings(base):
     participant_delete_id = Column(Integer, ForeignKey('checklists.id', ondelete='set null'), nullable=True)
     transaction_payoff_id = Column(Integer, ForeignKey('checklists.id', ondelete='set null'), nullable=True)
     item_delete_id = Column(Integer, ForeignKey('checklists.id', ondelete='set null'), nullable=True)
+    purchase_edit_id = Column(Integer, ForeignKey('purchases.id', ondelete='set null'), nullable=True)
+    purchase_distribution_id = Column(Integer, ForeignKey('purchase_distributions.id', ondelete='set null'),
+                                      nullable=True)
 
     def __init__(self, user_id):
         self.user_id = user_id

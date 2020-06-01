@@ -32,7 +32,11 @@ def create_for_purchase(session, user_id, item_names):
 
 
 def find_by_checklist(session, checklist_id):
-    items = session.query(Item).filter(Item.checklist_id == checklist_id, Item.purchase == None).all()
+    items = session \
+        .query(Item) \
+        .filter(Item.checklist_id == checklist_id, Item.purchase == None) \
+        .order_by(Item.created_at.desc()) \
+        .all()
     return items
 
 

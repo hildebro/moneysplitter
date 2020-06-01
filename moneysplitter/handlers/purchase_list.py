@@ -11,19 +11,32 @@ from ..i18n import trans
 @session_wrapper
 def callback(session, update, context):
     query = update.callback_query
-    checklist = user_queries.get_selected_checklist(session, query.from_user.id)
+    user_id = query.from_user.id
+
+    text, markup = purchase_log_data(session, user_id)
+    if markup is None:
+        query.answer(text)
+
+    query.edit_message_text(text=text, reply_markup=markup, parse_mode='Markdown')
+
+
+def purchase_log_data(session, user_id):
+    checklist = user_queries.get_selected_checklist(session, user_id)
     purchases = purchase_queries.find_by_checklist(session, checklist.id)
     purchase_count = len(purchases)
 
     if purchase_count == 0:
-        query.answer(trans.t('purchase.log.no_purchases'))
-        return
+        return trans.t('purchase.log.no_purchases'), None
 
-    text = trans.t('purchase.log.header', name=checklist.name, count=purchase_count)
-    text += '\n\n' + '\n\n'.join(map(lambda purchase: purchase.display_name(), purchases))
+    keyboard = []
+    for purchase in purchases:
+        keyboard.append([button(f'purchase.edit_{purchase.id}', purchase.display_name())])
 
-    markup = InlineKeyboardMarkup([[
+    keyboard.append([
         main_menu.link_button(),
         button('transaction.create.info', trans.t('transaction.create.link'), emojis.MONEY)
-    ]])
-    query.edit_message_text(text=text, reply_markup=markup, parse_mode='Markdown')
+    ])
+
+    text = trans.t('purchase.log.text')
+    markup = InlineKeyboardMarkup(keyboard)
+    return text, markup

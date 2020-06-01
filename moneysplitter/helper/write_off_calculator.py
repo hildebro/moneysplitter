@@ -1,7 +1,7 @@
 import operator
 
 from ..db import Transaction
-from ..db.queries import participant_queries
+from ..db.queries import participant_queries, transaction_queries
 
 
 def write_off(session, checklist, purchases):
@@ -12,11 +12,11 @@ def write_off(session, checklist, purchases):
     user_price_mapping = {}
     full_price = 0
     for purchase in purchases:
-        full_price += purchase.price
+        full_price += purchase.leftover_price
         if purchase.buyer.id not in user_price_mapping:
-            user_price_mapping[purchase.buyer.id] = purchase.price
+            user_price_mapping[purchase.buyer.id] = purchase.leftover_price
         else:
-            user_price_mapping[purchase.buyer.id] += purchase.price
+            user_price_mapping[purchase.buyer.id] += purchase.leftover_price
 
     # add entry with price of 0 for everyone who hasn't purchased anything
     participants = participant_queries.find(session, checklist.id)
@@ -72,4 +72,17 @@ def write_off(session, checklist, purchases):
         # create new transaction for what happened in this iteration step
         transactions.append(Transaction(checklist.id, low_end_id, high_end_id, amount_to_transfer))
 
-    return transactions
+    # adding a transaction for every purchase distribution
+    # we don't care about potential duplicates here since transaction_queries.add_all will aggregate it anyway
+    for purchase in purchases:
+        for distribution in purchase.distributions:
+            # no need to create a transaction, if the buyer bought items for himself
+            if distribution.user_id != purchase.buyer_id:
+                transactions.append(
+                    Transaction(checklist.id, distribution.user_id, purchase.buyer_id, distribution.amount))
+
+        # mark everything as written off
+        purchase.written_off = True
+
+    if len(transactions) > 0:
+        transaction_queries.add_all(session, checklist, transactions)

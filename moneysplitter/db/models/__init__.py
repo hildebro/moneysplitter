@@ -3,6 +3,7 @@ from .checklist import Checklist
 from .item import Item
 from .participant import Participant
 from .purchase import Purchase
+from .purchase_distribution import PurchaseDistribution
 from .transaction import Transaction
 from .user import User
 from .user_settings import UserSettings
