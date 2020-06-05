@@ -16,6 +16,7 @@ def callback(session, update, context):
     text, markup = purchase_log_data(session, user_id)
     if markup is None:
         query.answer(text)
+        return
 
     query.edit_message_text(text=text, reply_markup=markup, parse_mode='Markdown')
 
