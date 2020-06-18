@@ -43,3 +43,6 @@ class Purchase(base):
     def display_name(self):
         formatted_time = self.created_at.isoformat(' ', timespec='minutes')
         return f'[{formatted_time}] {self.buyer.username} - {self.get_price()}'
+
+    def item_names(self):
+        return ', '.join(map(lambda item: item.name, self.items))

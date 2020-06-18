@@ -62,9 +62,14 @@ def finalize_purchase(session, user_id, price):
     purchase = find_in_progress(session, user_id)
     purchase.in_progress = False
     purchase.set_price(price)
-    session.add(
-        Activity(trans.t('activity.new_purchase', name=purchase.buyer.display_name(), price=purchase.get_price()),
-                 purchase.checklist_id))
+    session.add(Activity(
+        trans.t('activity.new_purchase',
+                id=purchase.id,
+                name=purchase.buyer.display_name(),
+                price=purchase.get_price(),
+                items=purchase.item_names()
+                ),
+        purchase.checklist_id))
     session.commit()
     return purchase
 

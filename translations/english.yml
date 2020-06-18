@@ -186,7 +186,11 @@ activity:
   new_participant: '*%{name}* joined the checklist.'
   leave_participant: '*%{name}* left the checklist.'
   kick_participant: '*%{name}* was removed from the checklist.'
-  new_purchase: '*%{name}* bought items for %{price}'
+  new_purchase: |
+    New purchase (ID %{id})
+    User: %{name}
+    Price: %{price}
+    Items: %{items}
   write_off: '*%{name}* has written off outstanding purchases.'
   paid_debt: 'The debt between *%{giver}* and *%{receiver}* was cleared.'
 

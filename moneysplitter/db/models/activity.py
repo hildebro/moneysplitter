@@ -22,4 +22,4 @@ class Activity(base):
 
     def display_name(self):
         formatted_time = self.created_at.isoformat(' ', timespec='minutes')
-        return f'*[{formatted_time}]* {self.message}'
+        return f'*[{formatted_time}]*\n{self.message}'
