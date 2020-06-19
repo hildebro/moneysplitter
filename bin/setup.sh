@@ -1,8 +1,8 @@
 #!/bin/sh
 
 # make sure we work on the correct folder
-DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
-cd $DIR
+#DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
+#cd $DIR
 
 # postgres setup
 sudo pacman -S postgresql --noconfirm
@@ -22,6 +22,6 @@ pip install PyYAML
 pip install -e .
 
 # build schema
-./reset_db.sh
+./bin/reset_db.sh
 
 echo "Setup completed. Remember to stamp the alembic revision table."
