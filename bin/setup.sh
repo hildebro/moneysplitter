@@ -19,6 +19,8 @@ pip install alembic
 pip install python-i18n
 pip install PyYAML
 
+pip install -e .
+
 # build schema
 ./reset_db.sh
 
