@@ -10,6 +10,7 @@ sudo -iu postgres initdb -D /var/lib/postgres/data
 sudo systemctl start postgresql.service
 
 # venv setup
+sudo pacman -S python-virtualenv
 virtualenv .venv
 source .venv/bin/activate
 pip install python-telegram-bot
