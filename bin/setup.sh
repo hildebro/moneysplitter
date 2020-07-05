@@ -5,7 +5,7 @@
 #cd $DIR
 
 # postgres setup
-sudo pacman -S postgresql --noconfirm
+sudo pacman -S postgresql
 sudo -iu postgres initdb -D /var/lib/postgres/data
 sudo systemctl start postgresql.service
 
