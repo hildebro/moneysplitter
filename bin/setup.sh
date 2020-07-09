@@ -6,10 +6,14 @@
 
 # postgres setup
 sudo pacman -S postgresql
+sudo mkdir -p /var/lib/postgres/data
+sudo chown -R postgres:postgres /var/lib/postgres
 sudo -iu postgres initdb -D /var/lib/postgres/data
 sudo systemctl start postgresql.service
 
 # venv setup
+sudo pacman -S gcc
+sudo pacman -S python
 sudo pacman -S python-virtualenv
 virtualenv .venv
 source .venv/bin/activate
