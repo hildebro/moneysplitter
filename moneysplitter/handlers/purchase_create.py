@@ -65,9 +65,14 @@ def check_price(session, update, context):
     purchase = purchase_queries.finalize_purchase(session, user_id, price)
 
     text = trans.t(f'{ACTION_IDENTIFIER}.success')
-    markup = InlineKeyboardMarkup([[
-        main_menu.link_button(),
-        button(f'purchase.edit_{purchase.id}', trans.t('purchase.edit.link'), emojis.FORWARD)
-    ]])
+    markup = InlineKeyboardMarkup([
+        [
+            button(f'purchase.edit_{purchase.id}', trans.t('purchase.edit.link'), emojis.FORWARD)
+        ],
+        [
+            main_menu.link_button(),
+            button(f'transaction.single_{purchase.id}', trans.t('purchase.edit.write_off'), emojis.MONEY)
+        ]
+    ])
     reply(message, text, markup)
     return ConversationHandler.END

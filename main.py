@@ -27,7 +27,6 @@ def main():
 
     # start
     dp.add_handler(CommandHandler('start', start.callback), group=1)
-    # TODO dp.add_handler(CommandHandler('stop', stop.callback), group=1)
 
     # user invitation
     dp.add_handler(InlineQueryHandler(inline_query.query_callback), group=1)
@@ -43,6 +42,9 @@ def main():
     dp.add_handler(CallbackQueryHandler(purchase_list.callback, pattern='^purchase-list$'), group=1)
     # purchase edit
     dp.add_handler(purchase_edit.conversation_handler(), group=1)
+    # single write off
+    dp.add_handler(CallbackQueryHandler(transaction_create.single_callback, pattern='^transaction.single_[0-9]+$'),
+                   group=1)
     # complete write off
     dp.add_handler(CallbackQueryHandler(transaction_create.info_callback, pattern='^transaction.create.info$'), group=1)
     dp.add_handler(CallbackQueryHandler(transaction_create.execute_callback, pattern='^transaction.create.execute$'),

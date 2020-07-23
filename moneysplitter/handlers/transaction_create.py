@@ -3,7 +3,7 @@ from telegram import InlineKeyboardMarkup
 from . import main_menu
 from ..db import session_wrapper, purchase_queries, user_queries, Activity
 from ..helper import emojis, write_off_calculator
-from ..helper.function_wrappers import button, edit
+from ..helper.function_wrappers import button, edit, get_entity_id
 from ..i18n import trans
 
 ACTION_IDENTIFIER = 'transaction.create'
@@ -40,3 +40,16 @@ def execute_callback(session, update, context):
     session.commit()
 
     edit(query, trans.t(f'{ACTION_IDENTIFIER}.success'), InlineKeyboardMarkup([[main_menu.link_button()]]))
+
+
+@session_wrapper
+def single_callback(session, update, context):
+    query = update.callback_query
+    purchase_id = get_entity_id(query)
+    purchase = purchase_queries.find(session, purchase_id)
+    checklist = purchase.checklist
+
+    write_off_calculator.write_off(session, checklist, [purchase])
+    session.commit()
+
+    edit(query, trans.t('purchase.edit.write_off_success'), InlineKeyboardMarkup([[main_menu.link_button()]]))
