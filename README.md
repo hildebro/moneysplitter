@@ -9,4 +9,4 @@ Current features:
 - User-to-User balances to keep track of debt
 - Assigning (partial) cost of purchases to specific users
 
-I'm no longer working on this repo, because the limitations of Telegram's bot API has been very irritating. I'm planning to convert this code into a webapp at some point.
+I'm no longer working on this repo, because the limitations of Telegram's bot API have been very irritating. I'm planning to convert this code into a webapp at some point.
