@@ -1,4 +1,4 @@
-# moneysplitter
+# moneysplitter (abandoned)
 Telegram bot to manage group purchases.
 
 Current features:
@@ -7,9 +7,9 @@ Current features:
 - Purchase history
 - Debt calculation based on past purchases
 - User-to-User balances to keep track of debt
-
-WIP features:
 - Assigning (partial) cost of purchases to specific users
+
+Planned features:
 - Validating resolved debt
 - Notifications for various actions
 - Adjustable permission settings
