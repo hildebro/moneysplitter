@@ -7,7 +7,7 @@ setuptools.setup(
     name="moneysplitter",
     version="0.0.1",
     author="Alexander Hildebrandt",
-    author_email="alex@hillburn.net",
+    author_email="alex@hilde.dev",
     description="Telegram bot to manage group purchases.",
     long_description=long_description,
     long_description_content_type="text/markdown",
